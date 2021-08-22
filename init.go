@@ -5,11 +5,13 @@ import (
 	"io/ioutil"
 )
 
+/*
 type Config struct {
 	Mongo struct {
 	}
 	Cassandra struct{}
 }
+*/
 
 type nexToken struct {
 	SystemType uint8
@@ -24,6 +26,7 @@ var rsaPrivateKey *rsa.PrivateKey
 var hmacSecret []byte
 
 func init() {
+	// Setup RSA private key for token parsing
 	var err error
 
 	rsaPrivateKeyBytes, err = ioutil.ReadFile("private.pem")
@@ -41,5 +44,6 @@ func init() {
 		panic(err)
 	}
 
-	//connectMongo()
+	// Connect to and setup Cassandra
+	connectCassandra()
 }

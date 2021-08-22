@@ -1,8 +1,6 @@
 package main
 
 import (
-	//"fmt"
-
 	"fmt"
 
 	nex "github.com/PretendoNetwork/nex-go"
@@ -18,6 +16,15 @@ func main() {
 	nexServer.SetSignatureVersion(1)
 	nexServer.SetKerberosKeySize(16)
 	nexServer.SetAccessKey("ridfebb9")
+
+	nexServer.On("Data", func(packet *nex.PacketV0) {
+		request := packet.RMCRequest()
+
+		fmt.Println("==Friends - Secure==")
+		fmt.Printf("Protocol ID: %#v\n", request.ProtocolID())
+		fmt.Printf("Method ID: %#v\n", request.MethodID())
+		fmt.Println("====================")
+	})
 
 	secureServer = nexproto.NewSecureProtocol(nexServer)
 	accountManagementServer := nexproto.NewAccountManagementProtocol(nexServer)

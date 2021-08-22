@@ -6,16 +6,13 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func nintendoCreateAccount(err error, client *nex.Client, callID uint32, username string, key string, groups uint32, email string, nintendoCreateAccountData *nexproto.NintendoCreateAccountData) {
-	fmt.Println("key " + key)
-
-	tokenBase64 := nintendoCreateAccountData.GetToken()
+	tokenBase64 := nintendoCreateAccountData.Token
 	encryptedToken, _ := base64.StdEncoding.DecodeString(tokenBase64)
 
 	decryptedToken, err := decryptToken(encryptedToken)

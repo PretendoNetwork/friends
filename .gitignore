@@ -12,6 +12,6 @@
 *.out
 
 # custom
-*.exe
+build
 *.pem
 *.key

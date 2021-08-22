@@ -5,9 +5,9 @@ import (
 )
 
 func connect(packet *nex.PacketV0) {
-	packet.GetSender().SetClientConnectionSignature(packet.GetConnectionSignature())
+	packet.Sender().SetClientConnectionSignature(packet.ConnectionSignature())
 
-	payload := packet.GetPayload()
+	payload := packet.Payload()
 	stream := nex.NewStreamIn(payload, nexServer)
 
 	ticketData, _ := stream.ReadBuffer()
@@ -36,7 +36,7 @@ func connect(packet *nex.PacketV0) {
 	responseValueBufferStream := nex.NewStreamOut(nexServer)
 	responseValueBufferStream.WriteBuffer(responseValueStream.Bytes())
 
-	packet.GetSender().UpdateRC4Key(sessionKey)
+	packet.Sender().UpdateRC4Key(sessionKey)
 
 	nexServer.AcknowledgePacket(packet, responseValueBufferStream.Bytes())
 }
