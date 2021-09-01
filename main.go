@@ -40,6 +40,7 @@ func main() {
 	// Secure protocol handles
 
 	// Handle RegisterEx RMC method
+	secureServer.Register(register)
 	secureServer.RegisterEx(registerEx)
 
 	// Friends (WiiU) protocol handles
