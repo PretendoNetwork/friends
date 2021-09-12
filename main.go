@@ -29,25 +29,31 @@ func main() {
 	secureServer = nexproto.NewSecureProtocol(nexServer)
 	accountManagementServer := nexproto.NewAccountManagementProtocol(nexServer)
 	friendsServer := nexproto.NewFriendsProtocol(nexServer)
+	friends3DSServer := nexproto.NewFriends3DSProtocol(nexServer)
 
 	// Handle PRUDP CONNECT packet (not an RMC method)
 	nexServer.On("Connect", connect)
 
 	// Account Management protocol handles
-
 	accountManagementServer.NintendoCreateAccount(nintendoCreateAccount)
+	accountManagementServer.NintendoCreateAccount3DS(nintendoCreateAccount3DS)
 
 	// Secure protocol handles
-
-	// Handle RegisterEx RMC method
 	secureServer.Register(register)
 	secureServer.RegisterEx(registerEx)
 
 	// Friends (WiiU) protocol handles
-
 	friendsServer.UpdateAndGetAllInformation(updateAndGetAllInformation)
-
 	friendsServer.CheckSettingStatus(checkSettingStatus)
+
+	// Friends (3DS) protocol handles
+	friends3DSServer.UpdateProfile(updateProfile)
+	friends3DSServer.UpdateMii(updateMii)
+	friends3DSServer.UpdatePreference(updatePreference)
+	friends3DSServer.SyncFriend(syncFriend)
+	friends3DSServer.UpdatePresence(updatePresence)
+	friends3DSServer.UpdateFavoriteGameKey(updateFavoriteGameKey)
+	friends3DSServer.UpdateComment(updateComment)
 
 	nexServer.Listen(":60001")
 }

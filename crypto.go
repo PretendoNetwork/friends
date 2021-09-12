@@ -17,23 +17,30 @@ import (
 
 func decryptToken(encryptedToken []byte) (*nexToken, error) {
 	// Split the encoded token into it's parts
-	cryptoConfig := encryptedToken[:0x90]
-	signature := encryptedToken[0x90:0xA4]
-	encryptedBody := encryptedToken[0xA4:]
+	cryptoConfig := encryptedToken[:0x82]
+	signature := encryptedToken[0x82:0x96]
+	encryptedBody := encryptedToken[0x96:]
 
+	// Parse crypto config into parts
 	encryptedAESKey := cryptoConfig[:128]
-	iv := cryptoConfig[128:]
+	point1 := cryptoConfig[128]
+	point2 := cryptoConfig[129]
+
+	// Rebuild the IV
+	iv := make([]byte, 0)
+	iv = append(iv, encryptedAESKey[point1:point1+8]...)
+	iv = append(iv, encryptedAESKey[point2:point2+8]...)
 
 	// Decrypt the AES key
 	decryptedAESKey, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, rsaPrivateKey, encryptedAESKey, nil)
 	if err != nil {
-		return &nexToken{}, err
+		return nil, err
 	}
 
 	// Decrypt the token body
 	block, err := aes.NewCipher(decryptedAESKey)
 	if err != nil {
-		return &nexToken{}, err
+		return nil, err
 	}
 
 	decryptedBody := make([]byte, len(encryptedBody))
@@ -45,7 +52,7 @@ func decryptToken(encryptedToken []byte) (*nexToken, error) {
 	// Verify the token body
 	err = verifySignature(decryptedBody, signature, hmacSecret)
 	if err != nil {
-		return &nexToken{}, err
+		return nil, err
 	}
 
 	// Unpack the token body to struct
@@ -54,7 +61,7 @@ func decryptToken(encryptedToken []byte) (*nexToken, error) {
 
 	err = binary.Read(tokenReader, binary.LittleEndian, token)
 	if err != nil {
-		return &nexToken{}, err
+		return nil, err
 	}
 
 	return token, nil
