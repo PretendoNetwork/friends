@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
-	"fmt"
 	"strings"
 
 	nex "github.com/PretendoNetwork/nex-go"
@@ -17,8 +16,6 @@ func nintendoCreateAccount3DS(err error, client *nex.Client, callID uint32, strP
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println(oAuthData.NEXToken)
 
 	tokenBase64 := oAuthData.NEXToken
 	tokenBase64 = strings.Replace(tokenBase64, ".", "+", -1)
