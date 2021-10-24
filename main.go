@@ -45,11 +45,12 @@ func main() {
 	// Friends (WiiU) protocol handles
 	friendsServer.UpdateAndGetAllInformation(updateAndGetAllInformation)
 	friendsServer.CheckSettingStatus(checkSettingStatus)
+	friendsServer.UpdatePreference(updatePreferenceWiiU)
 
 	// Friends (3DS) protocol handles
 	friends3DSServer.UpdateProfile(updateProfile)
 	friends3DSServer.UpdateMii(updateMii)
-	friends3DSServer.UpdatePreference(updatePreference)
+	friends3DSServer.UpdatePreference(updatePreference3DS)
 	friends3DSServer.SyncFriend(syncFriend)
 	friends3DSServer.UpdatePresence(updatePresence)
 	friends3DSServer.UpdateFavoriteGameKey(updateFavoriteGameKey)

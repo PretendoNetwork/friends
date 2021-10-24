@@ -5,7 +5,7 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func updatePreference(err error, client *nex.Client, callID uint32, unknown1 bool, unknown2 bool, unknown3 bool) {
+func updatePreference3DS(err error, client *nex.Client, callID uint32, unknown1 bool, unknown2 bool, unknown3 bool) {
 	// TODO: Do something with this
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
