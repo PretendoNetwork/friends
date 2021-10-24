@@ -1,8 +1,6 @@
 package main
 
 import (
-	"time"
-
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -163,8 +161,4 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	nexServer.Send(responsePacket)
-
-	time.AfterFunc(10*time.Second, func() {
-		//sendTestWiiUChatNotification3(client)
-	})
 }
