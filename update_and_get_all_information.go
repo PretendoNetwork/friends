@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -18,8 +20,9 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	updateNintendoPresenceV2(presence)
 
 	// Get user information
-	pid := nnaInfo.PrincipalBasicInfo.PID
+	pid := client.PID()
 
+	principalPreference := getUserPrincipalPreference(pid)
 	comment := getUserComment(pid)
 	//friendList := getUserFriendList(pid)
 	//friendRequestsOut := getUserFriendRequestsOut(pid)
@@ -27,24 +30,11 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	//blockList := getUserBlockList(pid)
 	//notifications := getUserNotifications(pid)
 
+	fmt.Printf("%+v\n", principalPreference)
+
 	rmcResponseStream := nex.NewStreamOut(nexServer)
 
-	//comment := "Pretendo Servers"
-	//datetime := nex.NewDateTime(0)
-	//notificationString := "Test"
-
-	//PrincipalPreference
-	rmcResponseStream.WriteUInt8(0)
-	rmcResponseStream.WriteUInt8(0)
-	rmcResponseStream.WriteUInt8(0)
-
-	/*
-		//Comment
-		rmcResponseStream.WriteUInt8(0)
-		rmcResponseStream.WriteString(comment)
-		rmcResponseStream.WriteUInt64LE(datetime.Now())\
-	*/
-
+	rmcResponseStream.WriteStructure(principalPreference)
 	rmcResponseStream.WriteStructure(comment)
 
 	//List<FriendInfo>

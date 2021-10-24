@@ -6,7 +6,7 @@ import (
 )
 
 func updatePreferenceWiiU(err error, client *nex.Client, callID uint32, principalPreference *nexproto.PrincipalPreference) {
-	// TODO: Do something with this
+	updateUserPrincipalPreference(client.PID(), principalPreference)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
 	rmcResponse.SetSuccess(nexproto.FriendsMethodUpdatePreference, nil)

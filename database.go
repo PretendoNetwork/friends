@@ -12,7 +12,7 @@ import (
 )
 
 var cluster *gocql.ClusterConfig
-var session *gocql.Session
+var cassandraClusterSession *gocql.Session
 
 func connectCassandra() {
 	// Connect to Cassandra
@@ -26,7 +26,7 @@ func connectCassandra() {
 
 	cluster.Keyspace = "pretendo_friends_wiiu"
 
-	session, err = cluster.CreateSession()
+	cassandraClusterSession, err = cluster.CreateSession()
 
 	if err != nil {
 		panic(err)
@@ -34,7 +34,7 @@ func connectCassandra() {
 
 	// Create tables if missing
 
-	if err := session.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.users (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.users (
 		pid int PRIMARY KEY,
 		nnid text,
 		changed_flags int,
@@ -52,7 +52,16 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := session.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.friendships (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.preferences (
+		pid int PRIMARY KEY,
+		show_online boolean,
+		show_current_game boolean,
+		block_friend_requests boolean
+	)`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.friendships (
 		id bigint PRIMARY KEY,
 		user1_pid int,
 		user2_pid int,
@@ -61,7 +70,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := session.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.blocks (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.blocks (
 		id text PRIMARY KEY,
 		blocker_pid int,
 		blocked_pid int,
@@ -70,7 +79,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := session.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.miis (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.miis (
 		pid int PRIMARY KEY,
 		name text,
 		unknown1 tinyint,
@@ -81,7 +90,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := session.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.friend_requests (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.friend_requests (
 		id bigint PRIMARY KEY,
 		sender_pid int,
 		recipient_pid int,
@@ -91,7 +100,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := session.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.notifications (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.notifications (
 		id bigint PRIMARY KEY,
 		sender_pid int,
 		recipient_pid int,
@@ -139,13 +148,13 @@ func updateNNAInfo(nnaInfo *nexproto.NNAInfo) {
 
 	// Insert users NNID into users table incase missing
 
-	if err := session.Query(`UPDATE pretendo_friends_wiiu.users SET nnid = ? WHERE pid = ?`, userNNID, userPID).Exec(); err != nil {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends_wiiu.users SET nnid = ? WHERE pid = ?`, userNNID, userPID).Exec(); err != nil {
 		log.Fatal(err)
 	}
 
 	// Update user Mii data
 
-	if err := session.Query(`UPDATE pretendo_friends_wiiu.miis SET
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends_wiiu.miis SET
 		data = ?,
 		name = ?,
 		date = ?
@@ -165,9 +174,14 @@ func getUserComment(pid uint32) *nexproto.Comment {
 	var content string
 	var changed uint64
 
-	if err := session.Query(`SELECT comment_message, comment_changed FROM pretendo_friends_wiiu.users WHERE pid = ? LIMIT 1`,
+	if err := cassandraClusterSession.Query(`SELECT comment_message, comment_changed FROM pretendo_friends_wiiu.users WHERE pid = ? LIMIT 1`,
 		pid).Consistency(gocql.One).Scan(&content, &changed); err != nil {
-		return nil
+		comment := nexproto.NewComment()
+		comment.Unknown = 0
+		comment.Contents = ""
+		comment.LastChanged = nex.NewDateTime(0)
+
+		return comment
 		// TODO: Handle the error
 	}
 
@@ -196,3 +210,26 @@ func getUserBlockList(pid uint32) {}
 
 // Get notifications for a user
 func getUserNotifications(pid uint32) {}
+
+func updateUserPrincipalPreference(pid uint32, principalPreference *nexproto.PrincipalPreference) {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends_wiiu.preferences SET show_online=?, show_current_game=?, block_friend_requests=? WHERE pid=?`, principalPreference.Unknown1, principalPreference.Unknown2, principalPreference.Unknown3, pid).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func getUserPrincipalPreference(pid uint32) *nexproto.PrincipalPreference {
+	var showOnline bool
+	var showCurrentGame bool
+	var blockFriendRequests bool
+
+	_ = cassandraClusterSession.Query(`SELECT show_online, show_current_game, block_friend_requests FROM pretendo_friends_wiiu.preferences WHERE pid=?`, pid).Scan(&showOnline, &showCurrentGame, &blockFriendRequests)
+
+	preference := nexproto.NewPrincipalPreference()
+	preference.Unknown1 = showOnline
+	preference.Unknown2 = showCurrentGame
+	preference.Unknown3 = blockFriendRequests
+
+	fmt.Println(preference)
+
+	return preference
+}
