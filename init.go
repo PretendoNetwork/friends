@@ -3,6 +3,9 @@ package main
 import (
 	"crypto/rsa"
 	"io/ioutil"
+	"log"
+
+	"github.com/joho/godotenv"
 )
 
 /*
@@ -44,6 +47,11 @@ func init() {
 		panic(err)
 	}
 
-	// Connect to and setup Cassandra
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	connectMongo()
 	connectCassandra()
 }

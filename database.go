@@ -1,18 +1,37 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"github.com/gocql/gocql"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var cluster *gocql.ClusterConfig
 var cassandraClusterSession *gocql.Session
+
+var mongoClient *mongo.Client
+var mongoContext context.Context
+var mongoDatabase *mongo.Database
+var mongoCollection *mongo.Collection
+
+func connectMongo() {
+	mongoClient, _ = mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGO_URI")))
+	mongoContext, _ = context.WithTimeout(context.Background(), 10*time.Second)
+	_ = mongoClient.Connect(mongoContext)
+
+	mongoDatabase = mongoClient.Database("pretendo")
+	mongoCollection = mongoDatabase.Collection("pnids")
+}
 
 func connectCassandra() {
 	// Connect to Cassandra
@@ -138,6 +157,12 @@ func createKeyspace(keyspace string) {
 	}
 }
 
+////////////////////////////////
+//                            //
+// Cassandra database methods //
+//                            //
+////////////////////////////////
+
 // Update a users NNAInfo data
 func updateNNAInfo(nnaInfo *nexproto.NNAInfo) {
 	principalBasicInfo := nnaInfo.PrincipalBasicInfo
@@ -244,4 +269,26 @@ func isFriendRequestBlocked(requesterPID uint32, requestedPID uint32) bool {
 
 	// Assume a block record was found
 	return true
+}
+
+//////////////////////////////
+//                          //
+// MongoDB database methods //
+//                          //
+//////////////////////////////
+
+func getUserInfoByPID(pid uint32) bson.M {
+	var result bson.M
+
+	err := mongoCollection.FindOne(context.TODO(), bson.D{{Key: "pid", Value: pid}}, options.FindOne()).Decode(&result)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil
+		}
+
+		panic(err)
+	}
+
+	return result
 }
