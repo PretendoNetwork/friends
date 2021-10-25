@@ -22,9 +22,9 @@ func connectCassandra() {
 	cluster = gocql.NewCluster("127.0.0.1")
 	cluster.Timeout = 30 * time.Second
 
-	createKeyspace("pretendo_friends_wiiu")
+	createKeyspace("pretendo_friends")
 
-	cluster.Keyspace = "pretendo_friends_wiiu"
+	cluster.Keyspace = "pretendo_friends"
 
 	cassandraClusterSession, err = cluster.CreateSession()
 
@@ -34,7 +34,7 @@ func connectCassandra() {
 
 	// Create tables if missing
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.users (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.users (
 		pid int PRIMARY KEY,
 		nnid text,
 		changed_flags int,
@@ -52,7 +52,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.preferences (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.preferences (
 		pid int PRIMARY KEY,
 		show_online boolean,
 		show_current_game boolean,
@@ -61,7 +61,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.friendships (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friendships (
 		id bigint PRIMARY KEY,
 		user1_pid int,
 		user2_pid int,
@@ -70,7 +70,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.blocks (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.blocks (
 		id text PRIMARY KEY,
 		blocker_pid int,
 		blocked_pid int,
@@ -79,7 +79,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.miis (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.miis (
 		pid int PRIMARY KEY,
 		name text,
 		unknown1 tinyint,
@@ -90,7 +90,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.friend_requests (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friend_requests (
 		id bigint PRIMARY KEY,
 		sender_pid int,
 		recipient_pid int,
@@ -100,7 +100,7 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends_wiiu.notifications (
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.notifications (
 		id bigint PRIMARY KEY,
 		sender_pid int,
 		recipient_pid int,
@@ -115,7 +115,7 @@ func connectCassandra() {
 
 // Adapted from gocql common_test.go
 func createKeyspace(keyspace string) {
-	flagRF := flag.Int("rf", 1, "replication factor for pretendo_friends_wiiu keyspace")
+	flagRF := flag.Int("rf", 1, "replication factor for pretendo_friends keyspace")
 
 	c := *cluster
 	c.Keyspace = "system"
@@ -148,13 +148,13 @@ func updateNNAInfo(nnaInfo *nexproto.NNAInfo) {
 
 	// Insert users NNID into users table incase missing
 
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends_wiiu.users SET nnid = ? WHERE pid = ?`, userNNID, userPID).Exec(); err != nil {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.users SET nnid = ? WHERE pid = ?`, userNNID, userPID).Exec(); err != nil {
 		log.Fatal(err)
 	}
 
 	// Update user Mii data
 
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends_wiiu.miis SET
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.miis SET
 		data = ?,
 		name = ?,
 		date = ?
@@ -174,7 +174,7 @@ func getUserComment(pid uint32) *nexproto.Comment {
 	var content string
 	var changed uint64
 
-	if err := cassandraClusterSession.Query(`SELECT comment_message, comment_changed FROM pretendo_friends_wiiu.users WHERE pid = ? LIMIT 1`,
+	if err := cassandraClusterSession.Query(`SELECT comment_message, comment_changed FROM pretendo_friends.users WHERE pid = ? LIMIT 1`,
 		pid).Consistency(gocql.One).Scan(&content, &changed); err != nil {
 		comment := nexproto.NewComment()
 		comment.Unknown = 0
@@ -212,7 +212,7 @@ func getUserBlockList(pid uint32) {}
 func getUserNotifications(pid uint32) {}
 
 func updateUserPrincipalPreference(pid uint32, principalPreference *nexproto.PrincipalPreference) {
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends_wiiu.preferences SET show_online=?, show_current_game=?, block_friend_requests=? WHERE pid=?`, principalPreference.Unknown1, principalPreference.Unknown2, principalPreference.Unknown3, pid).Exec(); err != nil {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.preferences SET show_online=?, show_current_game=?, block_friend_requests=? WHERE pid=?`, principalPreference.Unknown1, principalPreference.Unknown2, principalPreference.Unknown3, pid).Exec(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -222,14 +222,26 @@ func getUserPrincipalPreference(pid uint32) *nexproto.PrincipalPreference {
 	var showCurrentGame bool
 	var blockFriendRequests bool
 
-	_ = cassandraClusterSession.Query(`SELECT show_online, show_current_game, block_friend_requests FROM pretendo_friends_wiiu.preferences WHERE pid=?`, pid).Scan(&showOnline, &showCurrentGame, &blockFriendRequests)
+	_ = cassandraClusterSession.Query(`SELECT show_online, show_current_game, block_friend_requests FROM pretendo_friends.preferences WHERE pid=?`, pid).Scan(&showOnline, &showCurrentGame, &blockFriendRequests)
 
 	preference := nexproto.NewPrincipalPreference()
 	preference.Unknown1 = showOnline
 	preference.Unknown2 = showCurrentGame
 	preference.Unknown3 = blockFriendRequests
 
-	fmt.Println(preference)
-
 	return preference
+}
+
+func isFriendRequestBlocked(requesterPID uint32, requestedPID uint32) bool {
+	if err := cassandraClusterSession.Query(`SELECT id FROM pretendo_friends.blocks WHERE blocker_pid=? AND blocked_pid=? LIMIT 1 ALLOW FILTERING`, requestedPID, requesterPID).Scan(); err != nil {
+		if err == gocql.ErrNotFound {
+			// Assume no block record was found
+			return false
+		}
+
+		// TODO: Error handling
+	}
+
+	// Assume a block record was found
+	return true
 }

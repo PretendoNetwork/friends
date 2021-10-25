@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -29,8 +27,6 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	//friendRequestsIn := getUserFriendRequestsIn(pid)
 	//blockList := getUserBlockList(pid)
 	//notifications := getUserNotifications(pid)
-
-	fmt.Printf("%+v\n", principalPreference)
 
 	rmcResponseStream := nex.NewStreamOut(nexServer)
 
