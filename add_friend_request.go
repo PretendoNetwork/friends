@@ -103,6 +103,8 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendInfo.LastOnline = nex.NewDateTime(0)
 	friendInfo.Unknown = 0
 
+	saveFriendRequest(friendRequestID, senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
+
 	recipientClient := client.Server().FindClientFromPID(recipientPID)
 
 	if recipientClient != nil {

@@ -269,6 +269,12 @@ func isFriendRequestBlocked(requesterPID uint32, requestedPID uint32) bool {
 	return true
 }
 
+func saveFriendRequest(friendRequestID uint64, senderPID uint32, recipientPID uint32, sentTime uint64, expireTime uint64, message string) {
+	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friend_requests (id, sender_pid, recipient_pid, sent_on, expires_on, message) VALUES (?, ?, ?, ?, ?, ?) IF NOT EXISTS`, friendRequestID, senderPID, recipientPID, sentTime, expireTime, message).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 //////////////////////////////
 //                          //
 // MongoDB database methods //
