@@ -50,7 +50,7 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 
 	friendRequest.Message = nexproto.NewFriendRequestMessage()
 	friendRequest.Message.FriendRequestID = friendRequestID
-	friendRequest.Message.Unknown1 = 0 // replaying from real server
+	friendRequest.Message.Received = false
 	friendRequest.Message.Unknown2 = 1 // replaying from real
 	friendRequest.Message.Message = message
 	friendRequest.Message.Unknown3 = 0           // replaying from real server
@@ -129,7 +129,7 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 
 		friendRequestNotificationData.Message = nexproto.NewFriendRequestMessage()
 		friendRequestNotificationData.Message.FriendRequestID = friendRequestID
-		friendRequestNotificationData.Message.Unknown1 = 0 // replaying from real server
+		friendRequestNotificationData.Message.Received = false
 		friendRequestNotificationData.Message.Unknown2 = 1 // replaying from real
 		friendRequestNotificationData.Message.Message = message
 		friendRequestNotificationData.Message.Unknown3 = 0           // replaying from real server

@@ -78,7 +78,10 @@ func connectCassandra() {
 		recipient_pid int,
 		sent_on bigint,
 		expires_on bigint,
-		message text
+		message text,
+		received boolean,
+		accepted boolean,
+		denied boolean
 	)`).Exec(); err != nil {
 		log.Fatal(err)
 	}
@@ -231,7 +234,7 @@ func getUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
 	var sliceMap []map[string]interface{}
 	var err error
 
-	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, recipient_pid, sent_on, expires_on, message FROM pretendo_friends.friend_requests WHERE sender_pid=? ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
+	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, recipient_pid, sent_on, expires_on, message, received FROM pretendo_friends.friend_requests WHERE sender_pid=? AND accepted=false AND denied=false ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -260,7 +263,7 @@ func getUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
 
 		friendRequest.Message = nexproto.NewFriendRequestMessage()
 		friendRequest.Message.FriendRequestID = uint64(sliceMap[i]["id"].(int64))
-		friendRequest.Message.Unknown1 = 0
+		friendRequest.Message.Received = sliceMap[i]["received"].(bool)
 		friendRequest.Message.Unknown2 = 1
 		friendRequest.Message.Message = sliceMap[i]["message"].(string)
 		friendRequest.Message.Unknown3 = 0
@@ -283,7 +286,7 @@ func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 	var sliceMap []map[string]interface{}
 	var err error
 
-	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, sender_pid, sent_on, expires_on, message FROM pretendo_friends.friend_requests WHERE recipient_pid=? ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
+	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, sender_pid, sent_on, expires_on, message, received FROM pretendo_friends.friend_requests WHERE recipient_pid=? AND accepted=false AND denied=false ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -312,7 +315,7 @@ func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 
 		friendRequest.Message = nexproto.NewFriendRequestMessage()
 		friendRequest.Message.FriendRequestID = uint64(sliceMap[i]["id"].(int64))
-		friendRequest.Message.Unknown1 = 0
+		friendRequest.Message.Received = sliceMap[i]["received"].(bool)
 		friendRequest.Message.Unknown2 = 1
 		friendRequest.Message.Message = sliceMap[i]["message"].(string)
 		friendRequest.Message.Unknown3 = 0
@@ -369,7 +372,13 @@ func isFriendRequestBlocked(requesterPID uint32, requestedPID uint32) bool {
 }
 
 func saveFriendRequest(friendRequestID uint64, senderPID uint32, recipientPID uint32, sentTime uint64, expireTime uint64, message string) {
-	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friend_requests (id, sender_pid, recipient_pid, sent_on, expires_on, message) VALUES (?, ?, ?, ?, ?, ?) IF NOT EXISTS`, friendRequestID, senderPID, recipientPID, sentTime, expireTime, message).Exec(); err != nil {
+	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friend_requests (id, sender_pid, recipient_pid, sent_on, expires_on, message, received, accepted, denied) VALUES (?, ?, ?, ?, ?, ?, false, false, false) IF NOT EXISTS`, friendRequestID, senderPID, recipientPID, sentTime, expireTime, message).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func setFriendRequestReceived(friendRequestID uint64) {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.friend_requests SET received=true WHERE id=?`, friendRequestID).Exec(); err != nil {
 		log.Fatal(err)
 	}
 }
