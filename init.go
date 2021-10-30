@@ -2,9 +2,12 @@ package main
 
 import (
 	"crypto/rsa"
+	"fmt"
 	"io/ioutil"
 	"log"
+	"runtime"
 
+	"github.com/bwmarrin/snowflake"
 	"github.com/joho/godotenv"
 )
 
@@ -27,6 +30,7 @@ type nexToken struct {
 var rsaPrivateKeyBytes []byte
 var rsaPrivateKey *rsa.PrivateKey
 var hmacSecret []byte
+var snowflakeNodes []*snowflake.Node
 
 func init() {
 	// Setup RSA private key for token parsing
@@ -54,4 +58,18 @@ func init() {
 
 	connectMongo()
 	connectCassandra()
+	createSnowflakeNodes()
+}
+
+func createSnowflakeNodes() {
+	snowflakeNodes = make([]*snowflake.Node, 0)
+
+	for corenum := 0; corenum < runtime.NumCPU(); corenum++ {
+		node, err := snowflake.NewNode(int64(corenum))
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		snowflakeNodes = append(snowflakeNodes, node)
+	}
 }

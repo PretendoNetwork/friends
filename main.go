@@ -44,9 +44,10 @@ func main() {
 
 	// Friends (WiiU) protocol handles
 	friendsServer.UpdateAndGetAllInformation(updateAndGetAllInformation)
-	friendsServer.CheckSettingStatus(checkSettingStatus)
+	friendsServer.AddFriendRequest(addFriendRequest)
 	friendsServer.UpdatePreference(updatePreferenceWiiU)
 	friendsServer.GetBasicInfo(getBasicInfo)
+	friendsServer.CheckSettingStatus(checkSettingStatus)
 	friendsServer.GetRequestBlockSettings(getRequestBlockSettings)
 
 	// Friends (3DS) protocol handles

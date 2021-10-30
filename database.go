@@ -53,6 +53,35 @@ func connectCassandra() {
 
 	// Create tables if missing
 
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.preferences (
+		pid int PRIMARY KEY,
+		show_online boolean,
+		show_current_game boolean,
+		block_friend_requests boolean
+	)`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.blocks (
+		id text PRIMARY KEY,
+		blocker_pid int,
+		blocked_pid int,
+		date bigint
+	)`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friend_requests (
+		id bigint PRIMARY KEY,
+		sender_pid int,
+		recipient_pid int,
+		sent_on bigint,
+		expires_on bigint,
+		message text
+	)`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.users (
 		pid int PRIMARY KEY,
 		nnid text,
@@ -71,28 +100,10 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.preferences (
-		pid int PRIMARY KEY,
-		show_online boolean,
-		show_current_game boolean,
-		block_friend_requests boolean
-	)`).Exec(); err != nil {
-		log.Fatal(err)
-	}
-
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friendships (
 		id bigint PRIMARY KEY,
 		user1_pid int,
 		user2_pid int,
-		date bigint
-	)`).Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.blocks (
-		id text PRIMARY KEY,
-		blocker_pid int,
-		blocked_pid int,
 		date bigint
 	)`).Exec(); err != nil {
 		log.Fatal(err)
@@ -105,16 +116,6 @@ func connectCassandra() {
 		unknown2 tinyint,
 		data blob,
 		date bigint
-	)`).Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friend_requests (
-		id bigint PRIMARY KEY,
-		sender_pid int,
-		recipient_pid int,
-		sent_on bigint,
-		message text
 	)`).Exec(); err != nil {
 		log.Fatal(err)
 	}
@@ -237,22 +238,19 @@ func getUserBlockList(pid uint32) {}
 func getUserNotifications(pid uint32) {}
 
 func updateUserPrincipalPreference(pid uint32, principalPreference *nexproto.PrincipalPreference) {
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.preferences SET show_online=?, show_current_game=?, block_friend_requests=? WHERE pid=?`, principalPreference.Unknown1, principalPreference.Unknown2, principalPreference.Unknown3, pid).Exec(); err != nil {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.preferences SET
+		show_online=?,
+		show_current_game=?,
+		block_friend_requests=?
+		WHERE pid=?`, principalPreference.ShowOnlinePresence, principalPreference.ShowCurrentTitle, principalPreference.BlockFriendRequests, pid).Exec(); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func getUserPrincipalPreference(pid uint32) *nexproto.PrincipalPreference {
-	var showOnline bool
-	var showCurrentGame bool
-	var blockFriendRequests bool
-
-	_ = cassandraClusterSession.Query(`SELECT show_online, show_current_game, block_friend_requests FROM pretendo_friends.preferences WHERE pid=?`, pid).Scan(&showOnline, &showCurrentGame, &blockFriendRequests)
-
 	preference := nexproto.NewPrincipalPreference()
-	preference.Unknown1 = showOnline
-	preference.Unknown2 = showCurrentGame
-	preference.Unknown3 = blockFriendRequests
+
+	_ = cassandraClusterSession.Query(`SELECT show_online, show_current_game, block_friend_requests FROM pretendo_friends.preferences WHERE pid=?`, pid).Scan(&preference.ShowOnlinePresence, &preference.ShowCurrentTitle, &preference.BlockFriendRequests)
 
 	return preference
 }
