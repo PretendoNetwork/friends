@@ -53,11 +53,11 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendRequest.Message.Unknown1 = 0 // replaying from real server
 	friendRequest.Message.Unknown2 = 1 // replaying from real
 	friendRequest.Message.Message = message
-	friendRequest.Message.Unknown3 = 0         // replaying from real server
-	friendRequest.Message.Unknown4 = ""        // replaying from real server
-	friendRequest.Message.GameKey = gameKey    // maybe this is reused?
-	friendRequest.Message.Unknown5 = unknown6  // maybe this is reused?
-	friendRequest.Message.ExpiresOn = sentTime // no idea why this is set as the sent time
+	friendRequest.Message.Unknown3 = 0           // replaying from real server
+	friendRequest.Message.Unknown4 = ""          // replaying from real server
+	friendRequest.Message.GameKey = gameKey      // maybe this is reused?
+	friendRequest.Message.Unknown5 = unknown6    // maybe this is reused?
+	friendRequest.Message.ExpiresOn = expireTime // no idea why this is set as the sent time
 	friendRequest.SentOn = sentTime
 
 	// Why does this exist?? Always empty??
@@ -130,19 +130,20 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 		friendRequestNotificationData.Message.Unknown1 = 0 // replaying from real server
 		friendRequestNotificationData.Message.Unknown2 = 1 // replaying from real
 		friendRequestNotificationData.Message.Message = message
-		friendRequestNotificationData.Message.Unknown3 = 0         // replaying from real server
-		friendRequestNotificationData.Message.Unknown4 = ""        // replaying from real server
-		friendRequestNotificationData.Message.GameKey = gameKey    // maybe this is reused?
-		friendRequestNotificationData.Message.Unknown5 = unknown6  // maybe this is reused?
-		friendRequestNotificationData.Message.ExpiresOn = sentTime // no idea why this is set as the sent time
+		friendRequestNotificationData.Message.Unknown3 = 0           // replaying from real server
+		friendRequestNotificationData.Message.Unknown4 = ""          // replaying from real server
+		friendRequestNotificationData.Message.GameKey = gameKey      // maybe this is reused?
+		friendRequestNotificationData.Message.Unknown5 = unknown6    // maybe this is reused?
+		friendRequestNotificationData.Message.ExpiresOn = expireTime // no idea why this is set as the sent time
 		friendRequestNotificationData.SentOn = sentTime
 
-		sendFriendRequestNotification(recipientClient, friendRequestNotificationData)
+		go sendFriendRequestNotification(recipientClient, friendRequestNotificationData)
 	}
 
 	rmcResponseStream := nex.NewStreamOut(nexServer)
 
-	rmcResponseStream.WriteUInt8(0xFF)
+	rmcResponseStream.WriteStructure(friendRequest)
+	rmcResponseStream.WriteStructure(friendInfo)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
