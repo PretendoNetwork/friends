@@ -23,8 +23,8 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	principalPreference := getUserPrincipalPreference(pid)
 	comment := getUserComment(pid)
 	//friendList := getUserFriendList(pid)
-	//friendRequestsOut := getUserFriendRequestsOut(pid)
-	//friendRequestsIn := getUserFriendRequestsIn(pid)
+	friendRequestsOut := getUserFriendRequestsOut(pid)
+	friendRequestsIn := getUserFriendRequestsIn(pid)
 	//blockList := getUserBlockList(pid)
 	//notifications := getUserNotifications(pid)
 
@@ -107,13 +107,9 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	friendList = append(friendList, friend)
 
 	rmcResponseStream.WriteListStructure(friendList)
+	rmcResponseStream.WriteListStructure(friendRequestsOut)
+	rmcResponseStream.WriteListStructure(friendRequestsIn)
 	// End of hard-coded friend
-
-	//List<FriendRequest> (Sent)
-	rmcResponseStream.WriteUInt32LE(0)
-
-	//List<FriendRequest> (Received)
-	rmcResponseStream.WriteUInt32LE(0)
 
 	//List<BlacklistedPrincipal>
 	rmcResponseStream.WriteUInt32LE(0)

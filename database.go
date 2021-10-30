@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
@@ -226,10 +227,108 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 }
 
 // Get a users sent friend requests
-func getUserFriendRequestsOut(pid uint32) {}
+func getUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
+	var sliceMap []map[string]interface{}
+	var err error
+
+	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, recipient_pid, sent_on, expires_on, message FROM pretendo_friends.friend_requests WHERE sender_pid=? ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
+		log.Fatal(err)
+	}
+
+	friendRequestsOut := make([]*nexproto.FriendRequest, 0)
+
+	for i := 0; i < len(sliceMap); i++ {
+		recipientPID := uint32(sliceMap[i]["recipient_pid"].(int))
+		recipientUserInforation := getUserInfoByPID(recipientPID)
+
+		friendRequest := nexproto.NewFriendRequest()
+
+		friendRequest.PrincipalInfo = nexproto.NewPrincipalBasicInfo()
+		friendRequest.PrincipalInfo.PID = recipientPID
+		friendRequest.PrincipalInfo.NNID = recipientUserInforation["username"].(string)
+		friendRequest.PrincipalInfo.Mii = nexproto.NewMiiV2()
+		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
+
+		encodedMiiData := recipientUserInforation["mii"].(bson.M)["data"].(string)
+		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
+
+		friendRequest.PrincipalInfo.Mii.Name = recipientUserInforation["mii"].(bson.M)["name"].(string)
+		friendRequest.PrincipalInfo.Mii.Unknown1 = 0 // replaying from real server
+		friendRequest.PrincipalInfo.Mii.Unknown2 = 0 // replaying from real server
+		friendRequest.PrincipalInfo.Mii.Data = decodedMiiData
+		friendRequest.PrincipalInfo.Mii.Datetime = nex.NewDateTime(0)
+
+		friendRequest.Message = nexproto.NewFriendRequestMessage()
+		friendRequest.Message.FriendRequestID = uint64(sliceMap[i]["id"].(int64))
+		friendRequest.Message.Unknown1 = 0
+		friendRequest.Message.Unknown2 = 1
+		friendRequest.Message.Message = sliceMap[i]["message"].(string)
+		friendRequest.Message.Unknown3 = 0
+		friendRequest.Message.Unknown4 = ""
+		friendRequest.Message.GameKey = nexproto.NewGameKey()
+		friendRequest.Message.GameKey.TitleID = 0
+		friendRequest.Message.GameKey.TitleVersion = 0
+		friendRequest.Message.Unknown5 = nex.NewDateTime(134222053376) // idk what this value means but its always this
+		friendRequest.Message.ExpiresOn = nex.NewDateTime(uint64(sliceMap[i]["expires_on"].(int64)))
+		friendRequest.SentOn = nex.NewDateTime(uint64(sliceMap[i]["sent_on"].(int64)))
+
+		friendRequestsOut = append(friendRequestsOut, friendRequest)
+	}
+
+	return friendRequestsOut
+}
 
 // Get a users received friend requests
-func getUserFriendRequestsIn(pid uint32) {}
+func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
+	var sliceMap []map[string]interface{}
+	var err error
+
+	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, sender_pid, sent_on, expires_on, message FROM pretendo_friends.friend_requests WHERE recipient_pid=? ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
+		log.Fatal(err)
+	}
+
+	friendRequestsOut := make([]*nexproto.FriendRequest, 0)
+
+	for i := 0; i < len(sliceMap); i++ {
+		senderPID := uint32(sliceMap[i]["sender_pid"].(int))
+		senderUserInforation := getUserInfoByPID(senderPID)
+
+		friendRequest := nexproto.NewFriendRequest()
+
+		friendRequest.PrincipalInfo = nexproto.NewPrincipalBasicInfo()
+		friendRequest.PrincipalInfo.PID = senderPID
+		friendRequest.PrincipalInfo.NNID = senderUserInforation["username"].(string)
+		friendRequest.PrincipalInfo.Mii = nexproto.NewMiiV2()
+		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
+
+		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
+		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
+
+		friendRequest.PrincipalInfo.Mii.Name = senderUserInforation["mii"].(bson.M)["name"].(string)
+		friendRequest.PrincipalInfo.Mii.Unknown1 = 0 // replaying from real server
+		friendRequest.PrincipalInfo.Mii.Unknown2 = 0 // replaying from real server
+		friendRequest.PrincipalInfo.Mii.Data = decodedMiiData
+		friendRequest.PrincipalInfo.Mii.Datetime = nex.NewDateTime(0)
+
+		friendRequest.Message = nexproto.NewFriendRequestMessage()
+		friendRequest.Message.FriendRequestID = uint64(sliceMap[i]["id"].(int64))
+		friendRequest.Message.Unknown1 = 0
+		friendRequest.Message.Unknown2 = 1
+		friendRequest.Message.Message = sliceMap[i]["message"].(string)
+		friendRequest.Message.Unknown3 = 0
+		friendRequest.Message.Unknown4 = ""
+		friendRequest.Message.GameKey = nexproto.NewGameKey()
+		friendRequest.Message.GameKey.TitleID = 0
+		friendRequest.Message.GameKey.TitleVersion = 0
+		friendRequest.Message.Unknown5 = nex.NewDateTime(134222053376) // idk what this value means but its always this
+		friendRequest.Message.ExpiresOn = nex.NewDateTime(uint64(sliceMap[i]["expires_on"].(int64)))
+		friendRequest.SentOn = nex.NewDateTime(uint64(sliceMap[i]["sent_on"].(int64)))
+
+		friendRequestsOut = append(friendRequestsOut, friendRequest)
+	}
+
+	return friendRequestsOut
+}
 
 // Get a users blacklist
 func getUserBlockList(pid uint32) {}
