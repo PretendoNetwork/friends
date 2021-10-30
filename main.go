@@ -26,6 +26,11 @@ func main() {
 		fmt.Println("====================")
 	})
 
+	nexServer.On("Disconnect", func(packet *nex.PacketV0) {
+		pid := packet.Sender().PID()
+		delete(connectedUsers, pid)
+	})
+
 	secureServer = nexproto.NewSecureProtocol(nexServer)
 	accountManagementServer := nexproto.NewAccountManagementProtocol(nexServer)
 	friendsServer := nexproto.NewFriendsProtocol(nexServer)

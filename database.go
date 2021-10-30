@@ -86,6 +86,15 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friendships (
+		id bigint PRIMARY KEY,
+		user1_pid int,
+		user2_pid int,
+		date bigint
+	)`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.users (
 		pid int PRIMARY KEY,
 		nnid text,
@@ -100,15 +109,6 @@ func connectCassandra() {
 		active_title_data blob,
 		friendships list<int>,
 		blocks list<int>
-	)`).Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friendships (
-		id bigint PRIMARY KEY,
-		user1_pid int,
-		user2_pid int,
-		date bigint
 	)`).Exec(); err != nil {
 		log.Fatal(err)
 	}

@@ -7,6 +7,8 @@ import (
 	"log"
 	"runtime"
 
+	"github.com/PretendoNetwork/nex-go"
+	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"github.com/bwmarrin/snowflake"
 	"github.com/joho/godotenv"
 )
@@ -27,12 +29,24 @@ type nexToken struct {
 	CreatTime  uint64
 }
 
+type ConnectedUser struct {
+	PID      uint32
+	Client   *nex.Client
+	Presence *nexproto.NintendoPresenceV2
+}
+
+func NewConnectedUser() *ConnectedUser {
+	return &ConnectedUser{}
+}
+
 var rsaPrivateKeyBytes []byte
 var rsaPrivateKey *rsa.PrivateKey
 var hmacSecret []byte
 var snowflakeNodes []*snowflake.Node
+var connectedUsers map[uint32]*ConnectedUser
 
 func init() {
+	connectedUsers = make(map[uint32]*ConnectedUser)
 	// Setup RSA private key for token parsing
 	var err error
 

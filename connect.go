@@ -27,7 +27,6 @@ func connect(packet *nex.PacketV0) {
 	requestDataStream := nex.NewStreamIn(decryptedRequestData, nexServer)
 
 	userPID := requestDataStream.ReadUInt32LE() // User PID
-	packet.Sender().SetPID(userPID)
 
 	_ = requestDataStream.ReadUInt32LE() //CID of secure server station url
 	responseCheck := requestDataStream.ReadUInt32LE()
@@ -41,4 +40,11 @@ func connect(packet *nex.PacketV0) {
 	packet.Sender().UpdateRC4Key(sessionKey)
 
 	nexServer.AcknowledgePacket(packet, responseValueBufferStream.Bytes())
+
+	packet.Sender().SetPID(userPID)
+
+	connectedUser := NewConnectedUser()
+	connectedUser.PID = packet.Sender().PID()
+	connectedUser.Client = packet.Sender()
+	connectedUsers[userPID] = connectedUser
 }
