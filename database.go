@@ -227,7 +227,74 @@ func getUserComment(pid uint32) *nexproto.Comment {
 
 // Get a users friend list
 func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
-	return make([]*nexproto.FriendInfo, 0)
+	var sliceMap []map[string]interface{}
+	var err error
+
+	if sliceMap, err = cassandraClusterSession.Query(`SELECT user2_pid, date FROM pretendo_friends.friendships WHERE user1_pid=? ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
+		log.Fatal(err)
+	}
+
+	friendList := make([]*nexproto.FriendInfo, 0)
+
+	for i := 0; i < len(sliceMap); i++ {
+		friendPID := uint32(sliceMap[i]["user2_pid"].(int))
+
+		friendInfo := nexproto.NewFriendInfo()
+		connectedUser := connectedUsers[friendPID]
+
+		if connectedUser != nil {
+			// Online
+			friendInfo.NNAInfo = connectedUser.NNAInfo
+			friendInfo.Presence = connectedUser.Presence
+		} else {
+			// Offline
+			friendUserInforation := getUserInfoByPID(friendPID)
+			encodedMiiData := friendUserInforation["mii"].(bson.M)["data"].(string)
+			decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
+
+			friendInfo.NNAInfo = nexproto.NewNNAInfo()
+			friendInfo.NNAInfo.PrincipalBasicInfo = nexproto.NewPrincipalBasicInfo()
+			friendInfo.NNAInfo.PrincipalBasicInfo.PID = friendPID
+			friendInfo.NNAInfo.PrincipalBasicInfo.NNID = friendUserInforation["username"].(string)
+			friendInfo.NNAInfo.PrincipalBasicInfo.Mii = nexproto.NewMiiV2()
+			friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = friendUserInforation["mii"].(bson.M)["name"].(string)
+			friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = 0
+			friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = 0
+			friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Data = decodedMiiData
+			friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Datetime = nex.NewDateTime(0)
+			friendInfo.NNAInfo.PrincipalBasicInfo.Unknown = 0
+			friendInfo.NNAInfo.Unknown1 = 0
+			friendInfo.NNAInfo.Unknown2 = 0
+
+			friendInfo.Presence = nexproto.NewNintendoPresenceV2()
+			friendInfo.Presence.ChangedFlags = 0
+			friendInfo.Presence.Online = false
+			friendInfo.Presence.GameKey = nexproto.NewGameKey()
+			friendInfo.Presence.GameKey.TitleID = 0
+			friendInfo.Presence.GameKey.TitleVersion = 0
+			friendInfo.Presence.Unknown1 = 0
+			friendInfo.Presence.Message = ""
+			friendInfo.Presence.Unknown2 = 0
+			friendInfo.Presence.Unknown3 = 0
+			friendInfo.Presence.GameServerID = 0
+			friendInfo.Presence.Unknown4 = 0
+			friendInfo.Presence.PID = 0
+			friendInfo.Presence.GatheringID = 0
+			friendInfo.Presence.ApplicationData = []byte{0x00}
+			friendInfo.Presence.Unknown5 = 0
+			friendInfo.Presence.Unknown6 = 0
+			friendInfo.Presence.Unknown7 = 0
+		}
+
+		friendInfo.Status = getUserComment(friendPID)
+		friendInfo.BecameFriend = nex.NewDateTime(uint64(sliceMap[i]["date"].(int64)))
+		friendInfo.LastOnline = nex.NewDateTime(uint64(sliceMap[i]["date"].(int64))) // TODO: Change this
+		friendInfo.Unknown = 0
+
+		friendList = append(friendList, friendInfo)
+	}
+
+	return friendList
 }
 
 // Get a users sent friend requests
@@ -243,7 +310,10 @@ func getUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
 
 	for i := 0; i < len(sliceMap); i++ {
 		recipientPID := uint32(sliceMap[i]["recipient_pid"].(int))
+
 		recipientUserInforation := getUserInfoByPID(recipientPID)
+		encodedMiiData := recipientUserInforation["mii"].(bson.M)["data"].(string)
+		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
 
 		friendRequest := nexproto.NewFriendRequest()
 
@@ -251,16 +321,12 @@ func getUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
 		friendRequest.PrincipalInfo.PID = recipientPID
 		friendRequest.PrincipalInfo.NNID = recipientUserInforation["username"].(string)
 		friendRequest.PrincipalInfo.Mii = nexproto.NewMiiV2()
-		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
-
-		encodedMiiData := recipientUserInforation["mii"].(bson.M)["data"].(string)
-		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
-
 		friendRequest.PrincipalInfo.Mii.Name = recipientUserInforation["mii"].(bson.M)["name"].(string)
 		friendRequest.PrincipalInfo.Mii.Unknown1 = 0 // replaying from real server
 		friendRequest.PrincipalInfo.Mii.Unknown2 = 0 // replaying from real server
 		friendRequest.PrincipalInfo.Mii.Data = decodedMiiData
 		friendRequest.PrincipalInfo.Mii.Datetime = nex.NewDateTime(0)
+		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
 
 		friendRequest.Message = nexproto.NewFriendRequestMessage()
 		friendRequest.Message.FriendRequestID = uint64(sliceMap[i]["id"].(int64))
@@ -295,7 +361,10 @@ func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 
 	for i := 0; i < len(sliceMap); i++ {
 		senderPID := uint32(sliceMap[i]["sender_pid"].(int))
+
 		senderUserInforation := getUserInfoByPID(senderPID)
+		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
+		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
 
 		friendRequest := nexproto.NewFriendRequest()
 
@@ -303,16 +372,12 @@ func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 		friendRequest.PrincipalInfo.PID = senderPID
 		friendRequest.PrincipalInfo.NNID = senderUserInforation["username"].(string)
 		friendRequest.PrincipalInfo.Mii = nexproto.NewMiiV2()
-		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
-
-		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
-		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
-
 		friendRequest.PrincipalInfo.Mii.Name = senderUserInforation["mii"].(bson.M)["name"].(string)
 		friendRequest.PrincipalInfo.Mii.Unknown1 = 0 // replaying from real server
 		friendRequest.PrincipalInfo.Mii.Unknown2 = 0 // replaying from real server
 		friendRequest.PrincipalInfo.Mii.Data = decodedMiiData
 		friendRequest.PrincipalInfo.Mii.Datetime = nex.NewDateTime(0)
+		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
 
 		friendRequest.Message = nexproto.NewFriendRequestMessage()
 		friendRequest.Message.FriendRequestID = uint64(sliceMap[i]["id"].(int64))
@@ -384,6 +449,12 @@ func setFriendRequestReceived(friendRequestID uint64) {
 	}
 }
 
+func setFriendRequestAccepted(friendRequestID uint64) {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.friend_requests SET accepted=true WHERE id=?`, friendRequestID).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.FriendInfo {
 	var senderPID uint32
 	var recipientPID uint32
@@ -414,6 +485,8 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		log.Fatal(err)
 	}
 
+	setFriendRequestAccepted(friendRequestID)
+
 	friendInfo := nexproto.NewFriendInfo()
 	connectedUser := connectedUsers[senderPID]
 
@@ -423,15 +496,19 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		friendInfo.Presence = connectedUser.Presence
 	} else {
 		// Offline
+		senderUserInforation := getUserInfoByPID(senderPID)
+		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
+		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
+
 		friendInfo.NNAInfo = nexproto.NewNNAInfo()
 		friendInfo.NNAInfo.PrincipalBasicInfo = nexproto.NewPrincipalBasicInfo()
-		friendInfo.NNAInfo.PrincipalBasicInfo.PID = 0
-		friendInfo.NNAInfo.PrincipalBasicInfo.NNID = ""
+		friendInfo.NNAInfo.PrincipalBasicInfo.PID = senderPID
+		friendInfo.NNAInfo.PrincipalBasicInfo.NNID = senderUserInforation["username"].(string)
 		friendInfo.NNAInfo.PrincipalBasicInfo.Mii = nexproto.NewMiiV2()
-		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = ""
+		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = senderUserInforation["mii"].(bson.M)["name"].(string)
 		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = 0
 		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = 0
-		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Data = []byte{}
+		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Data = decodedMiiData
 		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Datetime = nex.NewDateTime(0)
 		friendInfo.NNAInfo.PrincipalBasicInfo.Unknown = 0
 		friendInfo.NNAInfo.Unknown1 = 0
