@@ -54,6 +54,7 @@ func main() {
 	friendsServer.MarkFriendRequestsAsReceived(markFriendRequestsAsReceived)
 	friendsServer.UpdatePreference(updatePreferenceWiiU)
 	friendsServer.GetBasicInfo(getBasicInfo)
+	friendsServer.DeletePersistentNotification(deletePersistentNotification)
 	friendsServer.CheckSettingStatus(checkSettingStatus)
 	friendsServer.GetRequestBlockSettings(getRequestBlockSettings)
 
