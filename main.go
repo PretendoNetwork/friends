@@ -50,6 +50,7 @@ func main() {
 	// Friends (WiiU) protocol handles
 	friendsServer.UpdateAndGetAllInformation(updateAndGetAllInformation)
 	friendsServer.AddFriendRequest(addFriendRequest)
+	friendsServer.AcceptFriendRequest(acceptFriendRequest)
 	friendsServer.MarkFriendRequestsAsReceived(markFriendRequestsAsReceived)
 	friendsServer.UpdatePreference(updatePreferenceWiiU)
 	friendsServer.GetBasicInfo(getBasicInfo)

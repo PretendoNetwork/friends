@@ -20,6 +20,7 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	// Get user information
 	pid := client.PID()
 
+	connectedUsers[pid].NNAInfo = nnaInfo
 	connectedUsers[pid].Presence = presence
 
 	principalPreference := getUserPrincipalPreference(pid)

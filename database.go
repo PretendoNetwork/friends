@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"time"
 
@@ -381,6 +382,87 @@ func setFriendRequestReceived(friendRequestID uint64) {
 	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.friend_requests SET received=true WHERE id=?`, friendRequestID).Exec(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.FriendInfo {
+	var senderPID uint32
+	var recipientPID uint32
+
+	if err := cassandraClusterSession.Query(`SELECT sender_pid, recipient_pid FROM pretendo_friends.friend_requests WHERE id=?`, friendRequestID).Scan(&senderPID, &recipientPID); err != nil {
+		log.Fatal(err)
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	nodeID := rand.Intn(len(snowflakeNodes))
+
+	snowflakeNode := snowflakeNodes[nodeID]
+
+	friendshipID1 := uint64(snowflakeNode.Generate().Int64())
+	friendshipID2 := uint64(snowflakeNode.Generate().Int64())
+
+	acceptedTime := nex.NewDateTime(0)
+	acceptedTime.FromTimestamp(time.Now())
+
+	// Friendships are two-way relationships, not just one link between 2 entities
+	// "A" has friend "B" and "B" has friend "A", so store both relationships
+
+	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friendships (id, user1_pid, user2_pid, date) VALUES (?, ?, ?, ?) IF NOT EXISTS`, friendshipID1, senderPID, recipientPID, acceptedTime.Value()).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friendships (id, user1_pid, user2_pid, date) VALUES (?, ?, ?, ?) IF NOT EXISTS`, friendshipID2, recipientPID, senderPID, acceptedTime.Value()).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	friendInfo := nexproto.NewFriendInfo()
+	connectedUser := connectedUsers[senderPID]
+
+	if connectedUser != nil {
+		// Online
+		friendInfo.NNAInfo = connectedUser.NNAInfo
+		friendInfo.Presence = connectedUser.Presence
+	} else {
+		// Offline
+		friendInfo.NNAInfo = nexproto.NewNNAInfo()
+		friendInfo.NNAInfo.PrincipalBasicInfo = nexproto.NewPrincipalBasicInfo()
+		friendInfo.NNAInfo.PrincipalBasicInfo.PID = 0
+		friendInfo.NNAInfo.PrincipalBasicInfo.NNID = ""
+		friendInfo.NNAInfo.PrincipalBasicInfo.Mii = nexproto.NewMiiV2()
+		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = ""
+		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = 0
+		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = 0
+		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Data = []byte{}
+		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Datetime = nex.NewDateTime(0)
+		friendInfo.NNAInfo.PrincipalBasicInfo.Unknown = 0
+		friendInfo.NNAInfo.Unknown1 = 0
+		friendInfo.NNAInfo.Unknown2 = 0
+
+		friendInfo.Presence = nexproto.NewNintendoPresenceV2()
+		friendInfo.Presence.ChangedFlags = 0
+		friendInfo.Presence.Online = false
+		friendInfo.Presence.GameKey = nexproto.NewGameKey()
+		friendInfo.Presence.GameKey.TitleID = 0
+		friendInfo.Presence.GameKey.TitleVersion = 0
+		friendInfo.Presence.Unknown1 = 0
+		friendInfo.Presence.Message = ""
+		friendInfo.Presence.Unknown2 = 0
+		friendInfo.Presence.Unknown3 = 0
+		friendInfo.Presence.GameServerID = 0
+		friendInfo.Presence.Unknown4 = 0
+		friendInfo.Presence.PID = 0
+		friendInfo.Presence.GatheringID = 0
+		friendInfo.Presence.ApplicationData = []byte{0x00}
+		friendInfo.Presence.Unknown5 = 0
+		friendInfo.Presence.Unknown6 = 0
+		friendInfo.Presence.Unknown7 = 0
+	}
+
+	friendInfo.Status = getUserComment(senderPID)
+	friendInfo.BecameFriend = acceptedTime
+	friendInfo.LastOnline = acceptedTime // TODO: Change this
+	friendInfo.Unknown = 0
+
+	return friendInfo
 }
 
 //////////////////////////////

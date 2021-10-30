@@ -32,6 +32,7 @@ type nexToken struct {
 type ConnectedUser struct {
 	PID      uint32
 	Client   *nex.Client
+	NNAInfo  *nexproto.NNAInfo
 	Presence *nexproto.NintendoPresenceV2
 }
 
