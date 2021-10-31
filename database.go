@@ -200,6 +200,12 @@ func updateNintendoPresenceV2(presence *nexproto.NintendoPresenceV2) {
 
 }
 
+func updateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.users SET last_online=? WHERE pid=?`, lastOnline.Value(), pid).Exec(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 // Get a users comment
 func getUserComment(pid uint32) *nexproto.Comment {
 	var content string
@@ -241,11 +247,15 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 
 		friendInfo := nexproto.NewFriendInfo()
 		connectedUser := connectedUsers[friendPID]
+		var lastOnline *nex.DateTime
 
 		if connectedUser != nil {
 			// Online
 			friendInfo.NNAInfo = connectedUser.NNAInfo
 			friendInfo.Presence = connectedUser.Presence
+
+			lastOnline = nex.NewDateTime(0)
+			lastOnline.FromTimestamp(time.Now())
 		} else {
 			// Offline
 			friendUserInforation := getUserInfoByPID(friendPID)
@@ -284,11 +294,20 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 			friendInfo.Presence.Unknown5 = 0
 			friendInfo.Presence.Unknown6 = 0
 			friendInfo.Presence.Unknown7 = 0
+
+			var lastOnlineTime uint64
+			if err := cassandraClusterSession.Query(`SELECT last_online FROM pretendo_friends.users WHERE pid=?`, friendPID).Scan(&lastOnlineTime); err != nil {
+				log.Fatal(err)
+			}
+
+			fmt.Println(lastOnlineTime)
+
+			lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
 		}
 
 		friendInfo.Status = getUserComment(friendPID)
 		friendInfo.BecameFriend = nex.NewDateTime(uint64(sliceMap[i]["date"].(int64)))
-		friendInfo.LastOnline = nex.NewDateTime(uint64(sliceMap[i]["date"].(int64))) // TODO: Change this
+		friendInfo.LastOnline = lastOnline
 		friendInfo.Unknown = 0
 
 		friendList = append(friendList, friendInfo)
@@ -489,11 +508,15 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 
 	friendInfo := nexproto.NewFriendInfo()
 	connectedUser := connectedUsers[senderPID]
+	var lastOnline *nex.DateTime
 
 	if connectedUser != nil {
 		// Online
 		friendInfo.NNAInfo = connectedUser.NNAInfo
 		friendInfo.Presence = connectedUser.Presence
+
+		lastOnline = nex.NewDateTime(0)
+		lastOnline.FromTimestamp(time.Now())
 	} else {
 		// Offline
 		senderUserInforation := getUserInfoByPID(senderPID)
@@ -526,17 +549,24 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		friendInfo.Presence.Unknown3 = 0
 		friendInfo.Presence.GameServerID = 0
 		friendInfo.Presence.Unknown4 = 0
-		friendInfo.Presence.PID = 0
+		friendInfo.Presence.PID = senderPID
 		friendInfo.Presence.GatheringID = 0
 		friendInfo.Presence.ApplicationData = []byte{0x00}
 		friendInfo.Presence.Unknown5 = 0
 		friendInfo.Presence.Unknown6 = 0
 		friendInfo.Presence.Unknown7 = 0
+
+		var lastOnlineTime uint64
+		if err := cassandraClusterSession.Query(`SELECT last_online FROM pretendo_friends.users WHERE pid=?`, senderPID).Scan(&lastOnlineTime); err != nil {
+			log.Fatal(err)
+		}
+
+		lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
 	}
 
 	friendInfo.Status = getUserComment(senderPID)
 	friendInfo.BecameFriend = acceptedTime
-	friendInfo.LastOnline = acceptedTime // TODO: Change this
+	friendInfo.LastOnline = lastOnline // TODO: Change this
 	friendInfo.Unknown = 0
 
 	return friendInfo

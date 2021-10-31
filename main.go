@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -29,6 +30,10 @@ func main() {
 	nexServer.On("Disconnect", func(packet *nex.PacketV0) {
 		pid := packet.Sender().PID()
 		delete(connectedUsers, pid)
+
+		lastOnline := nex.NewDateTime(0)
+		lastOnline.FromTimestamp(time.Now())
+		updateUserLastOnlineTime(pid, lastOnline)
 	})
 
 	secureServer = nexproto.NewSecureProtocol(nexServer)

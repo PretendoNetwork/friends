@@ -1,6 +1,8 @@
 package main
 
 import (
+	"time"
+
 	nex "github.com/PretendoNetwork/nex-go"
 )
 
@@ -47,4 +49,8 @@ func connect(packet *nex.PacketV0) {
 	connectedUser.PID = packet.Sender().PID()
 	connectedUser.Client = packet.Sender()
 	connectedUsers[userPID] = connectedUser
+
+	lastOnline := nex.NewDateTime(0)
+	lastOnline.FromTimestamp(time.Now())
+	updateUserLastOnlineTime(packet.Sender().PID(), lastOnline)
 }
