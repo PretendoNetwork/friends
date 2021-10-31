@@ -300,8 +300,6 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 				log.Fatal(err)
 			}
 
-			fmt.Println(lastOnlineTime)
-
 			lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
 		}
 

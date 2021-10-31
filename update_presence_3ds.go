@@ -5,7 +5,7 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func updatePresence(err error, client *nex.Client, callID uint32, presense *nexproto.NintendoPresence, unknown bool) {
+func updatePresence3DS(err error, client *nex.Client, callID uint32, presence *nexproto.NintendoPresence, unknown bool) {
 	// TODO: Do something with this
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)

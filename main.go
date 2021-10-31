@@ -57,6 +57,7 @@ func main() {
 	friendsServer.AddFriendRequest(addFriendRequest)
 	friendsServer.AcceptFriendRequest(acceptFriendRequest)
 	friendsServer.MarkFriendRequestsAsReceived(markFriendRequestsAsReceived)
+	friendsServer.UpdatePresence(updatePresenceWiiU)
 	friendsServer.UpdatePreference(updatePreferenceWiiU)
 	friendsServer.GetBasicInfo(getBasicInfo)
 	friendsServer.DeletePersistentNotification(deletePersistentNotification)
@@ -68,7 +69,7 @@ func main() {
 	friends3DSServer.UpdateMii(updateMii)
 	friends3DSServer.UpdatePreference(updatePreference3DS)
 	friends3DSServer.SyncFriend(syncFriend)
-	friends3DSServer.UpdatePresence(updatePresence)
+	friends3DSServer.UpdatePresence(updatePresence3DS)
 	friends3DSServer.UpdateFavoriteGameKey(updateFavoriteGameKey)
 	friends3DSServer.UpdateComment(updateComment)
 
