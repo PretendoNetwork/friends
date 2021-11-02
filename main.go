@@ -34,7 +34,9 @@ func main() {
 
 		lastOnline := nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
+
 		updateUserLastOnlineTime(pid, lastOnline)
+		sendUserWentOfflineWiiUNotifications(packet.Sender())
 
 		fmt.Println("Leaving")
 	})
@@ -82,4 +84,57 @@ func main() {
 	friends3DSServer.UpdateComment(updateComment)
 
 	nexServer.Listen(":60001")
+}
+
+// Maybe this function should go in a different file?
+func sendUserWentOfflineWiiUNotifications(client *nex.Client) {
+	lastOnline := nex.NewDateTime(0)
+	lastOnline.FromTimestamp(time.Now())
+
+	nintendoNotificationEventGeneral := nexproto.NewNintendoNotificationEventGeneral()
+
+	nintendoNotificationEventGeneral.U32Param = 0
+	nintendoNotificationEventGeneral.U64Param1 = 0
+	nintendoNotificationEventGeneral.U64Param2 = lastOnline.Value()
+	nintendoNotificationEventGeneral.StrParam = ""
+
+	eventObject := nexproto.NewNintendoNotificationEvent()
+	eventObject.Type = 10
+	eventObject.SenderPID = client.PID()
+	eventObject.DataHolder = nex.NewDataHolder()
+	eventObject.DataHolder.Name = "NintendoNotificationEventGeneral"
+	eventObject.DataHolder.Object = nintendoNotificationEventGeneral
+
+	stream := nex.NewStreamOut(nexServer)
+	stream.WriteStructure(eventObject)
+
+	rmcRequest := nex.NewRMCRequest()
+	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
+	rmcRequest.SetCallID(3810693103)
+	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent1)
+	rmcRequest.SetParameters(stream.Bytes())
+
+	rmcRequestBytes := rmcRequest.Bytes()
+
+	friendList := getUserFriendList(client.PID())
+
+	for i := 0; i < len(friendList); i++ {
+		friendPID := friendList[i].NNAInfo.PrincipalBasicInfo.PID
+		connectedUser := connectedUsers[friendPID]
+
+		if connectedUser != nil {
+			requestPacket, _ := nex.NewPacketV0(connectedUser.Client, nil)
+
+			requestPacket.SetVersion(0)
+			requestPacket.SetSource(0xA1)
+			requestPacket.SetDestination(0xAF)
+			requestPacket.SetType(nex.DataPacket)
+			requestPacket.SetPayload(rmcRequestBytes)
+
+			requestPacket.AddFlag(nex.FlagNeedsAck)
+			requestPacket.AddFlag(nex.FlagReliable)
+
+			nexServer.Send(requestPacket)
+		}
+	}
 }
