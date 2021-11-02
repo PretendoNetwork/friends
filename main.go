@@ -16,6 +16,7 @@ func main() {
 	nexServer.SetPrudpVersion(0)
 	nexServer.SetSignatureVersion(1)
 	nexServer.SetKerberosKeySize(16)
+	nexServer.SetPingTimeout(20) // Maybe too long?
 	nexServer.SetAccessKey("ridfebb9")
 
 	nexServer.On("Data", func(packet *nex.PacketV0) {
@@ -27,13 +28,20 @@ func main() {
 		fmt.Println("====================")
 	})
 
-	nexServer.On("Disconnect", func(packet *nex.PacketV0) {
+	nexServer.On("Kick", func(packet *nex.PacketV0) {
 		pid := packet.Sender().PID()
 		delete(connectedUsers, pid)
 
 		lastOnline := nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 		updateUserLastOnlineTime(pid, lastOnline)
+
+		fmt.Println("Leaving")
+	})
+
+	nexServer.On("Ping", func(packet *nex.PacketV0) {
+		fmt.Print("Pinged. Is ACK: ")
+		fmt.Println(packet.HasFlag(nex.FlagAck))
 	})
 
 	secureServer = nexproto.NewSecureProtocol(nexServer)

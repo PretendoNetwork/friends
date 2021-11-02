@@ -14,9 +14,12 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 
 	// Update user information
 
+	presence.Online = true      // Force online status. I have no idea why this is always false
+	presence.PID = client.PID() // WHY IS THIS SET TO 0 BY DEFAULT??
+
 	updateNNAInfo(nnaInfo)
 	updateNintendoPresenceV2(presence)
-	go sendUpdatePresenceWiiUNotifications(presence)
+	sendUpdatePresenceWiiUNotifications(presence)
 
 	// Get user information
 	pid := client.PID()

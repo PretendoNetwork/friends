@@ -8,9 +8,12 @@ import (
 func updatePresenceWiiU(err error, client *nex.Client, callID uint32, presence *nexproto.NintendoPresenceV2) {
 	pid := client.PID()
 
+	presence.Online = true      // Force online status. I have no idea why this is always false
+	presence.PID = client.PID() // WHY IS THIS SET TO 0 BY DEFAULT??
+
 	connectedUsers[pid].Presence = presence
 	updateNintendoPresenceV2(presence)
-	go sendUpdatePresenceWiiUNotifications(presence)
+	sendUpdatePresenceWiiUNotifications(presence)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
 	rmcResponse.SetSuccess(nexproto.FriendsMethodUpdatePresence, nil)
