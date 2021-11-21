@@ -5,11 +5,19 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func updateComment(err error, client *nex.Client, callID uint32, comment string) {
+func updateCommentWiiU(err error, client *nex.Client, callID uint32, comment *nexproto.Comment) {
 	// TODO: Do something with this
 
-	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateComment, nil)
+	changed := updateUserComment(client.PID(), comment.Contents)
+
+	rmcResponseStream := nex.NewStreamOut(nexServer)
+
+	rmcResponseStream.WriteUInt64LE(changed)
+
+	rmcResponseBody := rmcResponseStream.Bytes()
+
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsMethodUpdateComment, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

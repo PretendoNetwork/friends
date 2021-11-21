@@ -96,6 +96,21 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.comments (
+		pid int PRIMARY KEY,
+		message text,
+		changed bigint
+	)`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.last_online (
+		pid int PRIMARY KEY,
+		time bigint
+	)`).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.users (
 		pid int PRIMARY KEY,
 		nnid text,
@@ -201,7 +216,7 @@ func updateNintendoPresenceV2(presence *nexproto.NintendoPresenceV2) {
 }
 
 func updateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.users SET last_online=? WHERE pid=?`, lastOnline.Value(), pid).Exec(); err != nil {
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.last_online SET time=? WHERE pid=?`, lastOnline.Value(), pid).Exec(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -211,7 +226,7 @@ func getUserComment(pid uint32) *nexproto.Comment {
 	var content string
 	var changed uint64
 
-	if err := cassandraClusterSession.Query(`SELECT comment_message, comment_changed FROM pretendo_friends.users WHERE pid = ? LIMIT 1`,
+	if err := cassandraClusterSession.Query(`SELECT message, changed FROM pretendo_friends.comments WHERE pid=?`,
 		pid).Consistency(gocql.One).Scan(&content, &changed); err != nil {
 		comment := nexproto.NewComment()
 		comment.Unknown = 0
@@ -229,6 +244,17 @@ func getUserComment(pid uint32) *nexproto.Comment {
 	comment.LastChanged = nex.NewDateTime(changed)
 
 	return comment
+}
+
+// Update a users comment
+func updateUserComment(pid uint32, message string) uint64 {
+	changed := nex.NewDateTime(0).Now()
+
+	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.comments SET message=?, changed=? WHERE pid=?`, message, changed, pid).Exec(); err != nil {
+		log.Fatal(err)
+	}
+
+	return changed
 }
 
 // Get a users friend list

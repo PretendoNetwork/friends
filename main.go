@@ -69,6 +69,7 @@ func main() {
 	friendsServer.AcceptFriendRequest(acceptFriendRequest)
 	friendsServer.MarkFriendRequestsAsReceived(markFriendRequestsAsReceived)
 	friendsServer.UpdatePresence(updatePresenceWiiU)
+	friendsServer.UpdateComment(updateCommentWiiU)
 	friendsServer.UpdatePreference(updatePreferenceWiiU)
 	friendsServer.GetBasicInfo(getBasicInfo)
 	friendsServer.DeletePersistentNotification(deletePersistentNotification)
@@ -82,7 +83,7 @@ func main() {
 	friends3DSServer.SyncFriend(syncFriend)
 	friends3DSServer.UpdatePresence(updatePresence3DS)
 	friends3DSServer.UpdateFavoriteGameKey(updateFavoriteGameKey)
-	friends3DSServer.UpdateComment(updateComment)
+	friends3DSServer.UpdateComment(updateComment3DS)
 
 	nexServer.Listen(":60001")
 }
