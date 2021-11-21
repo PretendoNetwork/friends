@@ -153,25 +153,18 @@ func updateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
 
 // Get a users comment
 func getUserComment(pid uint32) *nexproto.Comment {
-	var content string
-	var changed uint64
+	comment := nexproto.NewComment()
+	comment.Unknown = 0
 
 	if err := cassandraClusterSession.Query(`SELECT message, changed FROM pretendo_friends.comments WHERE pid=?`,
-		pid).Consistency(gocql.One).Scan(&content, &changed); err != nil {
-		comment := nexproto.NewComment()
-		comment.Unknown = 0
-		comment.Contents = ""
-		comment.LastChanged = nex.NewDateTime(0)
-
-		return comment
-		// TODO: Handle the error
+		pid).Consistency(gocql.One).Scan(&comment.Contents, &comment.LastChanged); err != nil {
+		if err == gocql.ErrNotFound {
+			comment.Contents = ""
+			comment.LastChanged = nex.NewDateTime(0)
+		} else {
+			log.Fatal(err)
+		}
 	}
-
-	comment := nexproto.NewComment()
-
-	comment.Unknown = 0
-	comment.Contents = content
-	comment.LastChanged = nex.NewDateTime(changed)
 
 	return comment
 }
@@ -253,7 +246,11 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 
 			var lastOnlineTime uint64
 			if err := cassandraClusterSession.Query(`SELECT time FROM pretendo_friends.last_online WHERE pid=?`, friendPID).Scan(&lastOnlineTime); err != nil {
-				log.Fatal(err)
+				if err == gocql.ErrNotFound {
+					lastOnlineTime = 0
+				} else {
+					log.Fatal(err)
+				}
 			}
 
 			lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
@@ -516,7 +513,11 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 
 		var lastOnlineTime uint64
 		if err := cassandraClusterSession.Query(`SELECT time FROM pretendo_friends.last_online WHERE pid=?`, senderPID).Scan(&lastOnlineTime); err != nil {
-			log.Fatal(err)
+			if err == gocql.ErrNotFound {
+				lastOnlineTime = 0
+			} else {
+				log.Fatal(err)
+			}
 		}
 
 		lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
