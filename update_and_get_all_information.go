@@ -19,8 +19,6 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	presence.Online = true      // Force online status. I have no idea why this is always false
 	presence.PID = client.PID() // WHY IS THIS SET TO 0 BY DEFAULT??
 
-	updateNNAInfo(nnaInfo)
-	updateNintendoPresenceV2(presence)
 	sendUpdatePresenceWiiUNotifications(presence)
 
 	// Get user information
@@ -34,8 +32,8 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	friendList := getUserFriendList(pid)
 	friendRequestsOut := getUserFriendRequestsOut(pid)
 	friendRequestsIn := getUserFriendRequestsIn(pid)
-	//blockList := getUserBlockList(pid)
-	//notifications := getUserNotifications(pid)
+	blockList := getUserBlockList(pid)
+	notifications := getUserNotifications(pid)
 
 	if os.Getenv("ENABLE_BELLA") == "true" {
 		bella := nexproto.NewFriendInfo()
@@ -116,16 +114,9 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	rmcResponseStream.WriteListStructure(friendList)
 	rmcResponseStream.WriteListStructure(friendRequestsOut)
 	rmcResponseStream.WriteListStructure(friendRequestsIn)
-	// End of hard-coded friend
-
-	//List<BlacklistedPrincipal>
-	rmcResponseStream.WriteUInt32LE(0)
-
-	//Unknown Bool
-	rmcResponseStream.WriteUInt8(0)
-
-	//List<PersistentNotification>
-	rmcResponseStream.WriteUInt32LE(0)
+	rmcResponseStream.WriteListStructure(blockList)
+	rmcResponseStream.WriteBool(false) // Unknown
+	rmcResponseStream.WriteListStructure(notifications)
 
 	//Unknown Bool
 	rmcResponseStream.WriteUInt8(0)

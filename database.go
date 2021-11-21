@@ -111,45 +111,6 @@ func connectCassandra() {
 		log.Fatal(err)
 	}
 
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.users (
-		pid int PRIMARY KEY,
-		nnid text,
-		changed_flags int,
-		comment_message text,
-		comment_changed bigint,
-		last_online bigint,
-		gathering_id int,
-		active_title_id bigint,
-		active_title_version smallint,
-		active_title_game_server_id int,
-		active_title_data blob,
-		friendships list<int>,
-		blocks list<int>
-	)`).Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.miis (
-		pid int PRIMARY KEY,
-		name text,
-		unknown1 tinyint,
-		unknown2 tinyint,
-		data blob,
-		date bigint
-	)`).Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.notifications (
-		id bigint PRIMARY KEY,
-		sender_pid int,
-		recipient_pid int,
-		event_type int,
-		message text
-	)`).Exec(); err != nil {
-		log.Fatal(err)
-	}
-
 	fmt.Println("Connected to Cassandra")
 }
 
@@ -183,37 +144,6 @@ func createKeyspace(keyspace string) {
 // Cassandra database methods //
 //                            //
 ////////////////////////////////
-
-// Update a users NNAInfo data
-func updateNNAInfo(nnaInfo *nexproto.NNAInfo) {
-	principalBasicInfo := nnaInfo.PrincipalBasicInfo
-
-	userPID := principalBasicInfo.PID
-	userNNID := principalBasicInfo.NNID
-	userMii := principalBasicInfo.Mii
-
-	// Insert users NNID into users table incase missing
-
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.users SET nnid = ? WHERE pid = ?`, userNNID, userPID).Exec(); err != nil {
-		log.Fatal(err)
-	}
-
-	// Update user Mii data
-
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.miis SET
-		data = ?,
-		name = ?,
-		date = ?
-		WHERE pid = ?`,
-		userMii.Data, userMii.Name, userMii.Datetime.Value(), userPID).Exec(); err != nil {
-		log.Fatal(err)
-	}
-}
-
-// Update a users NintendoPresenceV2 data
-func updateNintendoPresenceV2(presence *nexproto.NintendoPresenceV2) {
-
-}
 
 func updateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
 	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.last_online SET time=? WHERE pid=?`, lastOnline.Value(), pid).Exec(); err != nil {
@@ -322,7 +252,7 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 			friendInfo.Presence.Unknown7 = 0
 
 			var lastOnlineTime uint64
-			if err := cassandraClusterSession.Query(`SELECT last_online FROM pretendo_friends.users WHERE pid=?`, friendPID).Scan(&lastOnlineTime); err != nil {
+			if err := cassandraClusterSession.Query(`SELECT time FROM pretendo_friends.last_online WHERE pid=?`, friendPID).Scan(&lastOnlineTime); err != nil {
 				log.Fatal(err)
 			}
 
@@ -443,10 +373,14 @@ func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 }
 
 // Get a users blacklist
-func getUserBlockList(pid uint32) {}
+func getUserBlockList(pid uint32) []*nexproto.BlacklistedPrincipal {
+	return make([]*nexproto.BlacklistedPrincipal, 0)
+}
 
 // Get notifications for a user
-func getUserNotifications(pid uint32) {}
+func getUserNotifications(pid uint32) []*nexproto.PersistentNotification {
+	return make([]*nexproto.PersistentNotification, 0)
+}
 
 func updateUserPrincipalPreference(pid uint32, principalPreference *nexproto.PrincipalPreference) {
 	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.preferences SET
@@ -581,7 +515,7 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		friendInfo.Presence.Unknown7 = 0
 
 		var lastOnlineTime uint64
-		if err := cassandraClusterSession.Query(`SELECT last_online FROM pretendo_friends.users WHERE pid=?`, senderPID).Scan(&lastOnlineTime); err != nil {
+		if err := cassandraClusterSession.Query(`SELECT time FROM pretendo_friends.last_online WHERE pid=?`, senderPID).Scan(&lastOnlineTime); err != nil {
 			log.Fatal(err)
 		}
 
