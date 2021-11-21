@@ -156,15 +156,18 @@ func getUserComment(pid uint32) *nexproto.Comment {
 	comment := nexproto.NewComment()
 	comment.Unknown = 0
 
+	var changed uint64 = 0
+
 	if err := cassandraClusterSession.Query(`SELECT message, changed FROM pretendo_friends.comments WHERE pid=?`,
-		pid).Consistency(gocql.One).Scan(&comment.Contents, &comment.LastChanged); err != nil {
+		pid).Consistency(gocql.One).Scan(&comment.Contents, &changed); err != nil {
 		if err == gocql.ErrNotFound {
 			comment.Contents = ""
-			comment.LastChanged = nex.NewDateTime(0)
 		} else {
 			log.Fatal(err)
 		}
 	}
+
+	comment.LastChanged = nex.NewDateTime(changed)
 
 	return comment
 }
