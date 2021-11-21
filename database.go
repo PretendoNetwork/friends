@@ -247,7 +247,7 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 			var lastOnlineTime uint64
 			if err := cassandraClusterSession.Query(`SELECT time FROM pretendo_friends.last_online WHERE pid=?`, friendPID).Scan(&lastOnlineTime); err != nil {
 				if err == gocql.ErrNotFound {
-					lastOnlineTime = 0
+					lastOnlineTime = nex.NewDateTime(0).Now()
 				} else {
 					log.Fatal(err)
 				}
@@ -514,7 +514,7 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		var lastOnlineTime uint64
 		if err := cassandraClusterSession.Query(`SELECT time FROM pretendo_friends.last_online WHERE pid=?`, senderPID).Scan(&lastOnlineTime); err != nil {
 			if err == gocql.ErrNotFound {
-				lastOnlineTime = 0
+				lastOnlineTime = nex.NewDateTime(0).Now()
 			} else {
 				log.Fatal(err)
 			}
