@@ -19,7 +19,7 @@ func register(err error, client *nex.Client, callID uint32, stationUrls []*nex.S
 	rmcResponseStream := nex.NewStreamOut(nexServer)
 
 	rmcResponseStream.WriteUInt32LE(0x10001) // Success
-	rmcResponseStream.WriteUInt32LE(uint32(secureServer.ConnectionIDCounter.Increment()))
+	rmcResponseStream.WriteUInt32LE(nexServer.ConnectionIDCounter().Increment())
 	rmcResponseStream.WriteString(localStationURL)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
