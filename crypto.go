@@ -47,7 +47,7 @@ func decryptToken(encryptedToken []byte) (*nexToken, error) {
 	mode := cipher.NewCBCDecrypter(block, iv)
 	mode.CryptBlocks(decryptedBody, encryptedBody)
 
-	decryptedBody = decryptedBody[:0x16] // Remove AES padding
+	decryptedBody = decryptedBody[:0x17] // Remove AES padding
 
 	// Verify the token body
 	err = verifySignature(decryptedBody, signature, hmacSecret)
