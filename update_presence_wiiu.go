@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -55,6 +57,26 @@ func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) 
 	friendList := getUserFriendList(presence.PID)
 
 	for i := 0; i < len(friendList); i++ {
+		if friendList[i] == nil || friendList[i].NNAInfo == nil || friendList[i].NNAInfo.PrincipalBasicInfo == nil {
+			// TODO: Fix this
+			fmt.Printf("\nPID %d has friend with bad presence data update_presence_wiiu.go line 62\n", presence.PID)
+			if friendList[i] == nil {
+				fmt.Println("FriendInfo is nil")
+			} else if friendList[i].NNAInfo.PrincipalBasicInfo == nil {
+				fmt.Println("friendList[i].NNAInfo is nil?")
+			} else {
+				fmt.Println("friendList[i].NNAInfo.PrincipalBasicInfo is nil")
+			}
+
+			if friendList[i].Presence != nil {
+				fmt.Printf("Bad friend PID: %d\n\n", friendList[i].Presence.PID)
+			} else {
+				fmt.Printf("Bad friend PID unknown...\n\n")
+			}
+
+			return
+		}
+
 		friendPID := friendList[i].NNAInfo.PrincipalBasicInfo.PID
 		connectedUser := connectedUsers[friendPID]
 

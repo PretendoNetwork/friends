@@ -206,6 +206,19 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 			friendInfo.NNAInfo = connectedUser.NNAInfo
 			friendInfo.Presence = connectedUser.Presence
 
+			if friendInfo.NNAInfo == nil || friendInfo.NNAInfo.PrincipalBasicInfo == nil {
+				// TODO: Fix this
+				fmt.Printf("\nPID %d has friend with bad presence data database.go line 211\n", pid)
+				if friendInfo.NNAInfo == nil {
+					fmt.Println("friendInfo.NNAInfo is nil")
+				} else {
+					fmt.Println("friendInfo.NNAInfo.PrincipalBasicInfo is nil")
+				}
+				fmt.Printf("Bad friend PID: %d\n\n", friendPID)
+
+				continue
+			}
+
 			lastOnline = nex.NewDateTime(0)
 			lastOnline.FromTimestamp(time.Now())
 		} else {
