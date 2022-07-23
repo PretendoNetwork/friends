@@ -1,0 +1,6 @@
+[submodule "friends-authentication"]
+	path = friends-authentication
+	url = https://github.com/PretendoNetwork/friends-authentication
+[submodule "friends-secure"]
+	path = friends-secure
+	url = https://github.com/PretendoNetwork/friends-secure
