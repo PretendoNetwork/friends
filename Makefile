@@ -1,7 +1,7 @@
-git:
+update_submodule:
 	git submodule init
-	git submodule update
+	git submodule update --remote --merge
+	git commit -am 'Updated submodules'
+	git push -u origin master
 
-# TODO - Dockerize this repo instead of the auth/secure repos?
-
-.PHONY: git
+.PHONY: update_submodule
