@@ -24,8 +24,8 @@ func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb
 		rmcRequest := nex.NewRMCRequest()
 		rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
 		rmcRequest.SetCallID(3810693103)
-		rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent1)
-		rmcRequest.SetParameters(in.NotificationData)
+		rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent2)
+		rmcRequest.SetParameters(in.GetNotificationData())
 
 		rmcRequestBytes := rmcRequest.Bytes()
 
