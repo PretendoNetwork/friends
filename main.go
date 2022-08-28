@@ -15,7 +15,6 @@ func main() {
 	nexServer = nex.NewServer()
 	nexServer.SetFragmentSize(900)
 	nexServer.SetPrudpVersion(0)
-	nexServer.SetSignatureVersion(1)
 	nexServer.SetKerberosKeySize(16)
 	nexServer.SetPingTimeout(20) // Maybe too long?
 	nexServer.SetAccessKey("ridfebb9")
