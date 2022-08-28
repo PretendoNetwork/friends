@@ -15,8 +15,10 @@ func connect(packet *nex.PacketV0) {
 	ticketData, _ := stream.ReadBuffer()
 	requestData, _ := stream.ReadBuffer()
 
+	serverKey := nex.DeriveKerberosKey(2, []byte(nexServer.KerberosPassword()))
+
 	// TODO: use random key from auth server
-	ticketDataEncryption := nex.NewKerberosEncryption([]byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0})
+	ticketDataEncryption := nex.NewKerberosEncryption(serverKey)
 	decryptedTicketData := ticketDataEncryption.Decrypt(ticketData)
 	ticketDataStream := nex.NewStreamIn(decryptedTicketData, nexServer)
 

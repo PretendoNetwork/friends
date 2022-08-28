@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 
 	nex "github.com/PretendoNetwork/nex-go"
@@ -16,6 +17,7 @@ func main() {
 	nexServer.SetFragmentSize(900)
 	nexServer.SetPrudpVersion(0)
 	nexServer.SetKerberosKeySize(16)
+	nexServer.SetKerberosPassword(os.Getenv("KERBEROS_PASSWORD"))
 	nexServer.SetPingTimeout(20) // Maybe too long?
 	nexServer.SetAccessKey("ridfebb9")
 
