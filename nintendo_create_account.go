@@ -6,17 +6,34 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"encoding/hex"
+	"strings"
 
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func nintendoCreateAccount(err error, client *nex.Client, callID uint32, username string, key string, groups uint32, email string, nintendoCreateAccountData *nexproto.NintendoCreateAccountData) {
+func nintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) {
 	if err != nil {
 		panic(err)
 	}
 
-	tokenBase64 := nintendoCreateAccountData.Token
+	var tokenBase64 string
+
+	oAuthDataType := oAuthData.TypeName()
+
+	if oAuthDataType == "NintendoCreateAccountData" { // Wii U
+		nintendoCreateAccountData := oAuthData.ObjectData().(*nexproto.NintendoCreateAccountData)
+
+		tokenBase64 = nintendoCreateAccountData.Token
+	} else if oAuthDataType == "AccountExtraInfo" { // 3DS
+		accountExtraInfo := oAuthData.ObjectData().(*nexproto.AccountExtraInfo)
+
+		tokenBase64 = accountExtraInfo.NEXToken
+		tokenBase64 = strings.Replace(tokenBase64, ".", "+", -1)
+		tokenBase64 = strings.Replace(tokenBase64, "-", "/", -1)
+		tokenBase64 = strings.Replace(tokenBase64, "*", "=", -1)
+	}
+
 	encryptedToken, _ := base64.StdEncoding.DecodeString(tokenBase64)
 
 	decryptedToken, err := decryptToken(encryptedToken)
@@ -29,7 +46,7 @@ func nintendoCreateAccount(err error, client *nex.Client, callID uint32, usernam
 	pidByteArray := make([]byte, 4)
 	binary.LittleEndian.PutUint32(pidByteArray, pid)
 
-	mac := hmac.New(md5.New, []byte(key))
+	mac := hmac.New(md5.New, []byte(strKey))
 	mac.Write(pidByteArray)
 
 	pidHmac := hex.EncodeToString(mac.Sum(nil))

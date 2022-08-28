@@ -58,7 +58,6 @@ func main() {
 
 	// Account Management protocol handles
 	accountManagementServer.NintendoCreateAccount(nintendoCreateAccount)
-	accountManagementServer.NintendoCreateAccount3DS(nintendoCreateAccount3DS)
 
 	// Secure protocol handles
 	secureServer.Register(register)
