@@ -174,8 +174,8 @@ func sendFriendRequestNotification(client *nex.Client, friendRequestNotification
 	eventObject.Type = 27
 	eventObject.SenderPID = friendRequestNotificationData.PrincipalInfo.PID
 	eventObject.DataHolder = nex.NewDataHolder()
-	eventObject.DataHolder.Name = "FriendRequest"
-	eventObject.DataHolder.Object = friendRequestNotificationData
+	eventObject.DataHolder.SetTypeName("FriendRequest")
+	eventObject.DataHolder.SetObjectData(friendRequestNotificationData)
 
 	stream := nex.NewStreamOut(nexServer)
 	eventObjectBytes := eventObject.Bytes(stream)

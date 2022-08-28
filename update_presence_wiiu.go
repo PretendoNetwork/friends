@@ -40,8 +40,8 @@ func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) 
 	eventObject.Type = 24
 	eventObject.SenderPID = presence.PID
 	eventObject.DataHolder = nex.NewDataHolder()
-	eventObject.DataHolder.Name = "NintendoPresenceV2"
-	eventObject.DataHolder.Object = presence
+	eventObject.DataHolder.SetTypeName("NintendoPresenceV2")
+	eventObject.DataHolder.SetObjectData(presence)
 
 	stream := nex.NewStreamOut(nexServer)
 	eventObjectBytes := eventObject.Bytes(stream)

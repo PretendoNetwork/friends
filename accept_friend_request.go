@@ -58,8 +58,8 @@ func sendFriendRequestAcceptedNotification(client *nex.Client, friendInfo *nexpr
 	eventObject.Type = 30
 	eventObject.SenderPID = friendInfo.NNAInfo.PrincipalBasicInfo.PID
 	eventObject.DataHolder = nex.NewDataHolder()
-	eventObject.DataHolder.Name = "FriendInfo"
-	eventObject.DataHolder.Object = friendInfo
+	eventObject.DataHolder.SetTypeName("FriendInfo")
+	eventObject.DataHolder.SetObjectData(friendInfo)
 
 	stream := nex.NewStreamOut(nexServer)
 	eventObjectBytes := eventObject.Bytes(stream)
