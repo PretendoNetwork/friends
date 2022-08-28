@@ -9,7 +9,7 @@ func register(err error, client *nex.Client, callID uint32, stationUrls []*nex.S
 	localStation := stationUrls[0]
 
 	address := client.Address().IP.String()
-	port := string(client.Address().Port)
+	port := strconv.Itoa(client.Address().Port)
 
 	localStation.SetAddress(&address)
 	localStation.SetPort(&port)
