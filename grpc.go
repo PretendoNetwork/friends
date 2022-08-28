@@ -18,7 +18,7 @@ type gRPCFriendsServer struct {
 
 // SendUserNotificationWiiU implements helloworld.SendUserNotificationWiiU
 func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb.SendUserNotificationWiiURequest) (*empty.Empty, error) {
-	connectedUser := connectedUsers[in.Pid]
+	connectedUser := connectedUsers[in.GetPid()]
 
 	if connectedUser != nil {
 		rmcRequest := nex.NewRMCRequest()
