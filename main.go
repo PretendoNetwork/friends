@@ -1,93 +1,22 @@
 package main
 
 import (
-	"fmt"
-	"os"
+	"sync"
 	"time"
 
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-var nexServer *nex.Server
-var secureServer *nexproto.SecureProtocol
+var wg sync.WaitGroup
 
 func main() {
-	go gRPCStart()
+	wg.Add(2)
 
-	nexServer = nex.NewServer()
-	nexServer.SetFragmentSize(900)
-	nexServer.SetPrudpVersion(0)
-	nexServer.SetKerberosKeySize(16)
-	nexServer.SetKerberosPassword(os.Getenv("KERBEROS_PASSWORD"))
-	nexServer.SetPingTimeout(20) // Maybe too long?
-	nexServer.SetAccessKey("ridfebb9")
+	go listenGRPCServer()
+	go nexServerStart()
 
-	nexServer.On("Data", func(packet *nex.PacketV0) {
-		request := packet.RMCRequest()
-
-		fmt.Println("==Friends - Secure==")
-		fmt.Printf("Protocol ID: %#v\n", request.ProtocolID())
-		fmt.Printf("Method ID: %#v\n", request.MethodID())
-		fmt.Println("====================")
-	})
-
-	nexServer.On("Kick", func(packet *nex.PacketV0) {
-		pid := packet.Sender().PID()
-		delete(connectedUsers, pid)
-
-		lastOnline := nex.NewDateTime(0)
-		lastOnline.FromTimestamp(time.Now())
-
-		updateUserLastOnlineTime(pid, lastOnline)
-		sendUserWentOfflineWiiUNotifications(packet.Sender())
-
-		fmt.Println("Leaving")
-	})
-
-	nexServer.On("Ping", func(packet *nex.PacketV0) {
-		fmt.Print("Pinged. Is ACK: ")
-		fmt.Println(packet.HasFlag(nex.FlagAck))
-	})
-
-	secureServer = nexproto.NewSecureProtocol(nexServer)
-	accountManagementServer := nexproto.NewAccountManagementProtocol(nexServer)
-	friendsServer := nexproto.NewFriendsProtocol(nexServer)
-	friends3DSServer := nexproto.NewFriends3DSProtocol(nexServer)
-
-	// Handle PRUDP CONNECT packet (not an RMC method)
-	nexServer.On("Connect", connect)
-
-	// Account Management protocol handles
-	accountManagementServer.NintendoCreateAccount(nintendoCreateAccount)
-
-	// Secure protocol handles
-	secureServer.Register(register)
-	secureServer.RegisterEx(registerEx)
-
-	// Friends (WiiU) protocol handles
-	friendsServer.UpdateAndGetAllInformation(updateAndGetAllInformation)
-	friendsServer.AddFriendRequest(addFriendRequest)
-	friendsServer.AcceptFriendRequest(acceptFriendRequest)
-	friendsServer.MarkFriendRequestsAsReceived(markFriendRequestsAsReceived)
-	friendsServer.UpdatePresence(updatePresenceWiiU)
-	friendsServer.UpdateComment(updateCommentWiiU)
-	friendsServer.UpdatePreference(updatePreferenceWiiU)
-	friendsServer.GetBasicInfo(getBasicInfo)
-	friendsServer.DeletePersistentNotification(deletePersistentNotification)
-	friendsServer.CheckSettingStatus(checkSettingStatus)
-	friendsServer.GetRequestBlockSettings(getRequestBlockSettings)
-
-	// Friends (3DS) protocol handles
-	friends3DSServer.UpdateProfile(updateProfile)
-	friends3DSServer.UpdateMii(updateMii)
-	friends3DSServer.UpdatePreference(updatePreference3DS)
-	friends3DSServer.SyncFriend(syncFriend)
-	friends3DSServer.UpdatePresence(updatePresence3DS)
-	friends3DSServer.UpdateFavoriteGameKey(updateFavoriteGameKey)
-	friends3DSServer.UpdateComment(updateComment3DS)
-
-	nexServer.Listen(":60001")
+	wg.Wait()
 }
 
 // Maybe this function should go in a different file?
