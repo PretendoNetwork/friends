@@ -13,6 +13,8 @@ var nexServer *nex.Server
 var secureServer *nexproto.SecureProtocol
 
 func main() {
+	go gRPCStart()
+
 	nexServer = nex.NewServer()
 	nexServer.SetFragmentSize(900)
 	nexServer.SetPrudpVersion(0)
