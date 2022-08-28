@@ -105,8 +105,8 @@ func sendUserWentOfflineWiiUNotifications(client *nex.Client) {
 	eventObject.Type = 10
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
-	eventObject.DataHolder.Name = "NintendoNotificationEventGeneral"
-	eventObject.DataHolder.Object = nintendoNotificationEventGeneral
+	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
+	eventObject.DataHolder.SetObjectData(nintendoNotificationEventGeneral)
 
 	stream := nex.NewStreamOut(nexServer)
 	stream.WriteStructure(eventObject)
