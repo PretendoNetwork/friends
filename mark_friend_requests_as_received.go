@@ -11,8 +11,8 @@ func markFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, 
 		setFriendRequestReceived(id)
 	}
 
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodMarkFriendRequestsAsReceived, nil)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodMarkFriendRequestsAsReceived, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

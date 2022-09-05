@@ -16,8 +16,8 @@ func updatePresenceWiiU(err error, client *nex.Client, callID uint32, presence *
 	connectedUsers[pid].Presence = presence
 	sendUpdatePresenceWiiUNotifications(presence)
 
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodUpdatePresence, nil)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodUpdatePresence, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

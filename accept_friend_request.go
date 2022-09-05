@@ -34,8 +34,8 @@ func acceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 	rmcResponseBody := rmcResponseStream.Bytes()
 
 	// Build response packet
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodAcceptFriendRequest, rmcResponseBody)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodAcceptFriendRequest, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

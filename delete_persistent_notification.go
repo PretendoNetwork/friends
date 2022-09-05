@@ -8,8 +8,8 @@ import (
 func deletePersistentNotification(err error, client *nex.Client, callID uint32, notifications []*nexproto.PersistentNotification) {
 	// TODO: Do something here
 
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodDeletePersistentNotification, nil)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodDeletePersistentNotification, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

@@ -124,8 +124,8 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	rmcResponseBody := rmcResponseStream.Bytes()
 
 	// Build response packet
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodUpdateAndGetAllInformation, rmcResponseBody)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodUpdateAndGetAllInformation, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

@@ -40,8 +40,8 @@ func getBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 	rmcResponseBody := rmcResponseStream.Bytes()
 
 	// Build response packet
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodGetBasicInfo, rmcResponseBody)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodGetBasicInfo, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

@@ -27,8 +27,8 @@ func getRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
 	// Build response packet
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodGetRequestBlockSettings, rmcResponseBody)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodGetRequestBlockSettings, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

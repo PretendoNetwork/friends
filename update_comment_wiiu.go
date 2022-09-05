@@ -16,8 +16,8 @@ func updateCommentWiiU(err error, client *nex.Client, callID uint32, comment *ne
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodUpdateComment, rmcResponseBody)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodUpdateComment, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

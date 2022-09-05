@@ -13,8 +13,8 @@ func checkSettingStatus(err error, client *nex.Client, callID uint32) {
 	rmcResponseBody := rmcResponseStream.Bytes()
 
 	// Build response packet
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodCheckSettingStatus, rmcResponseBody)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodCheckSettingStatus, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

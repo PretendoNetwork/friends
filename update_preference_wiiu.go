@@ -8,8 +8,8 @@ import (
 func updatePreferenceWiiU(err error, client *nex.Client, callID uint32, principalPreference *nexproto.PrincipalPreference) {
 	updateUserPrincipalPreference(client.PID(), principalPreference)
 
-	rmcResponse := nex.NewRMCResponse(nexproto.FriendsProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsMethodUpdatePreference, nil)
+	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodUpdatePreference, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

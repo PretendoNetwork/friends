@@ -7,7 +7,7 @@ import (
 func assignNEXProtocols() {
 	secureServer := nexproto.NewSecureProtocol(nexServer)
 	accountManagementServer := nexproto.NewAccountManagementProtocol(nexServer)
-	friendsServer := nexproto.NewFriendsProtocol(nexServer)
+	friendsWiiUServer := nexproto.NewFriendsWiiUProtocol(nexServer)
 	friends3DSServer := nexproto.NewFriends3DSProtocol(nexServer)
 
 	// Account Management protocol handles
@@ -18,17 +18,17 @@ func assignNEXProtocols() {
 	secureServer.RegisterEx(registerEx)
 
 	// Friends (WiiU) protocol handles
-	friendsServer.UpdateAndGetAllInformation(updateAndGetAllInformation)
-	friendsServer.AddFriendRequest(addFriendRequest)
-	friendsServer.AcceptFriendRequest(acceptFriendRequest)
-	friendsServer.MarkFriendRequestsAsReceived(markFriendRequestsAsReceived)
-	friendsServer.UpdatePresence(updatePresenceWiiU)
-	friendsServer.UpdateComment(updateCommentWiiU)
-	friendsServer.UpdatePreference(updatePreferenceWiiU)
-	friendsServer.GetBasicInfo(getBasicInfo)
-	friendsServer.DeletePersistentNotification(deletePersistentNotification)
-	friendsServer.CheckSettingStatus(checkSettingStatus)
-	friendsServer.GetRequestBlockSettings(getRequestBlockSettings)
+	friendsWiiUServer.UpdateAndGetAllInformation(updateAndGetAllInformation)
+	friendsWiiUServer.AddFriendRequest(addFriendRequest)
+	friendsWiiUServer.AcceptFriendRequest(acceptFriendRequest)
+	friendsWiiUServer.MarkFriendRequestsAsReceived(markFriendRequestsAsReceived)
+	friendsWiiUServer.UpdatePresence(updatePresenceWiiU)
+	friendsWiiUServer.UpdateComment(updateCommentWiiU)
+	friendsWiiUServer.UpdatePreference(updatePreferenceWiiU)
+	friendsWiiUServer.GetBasicInfo(getBasicInfo)
+	friendsWiiUServer.DeletePersistentNotification(deletePersistentNotification)
+	friendsWiiUServer.CheckSettingStatus(checkSettingStatus)
+	friendsWiiUServer.GetRequestBlockSettings(getRequestBlockSettings)
 
 	// Friends (3DS) protocol handles
 	friends3DSServer.UpdateProfile(updateProfile)
