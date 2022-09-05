@@ -5,9 +5,9 @@ go 1.18
 require (
 	github.com/PretendoNetwork/grpc-go v0.0.0-20220820112405-4798a22a13f3
 	github.com/PretendoNetwork/nex-go v1.0.8
-	github.com/PretendoNetwork/nex-protocols-go v1.0.5
+	github.com/PretendoNetwork/nex-protocols-go v1.0.8
 	github.com/bwmarrin/snowflake v0.3.0
-	github.com/gocql/gocql v1.2.0
+	github.com/gocql/gocql v1.2.1
 	github.com/golang/protobuf v1.5.2
 	github.com/joho/godotenv v1.4.0
 	go.mongodb.org/mongo-driver v1.10.1
@@ -37,7 +37,7 @@ require (
 	golang.org/x/sys v0.0.0-20220829200755-d48e67d00261 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	google.golang.org/genproto v0.0.0-20220829175752-36a9c930ecbf // indirect
+	google.golang.org/genproto v0.0.0-20220902135211-223410557253 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 )
