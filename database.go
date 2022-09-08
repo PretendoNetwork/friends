@@ -355,7 +355,7 @@ func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 		return make([]*nexproto.FriendRequest, 0)
 	}
 
-	friendRequestsOut := make([]*nexproto.FriendRequest, 0)
+	friendRequestsIn := make([]*nexproto.FriendRequest, 0)
 
 	for i := 0; i < len(sliceMap); i++ {
 		senderPID := uint32(sliceMap[i]["sender_pid"].(int))
@@ -391,10 +391,10 @@ func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 		friendRequest.Message.ExpiresOn = nex.NewDateTime(uint64(sliceMap[i]["expires_on"].(int64)))
 		friendRequest.SentOn = nex.NewDateTime(uint64(sliceMap[i]["sent_on"].(int64)))
 
-		friendRequestsOut = append(friendRequestsOut, friendRequest)
+		friendRequestsIn = append(friendRequestsIn, friendRequest)
 	}
 
-	return friendRequestsOut
+	return friendRequestsIn
 }
 
 // Get a users blacklist
