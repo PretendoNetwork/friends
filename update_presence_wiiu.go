@@ -59,22 +59,25 @@ func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) 
 	for i := 0; i < len(friendList); i++ {
 		if friendList[i] == nil || friendList[i].NNAInfo == nil || friendList[i].NNAInfo.PrincipalBasicInfo == nil {
 			// TODO: Fix this
-			fmt.Printf("\nPID %d has friend with bad presence data update_presence_wiiu.go line 62\n", presence.PID)
+			pid := presence.PID
+			var friendPID uint32 = 0
+
+			if friendList[i] != nil && friendList[i].Presence != nil {
+				// TODO: Better track the bad users PID
+				friendPID = friendList[i].Presence.PID
+			}
+
+			logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
+
 			if friendList[i] == nil {
-				fmt.Println("FriendInfo is nil")
+				logger.Error(fmt.Sprintf("%d friendList[i] nil", friendPID))
+			} else if friendList[i].NNAInfo == nil {
+				logger.Error(fmt.Sprintf("%d friendList[i].NNAInfo is nil", friendPID))
 			} else if friendList[i].NNAInfo.PrincipalBasicInfo == nil {
-				fmt.Println("friendList[i].NNAInfo is nil?")
-			} else {
-				fmt.Println("friendList[i].NNAInfo.PrincipalBasicInfo is nil")
+				logger.Error(fmt.Sprintf("%d friendList[i].NNAInfo.PrincipalBasicInfo is nil", friendPID))
 			}
 
-			if friendList[i].Presence != nil {
-				fmt.Printf("Bad friend PID: %d\n\n", friendList[i].Presence.PID)
-			} else {
-				fmt.Printf("Bad friend PID unknown...\n\n")
-			}
-
-			return
+			continue
 		}
 
 		friendPID := friendList[i].NNAInfo.PrincipalBasicInfo.PID

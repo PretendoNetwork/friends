@@ -14,7 +14,8 @@ import (
 
 func nintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) {
 	if err != nil {
-		panic(err)
+		// TODO: Handle error
+		logger.Critical(err.Error())
 	}
 
 	var tokenBase64 string
@@ -38,7 +39,8 @@ func nintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 
 	decryptedToken, err := decryptToken(encryptedToken)
 	if err != nil {
-		panic(err)
+		// TODO: Handle error
+		logger.Critical(err.Error())
 	}
 
 	pid := decryptedToken.UserPID

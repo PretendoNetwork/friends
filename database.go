@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"flag"
 	"fmt"
-	"log"
 	"math/rand"
 	"os"
 	"time"
@@ -50,7 +49,8 @@ func connectCassandra() {
 	cassandraClusterSession, err = cluster.CreateSession()
 
 	if err != nil {
-		panic(err)
+		logger.Critical(err.Error())
+		return
 	}
 
 	// Create tables if missing
@@ -61,7 +61,8 @@ func connectCassandra() {
 		show_current_game boolean,
 		block_friend_requests boolean
 	)`).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return
 	}
 
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.blocks (
@@ -70,7 +71,8 @@ func connectCassandra() {
 		blocked_pid int,
 		date bigint
 	)`).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return
 	}
 
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friend_requests (
@@ -84,7 +86,8 @@ func connectCassandra() {
 		accepted boolean,
 		denied boolean
 	)`).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return
 	}
 
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.friendships (
@@ -93,7 +96,8 @@ func connectCassandra() {
 		user2_pid int,
 		date bigint
 	)`).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return
 	}
 
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.comments (
@@ -101,17 +105,19 @@ func connectCassandra() {
 		message text,
 		changed bigint
 	)`).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return
 	}
 
 	if err := cassandraClusterSession.Query(`CREATE TABLE IF NOT EXISTS pretendo_friends.last_online (
 		pid int PRIMARY KEY,
 		time bigint
 	)`).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return
 	}
 
-	fmt.Println("Connected to Cassandra")
+	logger.Success("Connected to db")
 }
 
 // Adapted from gocql common_test.go
@@ -125,7 +131,7 @@ func createKeyspace(keyspace string) {
 	s, err := c.CreateSession()
 
 	if err != nil {
-		panic(err)
+		logger.Critical(err.Error())
 	}
 
 	defer s.Close()
@@ -135,7 +141,7 @@ func createKeyspace(keyspace string) {
 		'class' : 'SimpleStrategy',
 		'replication_factor' : %d
 	}`, keyspace, *flagRF)).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
 	}
 }
 
@@ -147,7 +153,7 @@ func createKeyspace(keyspace string) {
 
 func updateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
 	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.last_online SET time=? WHERE pid=?`, lastOnline.Value(), pid).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
 	}
 }
 
@@ -163,7 +169,8 @@ func getUserComment(pid uint32) *nexproto.Comment {
 		if err == gocql.ErrNotFound {
 			comment.Contents = ""
 		} else {
-			log.Fatal(err)
+			comment.Contents = ""
+			logger.Critical(err.Error())
 		}
 	}
 
@@ -177,7 +184,7 @@ func updateUserComment(pid uint32, message string) uint64 {
 	changed := nex.NewDateTime(0).Now()
 
 	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.comments SET message=?, changed=? WHERE pid=?`, message, changed, pid).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
 	}
 
 	return changed
@@ -189,7 +196,9 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 	var err error
 
 	if sliceMap, err = cassandraClusterSession.Query(`SELECT user2_pid, date FROM pretendo_friends.friendships WHERE user1_pid=? ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+
+		return make([]*nexproto.FriendInfo, 0)
 	}
 
 	friendList := make([]*nexproto.FriendInfo, 0)
@@ -208,13 +217,12 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 
 			if friendInfo.NNAInfo == nil || friendInfo.NNAInfo.PrincipalBasicInfo == nil {
 				// TODO: Fix this
-				fmt.Printf("\nPID %d has friend with bad presence data database.go line 211\n", pid)
+				logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
 				if friendInfo.NNAInfo == nil {
-					fmt.Println("friendInfo.NNAInfo is nil")
+					logger.Error(fmt.Sprintf("%d friendInfo.NNAInfo is nil", friendPID))
 				} else {
-					fmt.Println("friendInfo.NNAInfo.PrincipalBasicInfo is nil")
+					logger.Error(fmt.Sprintf("%d friendInfo.NNAInfo.PrincipalBasicInfo is nil", friendPID))
 				}
-				fmt.Printf("Bad friend PID: %d\n\n", friendPID)
 
 				continue
 			}
@@ -265,7 +273,8 @@ func getUserFriendList(pid uint32) []*nexproto.FriendInfo {
 				if err == gocql.ErrNotFound {
 					lastOnlineTime = nex.NewDateTime(0).Now()
 				} else {
-					log.Fatal(err)
+					logger.Critical(err.Error())
+					lastOnlineTime = nex.NewDateTime(0).Now()
 				}
 			}
 
@@ -289,7 +298,9 @@ func getUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
 	var err error
 
 	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, recipient_pid, sent_on, expires_on, message, received FROM pretendo_friends.friend_requests WHERE sender_pid=? AND accepted=false AND denied=false ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+
+		return make([]*nexproto.FriendRequest, 0)
 	}
 
 	friendRequestsOut := make([]*nexproto.FriendRequest, 0)
@@ -340,7 +351,8 @@ func getUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 	var err error
 
 	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, sender_pid, sent_on, expires_on, message, received FROM pretendo_friends.friend_requests WHERE recipient_pid=? AND accepted=false AND denied=false ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return make([]*nexproto.FriendRequest, 0)
 	}
 
 	friendRequestsOut := make([]*nexproto.FriendRequest, 0)
@@ -401,7 +413,7 @@ func updateUserPrincipalPreference(pid uint32, principalPreference *nexproto.Pri
 		show_current_game=?,
 		block_friend_requests=?
 		WHERE pid=?`, principalPreference.ShowOnlinePresence, principalPreference.ShowCurrentTitle, principalPreference.BlockFriendRequests, pid).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
 	}
 }
 
@@ -429,19 +441,19 @@ func isFriendRequestBlocked(requesterPID uint32, requestedPID uint32) bool {
 
 func saveFriendRequest(friendRequestID uint64, senderPID uint32, recipientPID uint32, sentTime uint64, expireTime uint64, message string) {
 	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friend_requests (id, sender_pid, recipient_pid, sent_on, expires_on, message, received, accepted, denied) VALUES (?, ?, ?, ?, ?, ?, false, false, false) IF NOT EXISTS`, friendRequestID, senderPID, recipientPID, sentTime, expireTime, message).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
 	}
 }
 
 func setFriendRequestReceived(friendRequestID uint64) {
 	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.friend_requests SET received=true WHERE id=?`, friendRequestID).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
 	}
 }
 
 func setFriendRequestAccepted(friendRequestID uint64) {
 	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.friend_requests SET accepted=true WHERE id=?`, friendRequestID).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
 	}
 }
 
@@ -450,7 +462,8 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 	var recipientPID uint32
 
 	if err := cassandraClusterSession.Query(`SELECT sender_pid, recipient_pid FROM pretendo_friends.friend_requests WHERE id=?`, friendRequestID).Scan(&senderPID, &recipientPID); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return nil
 	}
 
 	rand.Seed(time.Now().UnixNano())
@@ -468,11 +481,13 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 	// "A" has friend "B" and "B" has friend "A", so store both relationships
 
 	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friendships (id, user1_pid, user2_pid, date) VALUES (?, ?, ?, ?) IF NOT EXISTS`, friendshipID1, senderPID, recipientPID, acceptedTime.Value()).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return nil
 	}
 
 	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friendships (id, user1_pid, user2_pid, date) VALUES (?, ?, ?, ?) IF NOT EXISTS`, friendshipID2, recipientPID, senderPID, acceptedTime.Value()).Exec(); err != nil {
-		log.Fatal(err)
+		logger.Critical(err.Error())
+		return nil
 	}
 
 	setFriendRequestAccepted(friendRequestID)
@@ -532,7 +547,8 @@ func acceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 			if err == gocql.ErrNotFound {
 				lastOnlineTime = nex.NewDateTime(0).Now()
 			} else {
-				log.Fatal(err)
+				logger.Critical(err.Error())
+				lastOnlineTime = nex.NewDateTime(0).Now()
 			}
 		}
 
@@ -563,7 +579,7 @@ func getUserInfoByPID(pid uint32) bson.M {
 			return nil
 		}
 
-		panic(err)
+		logger.Critical(err.Error())
 	}
 
 	return result

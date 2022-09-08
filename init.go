@@ -2,16 +2,18 @@ package main
 
 import (
 	"crypto/rsa"
-	"fmt"
 	"io/ioutil"
 	"log"
 	"runtime"
 
 	"github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	"github.com/PretendoNetwork/plogger-go"
 	"github.com/bwmarrin/snowflake"
 	"github.com/joho/godotenv"
 )
+
+var logger = plogger.NewLogger()
 
 /*
 type Config struct {
@@ -54,17 +56,20 @@ func init() {
 
 	rsaPrivateKeyBytes, err = ioutil.ReadFile("private.pem")
 	if err != nil {
-		panic(err)
+		// TODO: Handle error
+		logger.Critical(err.Error())
 	}
 
 	rsaPrivateKey, err = parseRsaPrivateKey(rsaPrivateKeyBytes)
 	if err != nil {
-		panic(err)
+		// TODO: Handle error
+		logger.Critical(err.Error())
 	}
 
 	hmacSecret, err = ioutil.ReadFile("secret.key")
 	if err != nil {
-		panic(err)
+		// TODO: Handle error
+		logger.Critical(err.Error())
 	}
 
 	err = godotenv.Load()
@@ -83,7 +88,8 @@ func createSnowflakeNodes() {
 	for corenum := 0; corenum < runtime.NumCPU(); corenum++ {
 		node, err := snowflake.NewNode(int64(corenum))
 		if err != nil {
-			fmt.Println(err)
+			// TODO: Handle error
+			logger.Critical(err.Error())
 			return
 		}
 		snowflakeNodes = append(snowflakeNodes, node)

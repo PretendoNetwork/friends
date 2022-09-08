@@ -11,7 +11,7 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 
 	if err != nil {
 		// TODO: Handle error
-		panic(err)
+		logger.Critical(err.Error())
 	}
 
 	// Update user information
