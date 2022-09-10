@@ -17,7 +17,7 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 	var recipientPID uint32
 
 	if err := cassandraClusterSession.Query(`SELECT sender_pid, recipient_pid FROM pretendo_friends.friend_requests WHERE id=?`, friendRequestID).Scan(&senderPID, &recipientPID); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return nil
 	}
 
@@ -36,12 +36,12 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 	// "A" has friend "B" and "B" has friend "A", so store both relationships
 
 	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friendships (id, user1_pid, user2_pid, date) VALUES (?, ?, ?, ?) IF NOT EXISTS`, friendshipID1, senderPID, recipientPID, acceptedTime.Value()).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return nil
 	}
 
 	if err := cassandraClusterSession.Query(`INSERT INTO pretendo_friends.friendships (id, user1_pid, user2_pid, date) VALUES (?, ?, ?, ?) IF NOT EXISTS`, friendshipID2, recipientPID, senderPID, acceptedTime.Value()).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return nil
 	}
 
@@ -102,7 +102,7 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 			if err == gocql.ErrNotFound {
 				lastOnlineTime = nex.NewDateTime(0).Now()
 			} else {
-				logger.Critical(err.Error())
+				globals.Logger.Critical(err.Error())
 				lastOnlineTime = nex.NewDateTime(0).Now()
 			}
 		}

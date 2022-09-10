@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/gocql/gocql"
 )
 
@@ -26,7 +27,7 @@ func connectCassandra() {
 	cassandraClusterSession, err = cluster.CreateSession()
 
 	if err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return
 	}
 
@@ -38,7 +39,7 @@ func connectCassandra() {
 		show_current_game boolean,
 		block_friend_requests boolean
 	)`).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return
 	}
 
@@ -48,7 +49,7 @@ func connectCassandra() {
 		blocked_pid int,
 		date bigint
 	)`).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return
 	}
 
@@ -63,7 +64,7 @@ func connectCassandra() {
 		accepted boolean,
 		denied boolean
 	)`).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return
 	}
 
@@ -73,7 +74,7 @@ func connectCassandra() {
 		user2_pid int,
 		date bigint
 	)`).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return
 	}
 
@@ -82,7 +83,7 @@ func connectCassandra() {
 		message text,
 		changed bigint
 	)`).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return
 	}
 
@@ -90,11 +91,11 @@ func connectCassandra() {
 		pid int PRIMARY KEY,
 		time bigint
 	)`).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 		return
 	}
 
-	logger.Success("Connected to db")
+	globals.Logger.Success("Connected to db")
 }
 
 // Adapted from gocql common_test.go
@@ -108,7 +109,7 @@ func createKeyspace(keyspace string) {
 	s, err := c.CreateSession()
 
 	if err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 	}
 
 	defer s.Close()
@@ -118,6 +119,6 @@ func createKeyspace(keyspace string) {
 		'class' : 'SimpleStrategy',
 		'replication_factor' : %d
 	}`, keyspace, *flagRF)).Exec(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 	}
 }

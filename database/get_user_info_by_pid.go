@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 
+	"github.com/PretendoNetwork/friends-secure/globals"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -18,7 +19,7 @@ func GetUserInfoByPID(pid uint32) bson.M {
 			return nil
 		}
 
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 	}
 
 	return result

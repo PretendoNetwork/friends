@@ -3,6 +3,7 @@ package database
 import (
 	"encoding/base64"
 
+	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -14,7 +15,7 @@ func GetUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
 	var err error
 
 	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, recipient_pid, sent_on, expires_on, message, received FROM pretendo_friends.friend_requests WHERE sender_pid=? AND accepted=false AND denied=false ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 
 		return make([]*nexproto.FriendRequest, 0)
 	}

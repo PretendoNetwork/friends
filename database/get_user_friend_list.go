@@ -18,7 +18,7 @@ func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 	var err error
 
 	if sliceMap, err = cassandraClusterSession.Query(`SELECT user2_pid, date FROM pretendo_friends.friendships WHERE user1_pid=? ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 
 		return make([]*nexproto.FriendInfo, 0)
 	}
@@ -39,11 +39,11 @@ func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 
 			if friendInfo.NNAInfo == nil || friendInfo.NNAInfo.PrincipalBasicInfo == nil {
 				// TODO: Fix this
-				logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
+				globals.Logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
 				if friendInfo.NNAInfo == nil {
-					logger.Error(fmt.Sprintf("%d friendInfo.NNAInfo is nil", friendPID))
+					globals.Logger.Error(fmt.Sprintf("%d friendInfo.NNAInfo is nil", friendPID))
 				} else {
-					logger.Error(fmt.Sprintf("%d friendInfo.NNAInfo.PrincipalBasicInfo is nil", friendPID))
+					globals.Logger.Error(fmt.Sprintf("%d friendInfo.NNAInfo.PrincipalBasicInfo is nil", friendPID))
 				}
 
 				continue
@@ -95,7 +95,7 @@ func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 				if err == gocql.ErrNotFound {
 					lastOnlineTime = nex.NewDateTime(0).Now()
 				} else {
-					logger.Critical(err.Error())
+					globals.Logger.Critical(err.Error())
 					lastOnlineTime = nex.NewDateTime(0).Now()
 				}
 			}

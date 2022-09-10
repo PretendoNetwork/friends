@@ -1,6 +1,7 @@
 package database
 
 import (
+	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"github.com/gocql/gocql"
@@ -19,7 +20,7 @@ func GetUserComment(pid uint32) *nexproto.Comment {
 			comment.Contents = ""
 		} else {
 			comment.Contents = ""
-			logger.Critical(err.Error())
+			globals.Logger.Critical(err.Error())
 		}
 	}
 
