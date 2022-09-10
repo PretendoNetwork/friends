@@ -1,25 +1,27 @@
 package main
 
 import (
+	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func acceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
-	friendInfo := acceptFriendshipAndReturnFriendInfo(id)
+	friendInfo := database.AcceptFriendshipAndReturnFriendInfo(id)
 
 	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID
-	connectedUser := connectedUsers[friendPID]
+	connectedUser := globals.ConnectedUsers[friendPID]
 
 	if connectedUser != nil {
 		senderPID := client.PID()
-		senderConnectedUser := connectedUsers[senderPID]
+		senderConnectedUser := globals.ConnectedUsers[senderPID]
 
 		senderFriendInfo := nexproto.NewFriendInfo()
 
 		senderFriendInfo.NNAInfo = senderConnectedUser.NNAInfo
 		senderFriendInfo.Presence = senderConnectedUser.Presence
-		senderFriendInfo.Status = getUserComment(senderPID)
+		senderFriendInfo.Status = database.GetUserComment(senderPID)
 		senderFriendInfo.BecameFriend = friendInfo.BecameFriend
 		senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO: Change this
 		senderFriendInfo.Unknown = 0

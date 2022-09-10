@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -11,7 +13,7 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 
 	if err != nil {
 		// TODO: Handle error
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 	}
 
 	// Update user information
@@ -24,16 +26,16 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	// Get user information
 	pid := client.PID()
 
-	connectedUsers[pid].NNAInfo = nnaInfo
-	connectedUsers[pid].Presence = presence
+	globals.ConnectedUsers[pid].NNAInfo = nnaInfo
+	globals.ConnectedUsers[pid].Presence = presence
 
-	principalPreference := getUserPrincipalPreference(pid)
-	comment := getUserComment(pid)
-	friendList := getUserFriendList(pid)
-	friendRequestsOut := getUserFriendRequestsOut(pid)
-	friendRequestsIn := getUserFriendRequestsIn(pid)
-	blockList := getUserBlockList(pid)
-	notifications := getUserNotifications(pid)
+	principalPreference := database.GetUserPrincipalPreference(pid)
+	comment := database.GetUserComment(pid)
+	friendList := database.GetUserFriendList(pid)
+	friendRequestsOut := database.GetUserFriendRequestsOut(pid)
+	friendRequestsIn := database.GetUserFriendRequestsIn(pid)
+	blockList := database.GetUserBlockList(pid)
+	notifications := database.GetUserNotifications(pid)
 
 	if os.Getenv("ENABLE_BELLA") == "true" {
 		bella := nexproto.NewFriendInfo()

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/PretendoNetwork/friends-secure/database"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -15,7 +16,7 @@ func getRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 
 		setting := nexproto.NewPrincipalRequestBlockSetting()
 		setting.PID = requestedPID
-		setting.IsBlocked = isFriendRequestBlocked(client.PID(), requestedPID)
+		setting.IsBlocked = database.IsFriendRequestBlocked(client.PID(), requestedPID)
 
 		settings = append(settings, setting)
 	}

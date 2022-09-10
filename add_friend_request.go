@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -12,9 +14,9 @@ import (
 
 func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *nexproto.GameKey, unknown6 *nex.DateTime) {
 	rand.Seed(time.Now().UnixNano())
-	nodeID := rand.Intn(len(snowflakeNodes))
+	nodeID := rand.Intn(len(globals.SnowflakeNodes))
 
-	snowflakeNode := snowflakeNodes[nodeID]
+	snowflakeNode := globals.SnowflakeNodes[nodeID]
 
 	friendRequestID := uint64(snowflakeNode.Generate().Int64())
 
@@ -29,7 +31,7 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	senderPID := client.PID()
 	recipientPID := pid
 
-	recipientUserInforation := getUserInfoByPID(recipientPID)
+	recipientUserInforation := database.GetUserInfoByPID(recipientPID)
 
 	friendRequest := nexproto.NewFriendRequest()
 
@@ -103,12 +105,12 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendInfo.LastOnline = nex.NewDateTime(0)
 	friendInfo.Unknown = 0
 
-	saveFriendRequest(friendRequestID, senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
+	database.SaveFriendRequest(friendRequestID, senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
 
 	recipientClient := client.Server().FindClientFromPID(recipientPID)
 
 	if recipientClient != nil {
-		senderUserInforation := getUserInfoByPID(senderPID)
+		senderUserInforation := database.GetUserInfoByPID(senderPID)
 
 		friendRequestNotificationData := nexproto.NewFriendRequest()
 

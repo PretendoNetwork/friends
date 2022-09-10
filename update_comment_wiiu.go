@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/PretendoNetwork/friends-secure/database"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -8,7 +9,7 @@ import (
 func updateCommentWiiU(err error, client *nex.Client, callID uint32, comment *nexproto.Comment) {
 	// TODO: Do something with this
 
-	changed := updateUserComment(client.PID(), comment.Contents)
+	changed := database.UpdateUserComment(client.PID(), comment.Contents)
 
 	rmcResponseStream := nex.NewStreamOut(nexServer)
 

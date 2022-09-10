@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 
+	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -13,7 +15,7 @@ func updatePresenceWiiU(err error, client *nex.Client, callID uint32, presence *
 	presence.Online = true      // Force online status. I have no idea why this is always false
 	presence.PID = client.PID() // WHY IS THIS SET TO 0 BY DEFAULT??
 
-	connectedUsers[pid].Presence = presence
+	globals.ConnectedUsers[pid].Presence = presence
 	sendUpdatePresenceWiiUNotifications(presence)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
@@ -54,7 +56,7 @@ func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) 
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendList := getUserFriendList(presence.PID)
+	friendList := database.GetUserFriendList(presence.PID)
 
 	for i := 0; i < len(friendList); i++ {
 		if friendList[i] == nil || friendList[i].NNAInfo == nil || friendList[i].NNAInfo.PrincipalBasicInfo == nil {
@@ -67,21 +69,21 @@ func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) 
 				friendPID = friendList[i].Presence.PID
 			}
 
-			logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
+			globals.Logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
 
 			if friendList[i] == nil {
-				logger.Error(fmt.Sprintf("%d friendList[i] nil", friendPID))
+				globals.Logger.Error(fmt.Sprintf("%d friendList[i] nil", friendPID))
 			} else if friendList[i].NNAInfo == nil {
-				logger.Error(fmt.Sprintf("%d friendList[i].NNAInfo is nil", friendPID))
+				globals.Logger.Error(fmt.Sprintf("%d friendList[i].NNAInfo is nil", friendPID))
 			} else if friendList[i].NNAInfo.PrincipalBasicInfo == nil {
-				logger.Error(fmt.Sprintf("%d friendList[i].NNAInfo.PrincipalBasicInfo is nil", friendPID))
+				globals.Logger.Error(fmt.Sprintf("%d friendList[i].NNAInfo.PrincipalBasicInfo is nil", friendPID))
 			}
 
 			continue
 		}
 
 		friendPID := friendList[i].NNAInfo.PrincipalBasicInfo.PID
-		connectedUser := connectedUsers[friendPID]
+		connectedUser := globals.ConnectedUsers[friendPID]
 
 		if connectedUser != nil {
 			requestPacket, _ := nex.NewPacketV0(connectedUser.Client, nil)

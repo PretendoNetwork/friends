@@ -3,6 +3,8 @@ package main
 import (
 	"time"
 
+	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 )
 
@@ -47,12 +49,13 @@ func connect(packet *nex.PacketV0) {
 
 	packet.Sender().SetPID(userPID)
 
-	connectedUser := NewConnectedUser()
+	connectedUser := globals.NewConnectedUser()
 	connectedUser.PID = packet.Sender().PID()
 	connectedUser.Client = packet.Sender()
-	connectedUsers[userPID] = connectedUser
+	globals.ConnectedUsers[userPID] = connectedUser
 
 	lastOnline := nex.NewDateTime(0)
 	lastOnline.FromTimestamp(time.Now())
-	updateUserLastOnlineTime(packet.Sender().PID(), lastOnline)
+
+	database.UpdateUserLastOnlineTime(packet.Sender().PID(), lastOnline)
 }

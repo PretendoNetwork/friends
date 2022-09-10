@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 
+	"github.com/PretendoNetwork/friends-secure/database"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -13,7 +14,7 @@ func getBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 
 	for i := 0; i < len(pids); i++ {
 		pid := pids[i]
-		userInfo := getUserInfoByPID(pid)
+		userInfo := database.GetUserInfoByPID(pid)
 
 		info := nexproto.NewPrincipalBasicInfo()
 		info.PID = pid

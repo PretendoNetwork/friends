@@ -5,6 +5,8 @@ import (
 	"os"
 	"time"
 
+	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 )
 
@@ -30,12 +32,12 @@ func nexServerStart() {
 
 	nexServer.On("Kick", func(packet *nex.PacketV0) {
 		pid := packet.Sender().PID()
-		delete(connectedUsers, pid)
+		delete(globals.ConnectedUsers, pid)
 
 		lastOnline := nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 
-		updateUserLastOnlineTime(pid, lastOnline)
+		database.UpdateUserLastOnlineTime(pid, lastOnline)
 		sendUserWentOfflineWiiUNotifications(packet.Sender())
 
 		fmt.Println("Leaving")

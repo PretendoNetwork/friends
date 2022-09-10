@@ -6,10 +6,12 @@ import (
 )
 
 func markFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, ids []uint64) {
-	for i := 0; i < len(ids); i++ {
-		id := ids[i]
-		setFriendRequestReceived(id)
-	}
+	/*
+		for i := 0; i < len(ids); i++ {
+			id := ids[i]
+			setFriendRequestReceived(id)
+		}
+	*/
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
 	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodMarkFriendRequestsAsReceived, nil)

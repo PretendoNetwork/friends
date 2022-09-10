@@ -1,12 +1,13 @@
 package main
 
 import (
+	"github.com/PretendoNetwork/friends-secure/database"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func updatePreferenceWiiU(err error, client *nex.Client, callID uint32, principalPreference *nexproto.PrincipalPreference) {
-	updateUserPrincipalPreference(client.PID(), principalPreference)
+	database.UpdateUserPrincipalPreference(client.PID(), principalPreference)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
 	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodUpdatePreference, nil)

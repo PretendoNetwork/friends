@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/PretendoNetwork/friends-secure/globals"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -18,7 +19,7 @@ type gRPCFriendsServer struct {
 
 // SendUserNotificationWiiU implements helloworld.SendUserNotificationWiiU
 func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb.SendUserNotificationWiiURequest) (*empty.Empty, error) {
-	connectedUser := connectedUsers[in.GetPid()]
+	connectedUser := globals.ConnectedUsers[in.GetPid()]
 
 	if connectedUser != nil {
 		rmcRequest := nex.NewRMCRequest()

@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"strings"
 
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -15,7 +16,7 @@ import (
 func nintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) {
 	if err != nil {
 		// TODO: Handle error
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 	}
 
 	var tokenBase64 string
@@ -40,7 +41,7 @@ func nintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 	decryptedToken, err := decryptToken(encryptedToken)
 	if err != nil {
 		// TODO: Handle error
-		logger.Critical(err.Error())
+		globals.Logger.Critical(err.Error())
 	}
 
 	pid := decryptedToken.UserPID
