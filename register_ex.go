@@ -3,6 +3,7 @@ package main
 import (
 	"strconv"
 
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -20,10 +21,10 @@ func registerEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 
 	localStationURL := localStation.EncodeToString()
 
-	rmcResponseStream := nex.NewStreamOut(nexServer)
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
 	rmcResponseStream.WriteUInt32LE(0x10001) // Success
-	rmcResponseStream.WriteUInt32LE(nexServer.ConnectionIDCounter().Increment())
+	rmcResponseStream.WriteUInt32LE(globals.NEXServer.ConnectionIDCounter().Increment())
 	rmcResponseStream.WriteString(localStationURL)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
@@ -45,5 +46,5 @@ func registerEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

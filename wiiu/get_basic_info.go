@@ -1,15 +1,16 @@
-package main
+package friends_wiiu
 
 import (
 	"encoding/base64"
 
 	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func getBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
+func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 	infos := make([]*nexproto.PrincipalBasicInfo, 0)
 
 	for i := 0; i < len(pids); i++ {
@@ -34,7 +35,7 @@ func getBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 		infos = append(infos, info)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(nexServer)
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
 	rmcResponseStream.WriteListStructure(infos)
 
@@ -57,5 +58,5 @@ func getBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

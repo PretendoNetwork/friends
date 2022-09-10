@@ -1,24 +1,17 @@
-package main
+package friends_wiiu
 
 import (
 	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func updateCommentWiiU(err error, client *nex.Client, callID uint32, comment *nexproto.Comment) {
-	// TODO: Do something with this
-
-	changed := database.UpdateUserComment(client.PID(), comment.Contents)
-
-	rmcResponseStream := nex.NewStreamOut(nexServer)
-
-	rmcResponseStream.WriteUInt64LE(changed)
-
-	rmcResponseBody := rmcResponseStream.Bytes()
+func UpdatePreference(err error, client *nex.Client, callID uint32, principalPreference *nexproto.PrincipalPreference) {
+	database.UpdateUserPrincipalPreference(client.PID(), principalPreference)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodUpdateComment, rmcResponseBody)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodUpdatePreference, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
@@ -33,5 +26,5 @@ func updateCommentWiiU(err error, client *nex.Client, callID uint32, comment *ne
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

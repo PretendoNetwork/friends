@@ -54,7 +54,7 @@ func nintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 
 	pidHmac := hex.EncodeToString(mac.Sum(nil))
 
-	rmcResponseStream := nex.NewStreamOut(nexServer)
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
 	rmcResponseStream.WriteUInt32LE(pid)
 	rmcResponseStream.WriteString(pidHmac)
@@ -77,5 +77,5 @@ func nintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

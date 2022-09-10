@@ -1,15 +1,16 @@
-package main
+package friends_3ds
 
 import (
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func updatePresence3DS(err error, client *nex.Client, callID uint32, presence *nexproto.NintendoPresence, unknown bool) {
+func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *nexproto.MyProfile) {
 	// TODO: Do something with this
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdatePresence, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateProfile, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
@@ -24,5 +25,5 @@ func updatePresence3DS(err error, client *nex.Client, callID uint32, presence *n
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

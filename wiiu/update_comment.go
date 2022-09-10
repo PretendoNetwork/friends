@@ -1,19 +1,25 @@
-package main
+package friends_wiiu
 
 import (
 	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func markFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, ids []uint64) {
-	for i := 0; i < len(ids); i++ {
-		id := ids[i]
-		database.SetFriendRequestReceived(id)
-	}
+func UpdateComment(err error, client *nex.Client, callID uint32, comment *nexproto.Comment) {
+	// TODO: Do something with this
+
+	changed := database.UpdateUserComment(client.PID(), comment.Contents)
+
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+
+	rmcResponseStream.WriteUInt64LE(changed)
+
+	rmcResponseBody := rmcResponseStream.Bytes()
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodMarkFriendRequestsAsReceived, nil)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodUpdateComment, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
@@ -28,5 +34,5 @@ func markFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

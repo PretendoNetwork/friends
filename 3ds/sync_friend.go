@@ -1,15 +1,22 @@
-package main
+package friends_3ds
 
 import (
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func updatePreference3DS(err error, client *nex.Client, callID uint32, unknown1 bool, unknown2 bool, unknown3 bool) {
+func SyncFriend(err error, client *nex.Client, callID uint32, unknown1 uint64, pids []uint32, unknown3 []uint64) {
 	// TODO: Do something with this
 
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+
+	rmcResponseStream.WriteUInt32LE(0) // List<FriendRelationship> length 0
+
+	rmcResponseBody := rmcResponseStream.Bytes()
+
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdatePreference, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodSyncFriend, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
@@ -24,5 +31,5 @@ func updatePreference3DS(err error, client *nex.Client, callID uint32, unknown1 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

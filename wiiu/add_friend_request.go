@@ -1,4 +1,4 @@
-package main
+package friends_wiiu
 
 import (
 	"encoding/base64"
@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *nexproto.GameKey, unknown6 *nex.DateTime) {
+func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *nexproto.GameKey, unknown6 *nex.DateTime) {
 	rand.Seed(time.Now().UnixNano())
 	nodeID := rand.Intn(len(globals.SnowflakeNodes))
 
@@ -144,7 +144,7 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 		go sendFriendRequestNotification(recipientClient, friendRequestNotificationData)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(nexServer)
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
 	rmcResponseStream.WriteStructure(friendRequest)
 	rmcResponseStream.WriteStructure(friendInfo)
@@ -168,7 +168,7 @@ func addFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }
 
 func sendFriendRequestNotification(client *nex.Client, friendRequestNotificationData *nexproto.FriendRequest) {
@@ -179,7 +179,7 @@ func sendFriendRequestNotification(client *nex.Client, friendRequestNotification
 	eventObject.DataHolder.SetTypeName("FriendRequest")
 	eventObject.DataHolder.SetObjectData(friendRequestNotificationData)
 
-	stream := nex.NewStreamOut(nexServer)
+	stream := nex.NewStreamOut(globals.NEXServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -201,5 +201,5 @@ func sendFriendRequestNotification(client *nex.Client, friendRequestNotification
 	requestPacket.AddFlag(nex.FlagNeedsAck)
 	requestPacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(requestPacket)
+	globals.NEXServer.Send(requestPacket)
 }

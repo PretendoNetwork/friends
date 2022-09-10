@@ -1,4 +1,4 @@
-package main
+package friends_wiiu
 
 import (
 	"fmt"
@@ -9,7 +9,7 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func updatePresenceWiiU(err error, client *nex.Client, callID uint32, presence *nexproto.NintendoPresenceV2) {
+func UpdatePresence(err error, client *nex.Client, callID uint32, presence *nexproto.NintendoPresenceV2) {
 	pid := client.PID()
 
 	presence.Online = true      // Force online status. I have no idea why this is always false
@@ -34,7 +34,7 @@ func updatePresenceWiiU(err error, client *nex.Client, callID uint32, presence *
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }
 
 func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) {
@@ -45,7 +45,7 @@ func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) 
 	eventObject.DataHolder.SetTypeName("NintendoPresenceV2")
 	eventObject.DataHolder.SetObjectData(presence)
 
-	stream := nex.NewStreamOut(nexServer)
+	stream := nex.NewStreamOut(globals.NEXServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -97,7 +97,7 @@ func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) 
 			requestPacket.AddFlag(nex.FlagNeedsAck)
 			requestPacket.AddFlag(nex.FlagReliable)
 
-			nexServer.Send(requestPacket)
+			globals.NEXServer.Send(requestPacket)
 		}
 	}
 }

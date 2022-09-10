@@ -1,14 +1,17 @@
 package main
 
 import (
+	friends_3ds "github.com/PretendoNetwork/friends-secure/3ds"
+	"github.com/PretendoNetwork/friends-secure/globals"
+	friends_wiiu "github.com/PretendoNetwork/friends-secure/wiiu"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func assignNEXProtocols() {
-	secureServer := nexproto.NewSecureProtocol(nexServer)
-	accountManagementServer := nexproto.NewAccountManagementProtocol(nexServer)
-	friendsWiiUServer := nexproto.NewFriendsWiiUProtocol(nexServer)
-	friends3DSServer := nexproto.NewFriends3DSProtocol(nexServer)
+	secureServer := nexproto.NewSecureProtocol(globals.NEXServer)
+	accountManagementServer := nexproto.NewAccountManagementProtocol(globals.NEXServer)
+	friendsWiiUServer := nexproto.NewFriendsWiiUProtocol(globals.NEXServer)
+	friends3DSServer := nexproto.NewFriends3DSProtocol(globals.NEXServer)
 
 	// Account Management protocol handles
 	accountManagementServer.NintendoCreateAccount(nintendoCreateAccount)
@@ -18,24 +21,24 @@ func assignNEXProtocols() {
 	secureServer.RegisterEx(registerEx)
 
 	// Friends (WiiU) protocol handles
-	friendsWiiUServer.UpdateAndGetAllInformation(updateAndGetAllInformation)
-	friendsWiiUServer.AddFriendRequest(addFriendRequest)
-	friendsWiiUServer.AcceptFriendRequest(acceptFriendRequest)
-	friendsWiiUServer.MarkFriendRequestsAsReceived(markFriendRequestsAsReceived)
-	friendsWiiUServer.UpdatePresence(updatePresenceWiiU)
-	friendsWiiUServer.UpdateComment(updateCommentWiiU)
-	friendsWiiUServer.UpdatePreference(updatePreferenceWiiU)
-	friendsWiiUServer.GetBasicInfo(getBasicInfo)
-	friendsWiiUServer.DeletePersistentNotification(deletePersistentNotification)
-	friendsWiiUServer.CheckSettingStatus(checkSettingStatus)
-	friendsWiiUServer.GetRequestBlockSettings(getRequestBlockSettings)
+	friendsWiiUServer.UpdateAndGetAllInformation(friends_wiiu.UpdateAndGetAllInformation)
+	friendsWiiUServer.AddFriendRequest(friends_wiiu.AddFriendRequest)
+	friendsWiiUServer.AcceptFriendRequest(friends_wiiu.AcceptFriendRequest)
+	friendsWiiUServer.MarkFriendRequestsAsReceived(friends_wiiu.MarkFriendRequestsAsReceived)
+	friendsWiiUServer.UpdatePresence(friends_wiiu.UpdatePresence)
+	friendsWiiUServer.UpdateComment(friends_wiiu.UpdateComment)
+	friendsWiiUServer.UpdatePreference(friends_wiiu.UpdatePreference)
+	friendsWiiUServer.GetBasicInfo(friends_wiiu.GetBasicInfo)
+	friendsWiiUServer.DeletePersistentNotification(friends_wiiu.DeletePersistentNotification)
+	friendsWiiUServer.CheckSettingStatus(friends_wiiu.CheckSettingStatus)
+	friendsWiiUServer.GetRequestBlockSettings(friends_wiiu.GetRequestBlockSettings)
 
 	// Friends (3DS) protocol handles
-	friends3DSServer.UpdateProfile(updateProfile)
-	friends3DSServer.UpdateMii(updateMii)
-	friends3DSServer.UpdatePreference(updatePreference3DS)
-	friends3DSServer.SyncFriend(syncFriend)
-	friends3DSServer.UpdatePresence(updatePresence3DS)
-	friends3DSServer.UpdateFavoriteGameKey(updateFavoriteGameKey)
-	friends3DSServer.UpdateComment(updateComment3DS)
+	friends3DSServer.UpdateProfile(friends_3ds.UpdateProfile)
+	friends3DSServer.UpdateMii(friends_3ds.UpdateMii)
+	friends3DSServer.UpdatePreference(friends_3ds.UpdatePreference)
+	friends3DSServer.SyncFriend(friends_3ds.SyncFriend)
+	friends3DSServer.UpdatePresence(friends_3ds.UpdatePresence)
+	friends3DSServer.UpdateFavoriteGameKey(friends_3ds.UpdateFavoriteGameKey)
+	friends3DSServer.UpdateComment(friends_3ds.UpdateComment)
 }

@@ -1,21 +1,16 @@
-package main
+package friends_3ds
 
 import (
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func syncFriend(err error, client *nex.Client, callID uint32, unknown1 uint64, pids []uint32, unknown3 []uint64) {
+func UpdateFavoriteGameKey(err error, client *nex.Client, callID uint32, gameKey *nexproto.GameKey) {
 	// TODO: Do something with this
 
-	rmcResponseStream := nex.NewStreamOut(nexServer)
-
-	rmcResponseStream.WriteUInt32LE(0) // List<FriendRelationship> length 0
-
-	rmcResponseBody := rmcResponseStream.Bytes()
-
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodSyncFriend, rmcResponseBody)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateFavoriteGameKey, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
@@ -30,5 +25,5 @@ func syncFriend(err error, client *nex.Client, callID uint32, unknown1 uint64, p
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

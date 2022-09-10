@@ -1,12 +1,13 @@
-package main
+package friends_wiiu
 
 import (
 	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func getRequestBlockSettings(err error, client *nex.Client, callID uint32, pids []uint32) {
+func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids []uint32) {
 	settings := make([]*nexproto.PrincipalRequestBlockSetting, 0)
 
 	// TODO:
@@ -21,7 +22,7 @@ func getRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 		settings = append(settings, setting)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(nexServer)
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
 	rmcResponseStream.WriteListStructure(settings)
 
@@ -44,5 +45,5 @@ func getRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

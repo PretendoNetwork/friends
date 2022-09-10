@@ -40,7 +40,7 @@ func sendUserWentOfflineWiiUNotifications(client *nex.Client) {
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(nintendoNotificationEventGeneral)
 
-	stream := nex.NewStreamOut(nexServer)
+	stream := nex.NewStreamOut(globals.NEXServer)
 	stream.WriteStructure(eventObject)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -69,7 +69,7 @@ func sendUserWentOfflineWiiUNotifications(client *nex.Client) {
 			requestPacket.AddFlag(nex.FlagNeedsAck)
 			requestPacket.AddFlag(nex.FlagReliable)
 
-			nexServer.Send(requestPacket)
+			globals.NEXServer.Send(requestPacket)
 		}
 	}
 }

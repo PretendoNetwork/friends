@@ -1,4 +1,4 @@
-package main
+package friends_wiiu
 
 import (
 	"os"
@@ -9,7 +9,7 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nnaInfo *nexproto.NNAInfo, presence *nexproto.NintendoPresenceV2, birthday *nex.DateTime) {
+func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nnaInfo *nexproto.NNAInfo, presence *nexproto.NintendoPresenceV2, birthday *nex.DateTime) {
 
 	if err != nil {
 		// TODO: Handle error
@@ -151,7 +151,7 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 		friendRequestsIn = append(friendRequestsIn, friendRequest)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(nexServer)
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
 	rmcResponseStream.WriteStructure(principalPreference)
 	rmcResponseStream.WriteStructure(comment)
@@ -184,5 +184,5 @@ func updateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

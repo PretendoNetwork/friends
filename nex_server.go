@@ -10,18 +10,16 @@ import (
 	nex "github.com/PretendoNetwork/nex-go"
 )
 
-var nexServer *nex.Server
-
 func nexServerStart() {
-	nexServer = nex.NewServer()
-	nexServer.SetFragmentSize(900)
-	nexServer.SetPrudpVersion(0)
-	nexServer.SetKerberosKeySize(16)
-	nexServer.SetKerberosPassword(os.Getenv("KERBEROS_PASSWORD"))
-	nexServer.SetPingTimeout(20) // Maybe too long?
-	nexServer.SetAccessKey("ridfebb9")
+	globals.NEXServer = nex.NewServer()
+	globals.NEXServer.SetFragmentSize(900)
+	globals.NEXServer.SetPrudpVersion(0)
+	globals.NEXServer.SetKerberosKeySize(16)
+	globals.NEXServer.SetKerberosPassword(os.Getenv("KERBEROS_PASSWORD"))
+	globals.NEXServer.SetPingTimeout(20) // Maybe too long?
+	globals.NEXServer.SetAccessKey("ridfebb9")
 
-	nexServer.On("Data", func(packet *nex.PacketV0) {
+	globals.NEXServer.On("Data", func(packet *nex.PacketV0) {
 		request := packet.RMCRequest()
 
 		fmt.Println("==Friends - Secure==")
@@ -30,7 +28,7 @@ func nexServerStart() {
 		fmt.Println("====================")
 	})
 
-	nexServer.On("Kick", func(packet *nex.PacketV0) {
+	globals.NEXServer.On("Kick", func(packet *nex.PacketV0) {
 		pid := packet.Sender().PID()
 		delete(globals.ConnectedUsers, pid)
 
@@ -43,14 +41,14 @@ func nexServerStart() {
 		fmt.Println("Leaving")
 	})
 
-	nexServer.On("Ping", func(packet *nex.PacketV0) {
+	globals.NEXServer.On("Ping", func(packet *nex.PacketV0) {
 		fmt.Print("Pinged. Is ACK: ")
 		fmt.Println(packet.HasFlag(nex.FlagAck))
 	})
 
-	nexServer.On("Connect", connect)
+	globals.NEXServer.On("Connect", connect)
 
 	assignNEXProtocols()
 
-	nexServer.Listen(":60001")
+	globals.NEXServer.Listen(":60001")
 }

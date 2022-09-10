@@ -1,15 +1,20 @@
-package main
+package friends_wiiu
 
 import (
+	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func deletePersistentNotification(err error, client *nex.Client, callID uint32, notifications []*nexproto.PersistentNotification) {
-	// TODO: Do something here
+func MarkFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, ids []uint64) {
+	for i := 0; i < len(ids); i++ {
+		id := ids[i]
+		database.SetFriendRequestReceived(id)
+	}
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodDeletePersistentNotification, nil)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodMarkFriendRequestsAsReceived, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
@@ -24,5 +29,5 @@ func deletePersistentNotification(err error, client *nex.Client, callID uint32, 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }

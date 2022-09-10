@@ -1,4 +1,4 @@
-package main
+package friends_wiiu
 
 import (
 	"github.com/PretendoNetwork/friends-secure/database"
@@ -7,7 +7,7 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func acceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
+func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
 	friendInfo := database.AcceptFriendshipAndReturnFriendInfo(id)
 
 	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID
@@ -29,7 +29,7 @@ func acceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 		go sendFriendRequestAcceptedNotification(connectedUser.Client, senderFriendInfo)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(nexServer)
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
 	rmcResponseStream.WriteStructure(friendInfo)
 
@@ -52,7 +52,7 @@ func acceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(responsePacket)
+	globals.NEXServer.Send(responsePacket)
 }
 
 func sendFriendRequestAcceptedNotification(client *nex.Client, friendInfo *nexproto.FriendInfo) {
@@ -63,7 +63,7 @@ func sendFriendRequestAcceptedNotification(client *nex.Client, friendInfo *nexpr
 	eventObject.DataHolder.SetTypeName("FriendInfo")
 	eventObject.DataHolder.SetObjectData(friendInfo)
 
-	stream := nex.NewStreamOut(nexServer)
+	stream := nex.NewStreamOut(globals.NEXServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -85,5 +85,5 @@ func sendFriendRequestAcceptedNotification(client *nex.Client, friendInfo *nexpr
 	requestPacket.AddFlag(nex.FlagNeedsAck)
 	requestPacket.AddFlag(nex.FlagReliable)
 
-	nexServer.Send(requestPacket)
+	globals.NEXServer.Send(requestPacket)
 }
