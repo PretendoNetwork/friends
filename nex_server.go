@@ -10,7 +10,7 @@ import (
 	nex "github.com/PretendoNetwork/nex-go"
 )
 
-func nexServerStart() {
+func startNEXServer() {
 	globals.NEXServer = nex.NewServer()
 	globals.NEXServer.SetFragmentSize(900)
 	globals.NEXServer.SetPrudpVersion(0)

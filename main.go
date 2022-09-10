@@ -16,7 +16,7 @@ func main() {
 	wg.Add(2)
 
 	go startGRPCServer()
-	go nexServerStart()
+	go startNEXServer()
 
 	wg.Wait()
 }
