@@ -47,7 +47,7 @@ func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb
 	return &empty.Empty{}, nil
 }
 
-func listenGRPCServer() {
+func startGRPCServer() {
 	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)

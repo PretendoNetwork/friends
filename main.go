@@ -15,7 +15,7 @@ var wg sync.WaitGroup
 func main() {
 	wg.Add(2)
 
-	go listenGRPCServer()
+	go startGRPCServer()
 	go nexServerStart()
 
 	wg.Wait()
