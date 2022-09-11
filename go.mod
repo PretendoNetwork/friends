@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/PretendoNetwork/grpc-go v0.0.0-20220820112405-4798a22a13f3
-	github.com/PretendoNetwork/nex-go v1.0.9
+	github.com/PretendoNetwork/nex-go v1.0.10
 	github.com/PretendoNetwork/nex-protocols-go v1.0.11
 	github.com/PretendoNetwork/plogger-go v1.0.2
 	github.com/gocql/gocql v1.2.1
