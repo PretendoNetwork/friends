@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/PretendoNetwork/friends-secure/globals"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -21,4 +22,6 @@ func connectMongo() {
 
 	mongoDatabase = mongoClient.Database("pretendo")
 	MongoCollection = mongoDatabase.Collection("pnids")
+
+	globals.Logger.Success("Connected to Mongo!")
 }

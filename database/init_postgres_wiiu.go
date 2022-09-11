@@ -11,6 +11,8 @@ func initPostgresWiiU() {
 		return
 	}
 
+	globals.Logger.Success("[Wii U] Postgres schema created")
+
 	_, err = Postgres.Exec(`CREATE TABLE IF NOT EXISTS wiiu.user_data (
 		pid integer PRIMARY KEY,
 		show_online boolean,
@@ -62,4 +64,6 @@ func initPostgresWiiU() {
 		globals.Logger.Critical(err.Error())
 		return
 	}
+
+	globals.Logger.Success("[Wii U] Postgres tables created")
 }

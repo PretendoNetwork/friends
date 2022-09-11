@@ -19,6 +19,8 @@ func connectPostgres() {
 		globals.Logger.Critical(err.Error())
 	}
 
+	globals.Logger.Success("Connected to Postgres!")
+
 	initPostgresWiiU()
 	// TODO: 3DS database
 }
