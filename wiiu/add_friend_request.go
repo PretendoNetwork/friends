@@ -2,7 +2,6 @@ package friends_wiiu
 
 import (
 	"encoding/base64"
-	"math/rand"
 	"time"
 
 	"github.com/PretendoNetwork/friends-secure/database"
@@ -13,23 +12,19 @@ import (
 )
 
 func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *nexproto.GameKey, unknown6 *nex.DateTime) {
-	rand.Seed(time.Now().UnixNano())
-	nodeID := rand.Intn(len(globals.SnowflakeNodes))
-
-	snowflakeNode := globals.SnowflakeNodes[nodeID]
-
-	friendRequestID := uint64(snowflakeNode.Generate().Int64())
-
 	currentTimestamp := time.Now()
 	expireTimestamp := currentTimestamp.Add(time.Hour * 24 * 29)
 
 	sentTime := nex.NewDateTime(0)
 	expireTime := nex.NewDateTime(0)
+
 	sentTime.FromTimestamp(currentTimestamp)
 	expireTime.FromTimestamp(expireTimestamp)
 
 	senderPID := client.PID()
 	recipientPID := pid
+
+	friendRequestID := database.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
 
 	recipientUserInforation := database.GetUserInfoByPID(recipientPID)
 
@@ -104,8 +99,6 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendInfo.BecameFriend = nex.NewDateTime(0)
 	friendInfo.LastOnline = nex.NewDateTime(0)
 	friendInfo.Unknown = 0
-
-	database.SaveFriendRequest(friendRequestID, senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
 
 	recipientClient := client.Server().FindClientFromPID(recipientPID)
 

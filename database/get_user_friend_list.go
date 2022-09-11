@@ -14,19 +14,18 @@ import (
 
 // Get a users friend list
 func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
-	var sliceMap []map[string]interface{}
-	var err error
-
-	if sliceMap, err = cassandraClusterSession.Query(`SELECT user2_pid, date FROM pretendo_friends.friendships WHERE user1_pid=? ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
-		globals.Logger.Critical(err.Error())
-
-		return make([]*nexproto.FriendInfo, 0)
-	}
-
 	friendList := make([]*nexproto.FriendInfo, 0)
 
-	for i := 0; i < len(sliceMap); i++ {
-		friendPID := uint32(sliceMap[i]["user2_pid"].(int))
+	rows, err := postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1`, pid)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return friendList
+	}
+
+	for rows.Next() {
+		var friendPID uint32
+		var date uint64
+		rows.Scan(&friendPID, &date)
 
 		friendInfo := nexproto.NewFriendInfo()
 		connectedUser := globals.ConnectedUsers[friendPID]
@@ -91,12 +90,14 @@ func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 			friendInfo.Presence.Unknown7 = 0
 
 			var lastOnlineTime uint64
-			if err := cassandraClusterSession.Query(`SELECT time FROM pretendo_friends.last_online WHERE pid=?`, friendPID).Scan(&lastOnlineTime); err != nil {
+			err := postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID).Scan(&lastOnlineTime)
+			if err != nil {
+				lastOnlineTime = nex.NewDateTime(0).Now()
+
 				if err == gocql.ErrNotFound {
-					lastOnlineTime = nex.NewDateTime(0).Now()
+					globals.Logger.Error(err.Error())
 				} else {
 					globals.Logger.Critical(err.Error())
-					lastOnlineTime = nex.NewDateTime(0).Now()
 				}
 			}
 
@@ -104,7 +105,7 @@ func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 		}
 
 		friendInfo.Status = GetUserComment(friendPID)
-		friendInfo.BecameFriend = nex.NewDateTime(uint64(sliceMap[i]["date"].(int64)))
+		friendInfo.BecameFriend = nex.NewDateTime(date)
 		friendInfo.LastOnline = lastOnline
 		friendInfo.Unknown = 0
 

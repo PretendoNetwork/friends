@@ -7,10 +7,10 @@ require (
 	github.com/PretendoNetwork/nex-go v1.0.9
 	github.com/PretendoNetwork/nex-protocols-go v1.0.11
 	github.com/PretendoNetwork/plogger-go v1.0.2
-	github.com/bwmarrin/snowflake v0.3.0
 	github.com/gocql/gocql v1.2.1
 	github.com/golang/protobuf v1.5.2
 	github.com/joho/godotenv v1.4.0
+	github.com/lib/pq v1.10.7
 	go.mongodb.org/mongo-driver v1.10.2
 	google.golang.org/grpc v1.49.0
 )

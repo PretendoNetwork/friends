@@ -61,5 +61,4 @@ func init() {
 	}
 
 	database.Connect()
-	globals.CreateSnowflakeNodes()
 }

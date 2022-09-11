@@ -11,18 +11,22 @@ import (
 
 // Get a users received friend requests
 func GetUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
-	var sliceMap []map[string]interface{}
-	var err error
-
-	if sliceMap, err = cassandraClusterSession.Query(`SELECT id, sender_pid, sent_on, expires_on, message, received FROM pretendo_friends.friend_requests WHERE recipient_pid=? AND accepted=false AND denied=false ALLOW FILTERING`, pid).Iter().SliceMap(); err != nil {
-		globals.Logger.Critical(err.Error())
-		return make([]*nexproto.FriendRequest, 0)
-	}
-
 	friendRequestsIn := make([]*nexproto.FriendRequest, 0)
 
-	for i := 0; i < len(sliceMap); i++ {
-		senderPID := uint32(sliceMap[i]["sender_pid"].(int))
+	rows, err := postgres.Query(`SELECT id, sender_pid, sent_on, expires_on, message, received FROM wiiu.friend_requests WHERE recipient_pid=$1 AND accepted=false AND denied=false`, pid)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return friendRequestsIn
+	}
+
+	for rows.Next() {
+		var id uint64
+		var senderPID uint32
+		var sentOn uint64
+		var expiresOn uint64
+		var message string
+		var received bool
+		rows.Scan(&id, &senderPID, &sentOn, &expiresOn, &message, &received)
 
 		senderUserInforation := GetUserInfoByPID(senderPID)
 		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
@@ -42,18 +46,18 @@ func GetUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
 
 		friendRequest.Message = nexproto.NewFriendRequestMessage()
-		friendRequest.Message.FriendRequestID = uint64(sliceMap[i]["id"].(int64))
-		friendRequest.Message.Received = sliceMap[i]["received"].(bool)
+		friendRequest.Message.FriendRequestID = id
+		friendRequest.Message.Received = received
 		friendRequest.Message.Unknown2 = 1
-		friendRequest.Message.Message = sliceMap[i]["message"].(string)
+		friendRequest.Message.Message = message
 		friendRequest.Message.Unknown3 = 0
 		friendRequest.Message.Unknown4 = ""
 		friendRequest.Message.GameKey = nexproto.NewGameKey()
 		friendRequest.Message.GameKey.TitleID = 0
 		friendRequest.Message.GameKey.TitleVersion = 0
 		friendRequest.Message.Unknown5 = nex.NewDateTime(134222053376) // idk what this value means but its always this
-		friendRequest.Message.ExpiresOn = nex.NewDateTime(uint64(sliceMap[i]["expires_on"].(int64)))
-		friendRequest.SentOn = nex.NewDateTime(uint64(sliceMap[i]["sent_on"].(int64)))
+		friendRequest.Message.ExpiresOn = nex.NewDateTime(expiresOn)
+		friendRequest.SentOn = nex.NewDateTime(sentOn)
 
 		friendRequestsIn = append(friendRequestsIn, friendRequest)
 	}

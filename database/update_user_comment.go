@@ -9,7 +9,15 @@ import (
 func UpdateUserComment(pid uint32, message string) uint64 {
 	changed := nex.NewDateTime(0).Now()
 
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.comments SET message=?, changed=? WHERE pid=?`, message, changed, pid).Exec(); err != nil {
+	_, err := postgres.Exec(`
+		INSERT INTO wiiu.user_data (pid, comment, comment_changed)
+		VALUES ($1, $2, $3)
+		ON CONFLICT (pid)
+		DO UPDATE SET 
+		comment = $2,
+		comment_changed = $3`, pid, message, changed)
+
+	if err != nil {
 		globals.Logger.Critical(err.Error())
 	}
 

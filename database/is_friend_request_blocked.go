@@ -1,17 +1,15 @@
 package database
 
-import "github.com/gocql/gocql"
+import (
+	"github.com/PretendoNetwork/friends-secure/globals"
+)
 
 func IsFriendRequestBlocked(requesterPID uint32, requestedPID uint32) bool {
-	if err := cassandraClusterSession.Query(`SELECT id FROM pretendo_friends.blocks WHERE blocker_pid=? AND blocked_pid=? LIMIT 1 ALLOW FILTERING`, requestedPID, requesterPID).Scan(); err != nil {
-		if err == gocql.ErrNotFound {
-			// Assume no block record was found
-			return false
-		}
-
-		// TODO: Error handling
+	var found bool
+	err := postgres.QueryRow(`SELECT COUNT(*) FROM wiiu.blocks WHERE blocker_pid=$1 AND blocked_pid=$2 LIMIT 1`, requesterPID, requestedPID).Scan(&found)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
 	}
 
-	// Assume a block record was found
-	return true
+	return found
 }

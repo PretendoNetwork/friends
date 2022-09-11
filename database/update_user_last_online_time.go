@@ -6,7 +6,14 @@ import (
 )
 
 func UpdateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
-	if err := cassandraClusterSession.Query(`UPDATE pretendo_friends.last_online SET time=? WHERE pid=?`, lastOnline.Value(), pid).Exec(); err != nil {
+	_, err := postgres.Exec(`
+		INSERT INTO wiiu.user_data (pid, last_online)
+		VALUES ($1, $2)
+		ON CONFLICT (pid)
+		DO UPDATE SET 
+		last_online = $2`, pid, lastOnline.Value())
+
+	if err != nil {
 		globals.Logger.Critical(err.Error())
 	}
 }
