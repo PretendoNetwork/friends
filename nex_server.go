@@ -54,11 +54,6 @@ func startNEXServer() {
 		fmt.Println("Leaving (Disconnect)")
 	})
 
-	globals.NEXServer.On("Ping", func(packet *nex.PacketV0) {
-		fmt.Print("Pinged. Is ACK: ")
-		fmt.Println(packet.HasFlag(nex.FlagAck))
-	})
-
 	globals.NEXServer.On("Connect", connect)
 
 	assignNEXProtocols()
