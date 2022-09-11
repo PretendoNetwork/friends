@@ -12,7 +12,7 @@ import (
 var mongoClient *mongo.Client
 var mongoContext context.Context
 var mongoDatabase *mongo.Database
-var mongoCollection *mongo.Collection
+var MongoCollection *mongo.Collection
 
 func connectMongo() {
 	mongoClient, _ = mongo.NewClient(options.Client().ApplyURI(os.Getenv("MONGO_URI")))
@@ -20,5 +20,5 @@ func connectMongo() {
 	_ = mongoClient.Connect(mongoContext)
 
 	mongoDatabase = mongoClient.Database("pretendo")
-	mongoCollection = mongoDatabase.Collection("pnids")
+	MongoCollection = mongoDatabase.Collection("pnids")
 }

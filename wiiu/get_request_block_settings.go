@@ -1,7 +1,7 @@
 package friends_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -11,13 +11,13 @@ func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 	settings := make([]*nexproto.PrincipalRequestBlockSetting, 0)
 
 	// TODO:
-	// Improve this. Use less database reads
+	// Improve this. Use less database_wiiu.reads
 	for i := 0; i < len(pids); i++ {
 		requestedPID := pids[i]
 
 		setting := nexproto.NewPrincipalRequestBlockSetting()
 		setting.PID = requestedPID
-		setting.IsBlocked = database.IsFriendRequestBlocked(client.PID(), requestedPID)
+		setting.IsBlocked = database_wiiu.IsFriendRequestBlocked(client.PID(), requestedPID)
 
 		settings = append(settings, setting)
 	}

@@ -3,7 +3,7 @@ package friends_wiiu
 import (
 	"os"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -29,13 +29,13 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	globals.ConnectedUsers[pid].NNAInfo = nnaInfo
 	globals.ConnectedUsers[pid].Presence = presence
 
-	principalPreference := database.GetUserPrincipalPreference(pid)
-	comment := database.GetUserComment(pid)
-	friendList := database.GetUserFriendList(pid)
-	friendRequestsOut := database.GetUserFriendRequestsOut(pid)
-	friendRequestsIn := database.GetUserFriendRequestsIn(pid)
-	blockList := database.GetUserBlockList(pid)
-	notifications := database.GetUserNotifications(pid)
+	principalPreference := database_wiiu.GetUserPrincipalPreference(pid)
+	comment := database_wiiu.GetUserComment(pid)
+	friendList := database_wiiu.GetUserFriendList(pid)
+	friendRequestsOut := database_wiiu.GetUserFriendRequestsOut(pid)
+	friendRequestsIn := database_wiiu.GetUserFriendRequestsIn(pid)
+	blockList := database_wiiu.GetUserBlockList(pid)
+	notifications := database_wiiu.GetUserNotifications(pid)
 
 	if os.Getenv("ENABLE_BELLA") == "true" {
 		bella := nexproto.NewFriendInfo()

@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -51,7 +51,7 @@ func sendUserWentOfflineWiiUNotifications(client *nex.Client) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendList := database.GetUserFriendList(client.PID())
+	friendList := database_wiiu.GetUserFriendList(client.PID())
 
 	for i := 0; i < len(friendList); i++ {
 		friendPID := friendList[i].NNAInfo.PrincipalBasicInfo.PID

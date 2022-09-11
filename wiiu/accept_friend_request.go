@@ -1,14 +1,14 @@
 package friends_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
-	friendInfo := database.AcceptFriendshipAndReturnFriendInfo(id)
+	friendInfo := database_wiiu.AcceptFriendshipAndReturnFriendInfo(id)
 
 	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID
 	connectedUser := globals.ConnectedUsers[friendPID]
@@ -21,7 +21,7 @@ func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 
 		senderFriendInfo.NNAInfo = senderConnectedUser.NNAInfo
 		senderFriendInfo.Presence = senderConnectedUser.Presence
-		senderFriendInfo.Status = database.GetUserComment(senderPID)
+		senderFriendInfo.Status = database_wiiu.GetUserComment(senderPID)
 		senderFriendInfo.BecameFriend = friendInfo.BecameFriend
 		senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO: Change this
 		senderFriendInfo.Unknown = 0

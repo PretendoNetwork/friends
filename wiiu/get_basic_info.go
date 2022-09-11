@@ -3,7 +3,7 @@ package friends_wiiu
 import (
 	"encoding/base64"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -15,7 +15,7 @@ func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 
 	for i := 0; i < len(pids); i++ {
 		pid := pids[i]
-		userInfo := database.GetUserInfoByPID(pid)
+		userInfo := database_wiiu.GetUserInfoByPID(pid)
 
 		info := nexproto.NewPrincipalBasicInfo()
 		info.PID = pid

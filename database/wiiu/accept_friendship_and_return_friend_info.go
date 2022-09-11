@@ -1,9 +1,10 @@
-package database
+package database_wiiu
 
 import (
 	"encoding/base64"
 	"time"
 
+	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -15,7 +16,7 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 	var senderPID uint32
 	var recipientPID uint32
 
-	err := postgres.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID).Scan(&senderPID, &recipientPID)
+	err := database.Postgres.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID).Scan(&senderPID, &recipientPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil
@@ -27,13 +28,13 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 	// Friendships are two-way relationships, not just one link between 2 entities
 	// "A" has friend "B" and "B" has friend "A", so store both relationships
 
-	_, err = postgres.Exec(`INSERT INTO wiiu.friendships (user1_pid, user2_pid, date) VALUES ($1, $2, $3)`, senderPID, recipientPID, acceptedTime.Value())
+	_, err = database.Postgres.Exec(`INSERT INTO wiiu.friendships (user1_pid, user2_pid, date) VALUES ($1, $2, $3)`, senderPID, recipientPID, acceptedTime.Value())
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil
 	}
 
-	_, err = postgres.Exec(`INSERT INTO wiiu.friendships (user1_pid, user2_pid, date) VALUES ($1, $2, $3)`, recipientPID, senderPID, acceptedTime.Value())
+	_, err = database.Postgres.Exec(`INSERT INTO wiiu.friendships (user1_pid, user2_pid, date) VALUES ($1, $2, $3)`, recipientPID, senderPID, acceptedTime.Value())
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil
@@ -92,7 +93,7 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		friendInfo.Presence.Unknown7 = 0
 
 		var lastOnlineTime uint64
-		err := postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID).Scan(&lastOnlineTime)
+		err := database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID).Scan(&lastOnlineTime)
 		if err != nil {
 			lastOnlineTime = nex.NewDateTime(0).Now()
 

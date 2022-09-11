@@ -3,7 +3,7 @@ package main
 import (
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 )
@@ -57,5 +57,6 @@ func connect(packet *nex.PacketV0) {
 	lastOnline := nex.NewDateTime(0)
 	lastOnline.FromTimestamp(time.Now())
 
-	database.UpdateUserLastOnlineTime(packet.Sender().PID(), lastOnline)
+	// TODO: CHANGE THIS. NOT EVERY CONNECTION IS FROM WIIU
+	database_wiiu.UpdateUserLastOnlineTime(packet.Sender().PID(), lastOnline)
 }

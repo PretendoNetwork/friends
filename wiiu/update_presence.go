@@ -3,7 +3,7 @@ package friends_wiiu
 import (
 	"fmt"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -56,7 +56,7 @@ func sendUpdatePresenceWiiUNotifications(presence *nexproto.NintendoPresenceV2) 
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendList := database.GetUserFriendList(presence.PID)
+	friendList := database_wiiu.GetUserFriendList(presence.PID)
 
 	for i := 0; i < len(friendList); i++ {
 		if friendList[i] == nil || friendList[i].NNAInfo == nil || friendList[i].NNAInfo.PrincipalBasicInfo == nil {

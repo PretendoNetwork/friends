@@ -1,44 +1,45 @@
-package database
+package database_wiiu
 
 import (
 	"encoding/base64"
 
+	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-// Get a users sent friend requests
-func GetUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
-	friendRequestsOut := make([]*nexproto.FriendRequest, 0)
+// Get a users received friend requests
+func GetUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
+	friendRequestsIn := make([]*nexproto.FriendRequest, 0)
 
-	rows, err := postgres.Query(`SELECT id, recipient_pid, sent_on, expires_on, message, received FROM wiiu.friend_requests WHERE sender_pid=$1 AND accepted=false AND denied=false`, pid)
+	rows, err := database.Postgres.Query(`SELECT id, sender_pid, sent_on, expires_on, message, received FROM wiiu.friend_requests WHERE recipient_pid=$1 AND accepted=false AND denied=false`, pid)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return friendRequestsOut
+		return friendRequestsIn
 	}
 
 	for rows.Next() {
 		var id uint64
-		var recipientPID uint32
+		var senderPID uint32
 		var sentOn uint64
 		var expiresOn uint64
 		var message string
 		var received bool
-		rows.Scan(&id, &recipientPID, &sentOn, &expiresOn, &message, &received)
+		rows.Scan(&id, &senderPID, &sentOn, &expiresOn, &message, &received)
 
-		recipientUserInforation := GetUserInfoByPID(recipientPID)
-		encodedMiiData := recipientUserInforation["mii"].(bson.M)["data"].(string)
+		senderUserInforation := GetUserInfoByPID(senderPID)
+		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
 		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
 
 		friendRequest := nexproto.NewFriendRequest()
 
 		friendRequest.PrincipalInfo = nexproto.NewPrincipalBasicInfo()
-		friendRequest.PrincipalInfo.PID = recipientPID
-		friendRequest.PrincipalInfo.NNID = recipientUserInforation["username"].(string)
+		friendRequest.PrincipalInfo.PID = senderPID
+		friendRequest.PrincipalInfo.NNID = senderUserInforation["username"].(string)
 		friendRequest.PrincipalInfo.Mii = nexproto.NewMiiV2()
-		friendRequest.PrincipalInfo.Mii.Name = recipientUserInforation["mii"].(bson.M)["name"].(string)
+		friendRequest.PrincipalInfo.Mii.Name = senderUserInforation["mii"].(bson.M)["name"].(string)
 		friendRequest.PrincipalInfo.Mii.Unknown1 = 0 // replaying from real server
 		friendRequest.PrincipalInfo.Mii.Unknown2 = 0 // replaying from real server
 		friendRequest.PrincipalInfo.Mii.Data = decodedMiiData
@@ -59,8 +60,8 @@ func GetUserFriendRequestsOut(pid uint32) []*nexproto.FriendRequest {
 		friendRequest.Message.ExpiresOn = nex.NewDateTime(expiresOn)
 		friendRequest.SentOn = nex.NewDateTime(sentOn)
 
-		friendRequestsOut = append(friendRequestsOut, friendRequest)
+		friendRequestsIn = append(friendRequestsIn, friendRequest)
 	}
 
-	return friendRequestsOut
+	return friendRequestsIn
 }

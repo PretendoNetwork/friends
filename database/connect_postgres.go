@@ -9,12 +9,12 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 )
 
-var postgres *sql.DB
+var Postgres *sql.DB
 
 func connectPostgres() {
 	var err error
 
-	postgres, err = sql.Open("postgres", os.Getenv("DATABASE_URI"))
+	Postgres, err = sql.Open("postgres", os.Getenv("DATABASE_URI"))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 	}

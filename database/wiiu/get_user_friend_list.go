@@ -1,10 +1,11 @@
-package database
+package database_wiiu
 
 import (
 	"encoding/base64"
 	"fmt"
 	"time"
 
+	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -16,7 +17,7 @@ import (
 func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 	friendList := make([]*nexproto.FriendInfo, 0)
 
-	rows, err := postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1`, pid)
+	rows, err := database.Postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1`, pid)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return friendList
@@ -90,7 +91,7 @@ func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 			friendInfo.Presence.Unknown7 = 0
 
 			var lastOnlineTime uint64
-			err := postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID).Scan(&lastOnlineTime)
+			err := database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID).Scan(&lastOnlineTime)
 			if err != nil {
 				lastOnlineTime = nex.NewDateTime(0).Now()
 

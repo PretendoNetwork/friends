@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 )
@@ -35,7 +35,7 @@ func startNEXServer() {
 		lastOnline := nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 
-		database.UpdateUserLastOnlineTime(pid, lastOnline)
+		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
 		sendUserWentOfflineWiiUNotifications(packet.Sender())
 
 		fmt.Println("Leaving (Kick)")
@@ -48,7 +48,7 @@ func startNEXServer() {
 		lastOnline := nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 
-		database.UpdateUserLastOnlineTime(pid, lastOnline)
+		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
 		sendUserWentOfflineWiiUNotifications(packet.Sender())
 
 		fmt.Println("Leaving (Disconnect)")

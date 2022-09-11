@@ -1,7 +1,7 @@
 package friends_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -10,7 +10,7 @@ import (
 func MarkFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, ids []uint64) {
 	for i := 0; i < len(ids); i++ {
 		id := ids[i]
-		database.SetFriendRequestReceived(id)
+		database_wiiu.SetFriendRequestReceived(id)
 	}
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)

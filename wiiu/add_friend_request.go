@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
@@ -24,9 +24,9 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	senderPID := client.PID()
 	recipientPID := pid
 
-	friendRequestID := database.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
+	friendRequestID := database_wiiu.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
 
-	recipientUserInforation := database.GetUserInfoByPID(recipientPID)
+	recipientUserInforation := database_wiiu.GetUserInfoByPID(recipientPID)
 
 	friendRequest := nexproto.NewFriendRequest()
 
@@ -103,7 +103,7 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	recipientClient := client.Server().FindClientFromPID(recipientPID)
 
 	if recipientClient != nil {
-		senderUserInforation := database.GetUserInfoByPID(senderPID)
+		senderUserInforation := database_wiiu.GetUserInfoByPID(senderPID)
 
 		friendRequestNotificationData := nexproto.NewFriendRequest()
 

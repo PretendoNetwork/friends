@@ -1,4 +1,4 @@
-package database
+package database_wiiu
 
 import nexproto "github.com/PretendoNetwork/nex-protocols-go"
 
