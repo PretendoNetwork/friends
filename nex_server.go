@@ -38,7 +38,20 @@ func startNEXServer() {
 		database.UpdateUserLastOnlineTime(pid, lastOnline)
 		sendUserWentOfflineWiiUNotifications(packet.Sender())
 
-		fmt.Println("Leaving")
+		fmt.Println("Leaving (Kick)")
+	})
+
+	globals.NEXServer.On("Disconnect", func(packet *nex.PacketV0) {
+		pid := packet.Sender().PID()
+		delete(globals.ConnectedUsers, pid)
+
+		lastOnline := nex.NewDateTime(0)
+		lastOnline.FromTimestamp(time.Now())
+
+		database.UpdateUserLastOnlineTime(pid, lastOnline)
+		sendUserWentOfflineWiiUNotifications(packet.Sender())
+
+		fmt.Println("Leaving (Disconnect)")
 	})
 
 	globals.NEXServer.On("Ping", func(packet *nex.PacketV0) {
