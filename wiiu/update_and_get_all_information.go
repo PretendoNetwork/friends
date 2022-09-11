@@ -107,48 +107,6 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 		bella.Status.LastChanged = nex.NewDateTime(0)
 
 		friendList = append(friendList, bella)
-
-		friendRequest := nexproto.NewFriendRequest()
-
-		friendRequest.PrincipalInfo = nexproto.NewPrincipalBasicInfo()
-		friendRequest.PrincipalInfo.PID = 1743126338
-		friendRequest.PrincipalInfo.NNID = "bells1998_2"
-		friendRequest.PrincipalInfo.Mii = nexproto.NewMiiV2()
-		friendRequest.PrincipalInfo.Mii.Name = "bella 2"
-		friendRequest.PrincipalInfo.Mii.Unknown1 = 0
-		friendRequest.PrincipalInfo.Mii.Unknown2 = 0
-		friendRequest.PrincipalInfo.Mii.Data = []byte{
-			0x03, 0x00, 0x00, 0x40, 0xE9, 0x55, 0xA2, 0x09,
-			0xE7, 0xC7, 0x41, 0x82, 0xD9, 0x7D, 0x0B, 0x2D,
-			0x03, 0xB3, 0xB8, 0x8D, 0x27, 0xD9, 0x00, 0x00,
-			0x01, 0x40, 0x62, 0x00, 0x65, 0x00, 0x6C, 0x00,
-			0x6C, 0x00, 0x61, 0x00, 0x00, 0x00, 0x45, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x40, 0x40,
-			0x12, 0x00, 0x81, 0x01, 0x04, 0x68, 0x43, 0x18,
-			0x20, 0x34, 0x46, 0x14, 0x81, 0x12, 0x17, 0x68,
-			0x0D, 0x00, 0x00, 0x29, 0x03, 0x52, 0x48, 0x50,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xFE, 0x86,
-		}
-		friendRequest.PrincipalInfo.Mii.Datetime = nex.NewDateTime(0)
-		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
-
-		friendRequest.Message = nexproto.NewFriendRequestMessage()
-		friendRequest.Message.FriendRequestID = 12345
-		friendRequest.Message.Received = true
-		friendRequest.Message.Unknown2 = 1
-		friendRequest.Message.Message = "Hello"
-		friendRequest.Message.Unknown3 = 0
-		friendRequest.Message.Unknown4 = ""
-		friendRequest.Message.GameKey = nexproto.NewGameKey()
-		friendRequest.Message.GameKey.TitleID = 0
-		friendRequest.Message.GameKey.TitleVersion = 0
-		friendRequest.Message.Unknown5 = nex.NewDateTime(134222053376) // idk what this value means but its always this
-		friendRequest.Message.ExpiresOn = nex.NewDateTime(nex.NewDateTime(0).Now() + 100000)
-		friendRequest.SentOn = nex.NewDateTime(nex.NewDateTime(0).Now())
-
-		friendRequestsIn = append(friendRequestsIn, friendRequest)
 	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
