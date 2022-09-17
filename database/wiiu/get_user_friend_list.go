@@ -17,7 +17,7 @@ import (
 func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 	friendList := make([]*nexproto.FriendInfo, 0)
 
-	rows, err := database.Postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1`, pid)
+	rows, err := database.Postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1 AND active=true`, pid)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return friendList
