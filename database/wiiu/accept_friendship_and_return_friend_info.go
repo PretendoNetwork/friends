@@ -28,13 +28,27 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 	// Friendships are two-way relationships, not just one link between 2 entities
 	// "A" has friend "B" and "B" has friend "A", so store both relationships
 
-	_, err = database.Postgres.Exec(`INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active) VALUES ($1, $2, $3, true)`, senderPID, recipientPID, acceptedTime.Value())
+	// If were friends before, just activate the status again
+
+	_, err = database.Postgres.Exec(`
+		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active)
+		VALUES ($1, $2, $3, true)
+		ON CONFLICT (user1_pid, user2_pid)
+		DO UPDATE SET
+		date = $3
+		active = true`, senderPID, recipientPID, acceptedTime.Value())
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil
 	}
 
-	_, err = database.Postgres.Exec(`INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active) VALUES ($1, $2, $3, true)`, recipientPID, senderPID, acceptedTime.Value())
+	_, err = database.Postgres.Exec(`
+		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active)
+		VALUES ($1, $2, $3, true)
+		ON CONFLICT (user1_pid, user2_pid)
+		DO UPDATE SET
+		date = $3
+		active = true`, recipientPID, senderPID, acceptedTime.Value())
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil
