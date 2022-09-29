@@ -2,6 +2,7 @@ package friends_wiiu
 
 import (
 	"encoding/base64"
+	"fmt"
 	"time"
 
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
@@ -12,6 +13,34 @@ import (
 )
 
 func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *nexproto.GameKey, unknown6 *nex.DateTime) {
+	senderPID := client.PID()
+	recipientPID := pid
+
+	recipient := database_wiiu.GetUserInfoByPID(recipientPID)
+	if recipient == nil {
+		globals.Logger.Error(fmt.Sprintf("User %d has sent friend request to invalid PID %d", senderPID, pid))
+
+		rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+		rmcResponse.SetError(nex.Errors.FPD.InvalidPrincipalID) // TODO - Is this the right error?
+
+		rmcResponseBytes := rmcResponse.Bytes()
+
+		responsePacket, _ := nex.NewPacketV0(client, nil)
+
+		responsePacket.SetVersion(0)
+		responsePacket.SetSource(0xA1)
+		responsePacket.SetDestination(0xAF)
+		responsePacket.SetType(nex.DataPacket)
+		responsePacket.SetPayload(rmcResponseBytes)
+
+		responsePacket.AddFlag(nex.FlagNeedsAck)
+		responsePacket.AddFlag(nex.FlagReliable)
+
+		globals.NEXServer.Send(responsePacket)
+
+		return
+	}
+
 	currentTimestamp := time.Now()
 	expireTimestamp := currentTimestamp.Add(time.Hour * 24 * 29)
 
@@ -20,9 +49,6 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 
 	sentTime.FromTimestamp(currentTimestamp)
 	expireTime.FromTimestamp(expireTimestamp)
-
-	senderPID := client.PID()
-	recipientPID := pid
 
 	friendRequestID := database_wiiu.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
 
