@@ -32,7 +32,8 @@ func initPostgresWiiU() {
 		user1_pid integer,
 		user2_pid integer,
 		date bigint,
-		active boolean
+		active boolean,
+		UNIQUE (user1_pid, user2_pid)
 	)`)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
