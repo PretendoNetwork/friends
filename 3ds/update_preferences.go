@@ -7,11 +7,21 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *nexproto.MyProfile) {
-	database_3ds.UpdateUserProfile(client.PID(), profileData)
+func UpdatePreferences(err error, client *nex.Client, callID uint32, showOnline bool, showCurrentGame bool, showPlayedGame bool) {
+	if !showCurrentGame {
+		emptyPresence := nexproto.NewNintendoPresence()
+		emptyPresence.GameKey = nexproto.NewGameKey()
+		emptyPresence.ChangedFlags = 4294967295 // FF FF FF FF, All flags
+		sendPresenceUpdateNotification(client, emptyPresence)
+	}
+	if !showOnline {
+		SendUserWentOfflineNotificationsGlobally(client)
+	}
+
+	database_3ds.UpdateUserPreferences(client.PID(), showOnline, showCurrentGame)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateProfile, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdatePreference, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

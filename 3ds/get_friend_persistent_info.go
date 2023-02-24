@@ -7,11 +7,17 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *nexproto.MyProfile) {
-	database_3ds.UpdateUserProfile(client.PID(), profileData)
+func GetFriendPersistentInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
+	infoList := database_3ds.GetFriendPersistentInfos(client.PID(), pids)
+
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+
+	rmcResponseStream.WriteListStructure(infoList)
+
+	rmcResponseBody := rmcResponseStream.Bytes()
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateProfile, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodGetFriendPersistentInfo, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

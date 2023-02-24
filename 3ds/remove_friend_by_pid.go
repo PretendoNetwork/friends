@@ -7,11 +7,12 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *nexproto.MyProfile) {
-	database_3ds.UpdateUserProfile(client.PID(), profileData)
+func RemoveFriendByPrincipalID(err error, client *nex.Client, callID uint32, pid uint32) {
+	go SendUserWentOfflineNotification(client, pid)
+	database_3ds.RemoveFriendship(client.PID(), pid)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateProfile, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodRemoveFriendByPrincipalID, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

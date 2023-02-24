@@ -7,11 +7,17 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *nexproto.MyProfile) {
-	database_3ds.UpdateUserProfile(client.PID(), profileData)
+func GetAllFriends(err error, client *nex.Client, callID uint32) {
+	friendRelationships := database_3ds.GetUserFriends(client.PID())
+
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+
+	rmcResponseStream.WriteListStructure(friendRelationships)
+
+	rmcResponseBody := rmcResponseStream.Bytes()
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateProfile, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodGetAllFriends, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

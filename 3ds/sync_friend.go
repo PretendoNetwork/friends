@@ -1,17 +1,39 @@
 package friends_3ds
 
 import (
+	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	"golang.org/x/exp/slices"
 )
 
-func SyncFriend(err error, client *nex.Client, callID uint32, unknown1 uint64, pids []uint32, unknown3 []uint64) {
-	// TODO: Do something with this
+func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids []uint32, lfcList []uint64) {
+	friendRelationships := database_3ds.GetUserFriends(client.PID())
+
+	for i := 0; i < len(friendRelationships); i++ {
+		if !slices.Contains(pids, friendRelationships[i].PID) {
+			database_3ds.RemoveFriendship(client.PID(), friendRelationships[i].PID)
+		}
+	}
+
+	for i := 0; i < len(pids); i++ {
+		if !isPIDInRelationships(friendRelationships, pids[i]) {
+			friendRelationship := database_3ds.SaveFriendship(client.PID(), pids[i])
+
+			friendRelationships = append(friendRelationships, friendRelationship)
+
+			// Alert the other side, in case they weren't able to get our presence data
+			connectedUser := globals.ConnectedUsers[pids[i]]
+			if connectedUser != nil {
+				go sendFriendshipCompletedNotification(connectedUser.Client, pids[i], client.PID())
+			}
+		}
+	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
-	rmcResponseStream.WriteUInt32LE(0) // List<FriendRelationship> length 0
+	rmcResponseStream.WriteListStructure(friendRelationships)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
@@ -32,4 +54,13 @@ func SyncFriend(err error, client *nex.Client, callID uint32, unknown1 uint64, p
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.NEXServer.Send(responsePacket)
+}
+
+func isPIDInRelationships(relationships []*nexproto.FriendRelationship, pid uint32) bool {
+	for i := range relationships {
+		if relationships[i].PID == pid {
+			return true
+		}
+	}
+	return false
 }

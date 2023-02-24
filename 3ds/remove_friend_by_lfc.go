@@ -1,17 +1,16 @@
 package friends_3ds
 
 import (
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *nexproto.MyProfile) {
-	database_3ds.UpdateUserProfile(client.PID(), profileData)
+func RemoveFriendByLocalFriendCode(err error, client *nex.Client, callID uint32, friendLFC uint64) {
+	// Drop this request entirely, waiting for gRPC to retrieve PID from account server
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateProfile, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodRemoveFriendByLocalFriendCode, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
