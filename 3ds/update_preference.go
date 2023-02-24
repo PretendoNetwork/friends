@@ -11,7 +11,7 @@ func UpdatePreference(err error, client *nex.Client, callID uint32, showOnline b
 	if !showCurrentGame {
 		emptyPresence := nexproto.NewNintendoPresence()
 		emptyPresence.GameKey = nexproto.NewGameKey()
-		emptyPresence.ChangedFlags = 4294967295 // FF FF FF FF, All flags
+		emptyPresence.ChangedFlags = 0xFFFFFFFF // All flags
 		sendPresenceUpdateNotification(client, emptyPresence)
 	}
 	if !showOnline {

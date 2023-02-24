@@ -14,7 +14,7 @@ func UpdatePresence(err error, client *nex.Client, callID uint32, presence *nexp
 	if !showGame {
 		currentPresence = nexproto.NewNintendoPresence()
 		currentPresence.GameKey = nexproto.NewGameKey()
-		currentPresence.ChangedFlags = 4294967295 // FF FF FF FF, All flags
+		currentPresence.ChangedFlags = 0xFFFFFFFF // All flags
 	}
 
 	go sendPresenceUpdateNotification(client, currentPresence)
