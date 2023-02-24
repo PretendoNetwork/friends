@@ -42,10 +42,10 @@ func startNEXServer() {
 		lastOnline := nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 
-		if platform == 1 {
+		if platform == globals.WUP {
 			database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
 			notifications_wiiu.SendUserWentOfflineGlobally(packet.Sender())
-		} else if platform == 2 {
+		} else if platform == globals.CTR {
 			database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
 			notifications_3ds.SendUserWentOfflineGlobally(packet.Sender())
 		}

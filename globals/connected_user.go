@@ -7,7 +7,7 @@ import (
 
 type ConnectedUser struct {
 	PID        uint32
-	Platform   uint8
+	Platform   Platform
 	Client     *nex.Client
 	NNAInfo    *nexproto.NNAInfo
 	Presence   *nexproto.NintendoPresence

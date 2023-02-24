@@ -20,11 +20,11 @@ func registerEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	lastOnline.FromTimestamp(time.Now())
 
 	if loginData.TypeName() == "NintendoLoginData" {
-		user.Platform = 1 // Platform is Wii U
+		user.Platform = globals.WUP // Platform is Wii U
 
 		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
 	} else if loginData.TypeName() == "AccountExtraInfo" {
-		user.Platform = 2 // Platform is 3DS
+		user.Platform = globals.CTR // Platform is 3DS
 
 		database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
 	}
