@@ -36,7 +36,7 @@ func assignNEXProtocols() {
 	// Friends (3DS) protocol handles
 	friends3DSServer.UpdateProfile(friends_3ds.UpdateProfile)
 	friends3DSServer.UpdateMii(friends_3ds.UpdateMii)
-	friends3DSServer.UpdatePreference(friends_3ds.UpdatePreferences)
+	friends3DSServer.UpdatePreference(friends_3ds.UpdatePreference)
 	friends3DSServer.SyncFriend(friends_3ds.SyncFriend)
 	friends3DSServer.UpdatePresence(friends_3ds.UpdatePresence)
 	friends3DSServer.UpdateFavoriteGameKey(friends_3ds.UpdateFavoriteGameKey)
