@@ -20,7 +20,7 @@ func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 		senderFriendInfo := nexproto.NewFriendInfo()
 
 		senderFriendInfo.NNAInfo = senderConnectedUser.NNAInfo
-		senderFriendInfo.Presence = senderConnectedUser.Presence
+		senderFriendInfo.Presence = senderConnectedUser.PresenceV2
 		senderFriendInfo.Status = database_wiiu.GetUserComment(senderPID)
 		senderFriendInfo.BecameFriend = friendInfo.BecameFriend
 		senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO: Change this

@@ -27,7 +27,7 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	pid := client.PID()
 
 	globals.ConnectedUsers[pid].NNAInfo = nnaInfo
-	globals.ConnectedUsers[pid].Presence = presence
+	globals.ConnectedUsers[pid].PresenceV2 = presence
 
 	principalPreference := database_wiiu.GetUserPrincipalPreference(pid)
 	comment := database_wiiu.GetUserComment(pid)
