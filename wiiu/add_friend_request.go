@@ -7,6 +7,7 @@ import (
 
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
+	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"go.mongodb.org/mongo-driver/bson"
@@ -160,7 +161,7 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 		friendRequestNotificationData.Message.ExpiresOn = expireTime // no idea why this is set as the sent time
 		friendRequestNotificationData.SentOn = sentTime
 
-		go sendFriendRequestNotification(recipientClient, friendRequestNotificationData)
+		go notifications_wiiu.SendFriendRequest(recipientClient, friendRequestNotificationData)
 	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
@@ -188,37 +189,4 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.NEXServer.Send(responsePacket)
-}
-
-func sendFriendRequestNotification(client *nex.Client, friendRequestNotificationData *nexproto.FriendRequest) {
-	eventObject := nexproto.NewNintendoNotificationEvent()
-	eventObject.Type = 27
-	eventObject.SenderPID = friendRequestNotificationData.PrincipalInfo.PID
-	eventObject.DataHolder = nex.NewDataHolder()
-	eventObject.DataHolder.SetTypeName("FriendRequest")
-	eventObject.DataHolder.SetObjectData(friendRequestNotificationData)
-
-	stream := nex.NewStreamOut(globals.NEXServer)
-	eventObjectBytes := eventObject.Bytes(stream)
-
-	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
-	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent2)
-	rmcRequest.SetParameters(eventObjectBytes)
-
-	rmcRequestBytes := rmcRequest.Bytes()
-
-	requestPacket, _ := nex.NewPacketV0(client, nil)
-
-	requestPacket.SetVersion(0)
-	requestPacket.SetSource(0xA1)
-	requestPacket.SetDestination(0xAF)
-	requestPacket.SetType(nex.DataPacket)
-	requestPacket.SetPayload(rmcRequestBytes)
-
-	requestPacket.AddFlag(nex.FlagNeedsAck)
-	requestPacket.AddFlag(nex.FlagReliable)
-
-	globals.NEXServer.Send(requestPacket)
 }

@@ -5,8 +5,11 @@ import (
 	"os"
 	"time"
 
+	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
+	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
+	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
 )
 
@@ -30,27 +33,28 @@ func startNEXServer() {
 
 	globals.NEXServer.On("Kick", func(packet *nex.PacketV0) {
 		pid := packet.Sender().PID()
-		delete(globals.ConnectedUsers, pid)
 
+		if globals.ConnectedUsers[pid] == nil {
+			return
+		}
+
+		platform := globals.ConnectedUsers[pid].Platform
 		lastOnline := nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 
-		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
-		sendUserWentOfflineWiiUNotifications(packet.Sender())
+		if platform == globals.WUP {
+			database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+			notifications_wiiu.SendUserWentOfflineGlobally(packet.Sender())
+		} else if platform == globals.CTR {
+			database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+			notifications_3ds.SendUserWentOfflineGlobally(packet.Sender())
+		}
 
+		delete(globals.ConnectedUsers, pid)
 		fmt.Println("Leaving (Kick)")
 	})
 
 	globals.NEXServer.On("Disconnect", func(packet *nex.PacketV0) {
-		pid := packet.Sender().PID()
-		delete(globals.ConnectedUsers, pid)
-
-		lastOnline := nex.NewDateTime(0)
-		lastOnline.FromTimestamp(time.Now())
-
-		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
-		sendUserWentOfflineWiiUNotifications(packet.Sender())
-
 		fmt.Println("Leaving (Disconnect)")
 	})
 

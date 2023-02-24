@@ -2,4 +2,4 @@
 ### Pretendo Friends secure server
 
 ## About
-Only handles WiiU at this point. Only has enough implemented to get the Friends app booting. Lots of things are not implemented
+Handles basic functionality for Wii U and 3DS friends. Many things are not implemented.

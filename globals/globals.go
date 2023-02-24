@@ -8,3 +8,10 @@ import (
 var Logger = plogger.NewLogger()
 var NEXServer *nex.Server
 var ConnectedUsers map[uint32]*ConnectedUser
+
+type Platform int
+
+const (
+	WUP Platform = iota
+	CTR
+)

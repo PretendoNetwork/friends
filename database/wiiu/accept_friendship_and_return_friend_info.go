@@ -63,7 +63,7 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 	if connectedUser != nil {
 		// Online
 		friendInfo.NNAInfo = connectedUser.NNAInfo
-		friendInfo.Presence = connectedUser.Presence
+		friendInfo.Presence = connectedUser.PresenceV2
 
 		lastOnline = nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())

@@ -4,14 +4,15 @@ go 1.18
 
 require (
 	github.com/PretendoNetwork/grpc-go v0.0.0-20220820112405-4798a22a13f3
-	github.com/PretendoNetwork/nex-go v1.0.10
-	github.com/PretendoNetwork/nex-protocols-go v1.0.11
+	github.com/PretendoNetwork/nex-go v1.0.11
+	github.com/PretendoNetwork/nex-protocols-go v1.0.12
 	github.com/PretendoNetwork/plogger-go v1.0.2
 	github.com/gocql/gocql v1.2.1
 	github.com/golang/protobuf v1.5.2
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7
 	go.mongodb.org/mongo-driver v1.10.2
+	golang.org/x/exp v0.0.0-20230213192124-5e25df0256eb
 	google.golang.org/grpc v1.49.0
 )
 
@@ -34,7 +35,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220829220503-c86fa9a7ed90 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	golang.org/x/sync v0.0.0-20220907140024-f12130a52804 // indirect
-	golang.org/x/sys v0.0.0-20220909162455-aba9fc2a8ff2 // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/term v0.0.0-20220722155259-a9ba230a4035 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/genproto v0.0.0-20220909194730-69f6226f97e5 // indirect

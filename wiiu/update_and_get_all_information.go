@@ -5,6 +5,7 @@ import (
 
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
+	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -21,13 +22,13 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	presence.Online = true      // Force online status. I have no idea why this is always false
 	presence.PID = client.PID() // WHY IS THIS SET TO 0 BY DEFAULT??
 
-	sendUpdatePresenceWiiUNotifications(presence)
+	notifications_wiiu.SendPresenceUpdate(presence)
 
 	// Get user information
 	pid := client.PID()
 
 	globals.ConnectedUsers[pid].NNAInfo = nnaInfo
-	globals.ConnectedUsers[pid].Presence = presence
+	globals.ConnectedUsers[pid].PresenceV2 = presence
 
 	principalPreference := database_wiiu.GetUserPrincipalPreference(pid)
 	comment := database_wiiu.GetUserComment(pid)

@@ -3,17 +3,21 @@ package friends_3ds
 import (
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func UpdateComment(err error, client *nex.Client, callID uint32, comment string) {
-	go notifications_3ds.SendCommentUpdate(client, comment)
-	database_3ds.UpdateUserComment(client.PID(), comment)
+func GetAllFriends(err error, client *nex.Client, callID uint32) {
+	friendRelationships := database_3ds.GetUserFriends(client.PID())
+
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+
+	rmcResponseStream.WriteListStructure(friendRelationships)
+
+	rmcResponseBody := rmcResponseStream.Bytes()
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateComment, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodGetAllFriends, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

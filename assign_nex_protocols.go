@@ -41,4 +41,12 @@ func assignNEXProtocols() {
 	friends3DSServer.UpdatePresence(friends_3ds.UpdatePresence)
 	friends3DSServer.UpdateFavoriteGameKey(friends_3ds.UpdateFavoriteGameKey)
 	friends3DSServer.UpdateComment(friends_3ds.UpdateComment)
+	friends3DSServer.AddFriendByPrincipalID(friends_3ds.AddFriendshipByPrincipalID)
+	friends3DSServer.GetFriendPersistentInfo(friends_3ds.GetFriendPersistentInfo)
+	friends3DSServer.GetFriendMii(friends_3ds.GetFriendMii)
+	friends3DSServer.GetFriendPresence(friends_3ds.GetFriendPresence)
+	friends3DSServer.RemoveFriendByPrincipalID(friends_3ds.RemoveFriendByPrincipalID)
+	friends3DSServer.RemoveFriendByLocalFriendCode(friends_3ds.RemoveFriendByLocalFriendCode)
+	friends3DSServer.GetPrincipalIDByLocalFriendCode(friends_3ds.GetPrincipalIDByLocalFriendCode)
+	friends3DSServer.GetAllFriends(friends_3ds.GetAllFriends)
 }

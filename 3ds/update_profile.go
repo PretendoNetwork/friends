@@ -1,13 +1,14 @@
 package friends_3ds
 
 import (
+	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *nexproto.MyProfile) {
-	// TODO: Do something with this
+	database_3ds.UpdateUserProfile(client.PID(), profileData)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
 	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateProfile, nil)

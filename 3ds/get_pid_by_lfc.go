@@ -1,19 +1,16 @@
 package friends_3ds
 
 import (
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func UpdateComment(err error, client *nex.Client, callID uint32, comment string) {
-	go notifications_3ds.SendCommentUpdate(client, comment)
-	database_3ds.UpdateUserComment(client.PID(), comment)
+func GetPrincipalIDByLocalFriendCode(err error, client *nex.Client, callID uint32, lfc uint64, lfcList []uint64) {
+	// Respond with unimplemented, waiting for gRPC to retrieve PID from account server
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateComment, nil)
+	rmcResponse.SetError(nex.Errors.Core.NotImplemented)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

@@ -35,7 +35,7 @@ func GetUserFriendList(pid uint32) []*nexproto.FriendInfo {
 		if connectedUser != nil {
 			// Online
 			friendInfo.NNAInfo = connectedUser.NNAInfo
-			friendInfo.Presence = connectedUser.Presence
+			friendInfo.Presence = connectedUser.PresenceV2
 
 			if friendInfo.NNAInfo == nil || friendInfo.NNAInfo.PrincipalBasicInfo == nil {
 				// TODO: Fix this

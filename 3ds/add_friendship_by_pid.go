@@ -8,12 +8,22 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func UpdateComment(err error, client *nex.Client, callID uint32, comment string) {
-	go notifications_3ds.SendCommentUpdate(client, comment)
-	database_3ds.UpdateUserComment(client.PID(), comment)
+func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lfc uint64, pid uint32) {
+	friendRelationship := database_3ds.SaveFriendship(client.PID(), pid)
+
+	connectedUser := globals.ConnectedUsers[pid]
+	if connectedUser != nil {
+		go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pid, client.PID())
+	}
+
+	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+
+	rmcResponseStream.WriteStructure(friendRelationship)
+
+	rmcResponseBody := rmcResponseStream.Bytes()
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateComment, nil)
+	rmcResponse.SetSuccess(nexproto.Friends3DSMethodAddFriendByPrincipalID, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

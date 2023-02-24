@@ -1,13 +1,16 @@
 package friends_3ds
 
 import (
+	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
+	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func UpdateMii(err error, client *nex.Client, callID uint32, mii *nexproto.Mii) {
-	// TODO: Do something with this
+	go notifications_3ds.SendMiiUpdateNotification(client)
+	database_3ds.UpdateUserMii(client.PID(), mii)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
 	rmcResponse.SetSuccess(nexproto.Friends3DSMethodUpdateMii, nil)
