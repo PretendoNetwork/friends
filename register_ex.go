@@ -2,14 +2,32 @@ package main
 
 import (
 	"strconv"
+	"time"
 
+	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func registerEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData nexproto.NintendoLoginData) {
+func registerEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) {
 	// TODO: Validate loginData
+
+	pid := client.PID()
+	user := globals.ConnectedUsers[pid]
+	lastOnline := nex.NewDateTime(0)
+	lastOnline.FromTimestamp(time.Now())
+
+	if loginData.TypeName() == "NintendoLoginData" {
+		user.Platform = 1 // Platform is Wii U
+
+		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+	} else if loginData.TypeName() == "AccountExtraInfo" {
+		user.Platform = 2 // Platform is 3DS
+
+		database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+	}
 
 	localStation := stationUrls[0]
 

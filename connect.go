@@ -1,9 +1,6 @@
 package main
 
 import (
-	"time"
-
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 )
@@ -53,10 +50,4 @@ func connect(packet *nex.PacketV0) {
 	connectedUser.PID = packet.Sender().PID()
 	connectedUser.Client = packet.Sender()
 	globals.ConnectedUsers[userPID] = connectedUser
-
-	lastOnline := nex.NewDateTime(0)
-	lastOnline.FromTimestamp(time.Now())
-
-	// TODO: CHANGE THIS. NOT EVERY CONNECTION IS FROM WIIU
-	database_wiiu.UpdateUserLastOnlineTime(packet.Sender().PID(), lastOnline)
 }
