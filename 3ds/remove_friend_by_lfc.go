@@ -7,10 +7,10 @@ import (
 )
 
 func RemoveFriendByLocalFriendCode(err error, client *nex.Client, callID uint32, friendLFC uint64) {
-	// Drop this request entirely, waiting for gRPC to retrieve PID from account server
+	// Respond with unimplemented, waiting for gRPC to retrieve PID from account server
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodRemoveFriendByLocalFriendCode, nil)
+	rmcResponse.SetError(nex.Errors.Core.NotImplemented)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

@@ -7,10 +7,10 @@ import (
 )
 
 func GetPrincipalIDByLocalFriendCode(err error, client *nex.Client, callID uint32, lfc uint64, lfcList []uint64) {
-	// Drop this request entirely, waiting for gRPC to retrieve PID from account server
+	// Respond with unimplemented, waiting for gRPC to retrieve PID from account server
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.Friends3DSMethodGetPrincipalIDByLocalFriendCode, nil)
+	rmcResponse.SetError(nex.Errors.Core.NotImplemented)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
