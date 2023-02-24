@@ -22,5 +22,5 @@ func connectPostgres() {
 	globals.Logger.Success("Connected to Postgres!")
 
 	initPostgresWiiU()
-	// TODO: 3DS database
+	initPostgres3DS()
 }
