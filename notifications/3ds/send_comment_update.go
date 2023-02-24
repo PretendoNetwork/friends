@@ -1,50 +1,39 @@
-package friends_wiiu
+package notifications_3ds
 
 import (
-	"time"
-
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
+	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-// Notifications that are used in other files with no main file
-
-func SendUserWentOfflineNotifications(client *nex.Client) {
-	lastOnline := nex.NewDateTime(0)
-	lastOnline.FromTimestamp(time.Now())
-
-	nintendoNotificationEventGeneral := nexproto.NewNintendoNotificationEventGeneral()
-
-	nintendoNotificationEventGeneral.U32Param = 0
-	nintendoNotificationEventGeneral.U64Param1 = 0
-	nintendoNotificationEventGeneral.U64Param2 = lastOnline.Value()
-	nintendoNotificationEventGeneral.StrParam = ""
+func SendCommentUpdate(client *nex.Client, comment string) {
+	notificationEvent := nexproto.NewNintendoNotificationEventGeneral()
+	notificationEvent.StrParam = comment
 
 	eventObject := nexproto.NewNintendoNotificationEvent()
-	eventObject.Type = 10
+	eventObject.Type = 3
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
-	eventObject.DataHolder.SetObjectData(nintendoNotificationEventGeneral)
+	eventObject.DataHolder.SetObjectData(notificationEvent)
 
 	stream := nex.NewStreamOut(globals.NEXServer)
-	stream.WriteStructure(eventObject)
+	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
 	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
 	rmcRequest.SetCallID(3810693103)
 	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent1)
-	rmcRequest.SetParameters(stream.Bytes())
+	rmcRequest.SetParameters(eventObjectBytes)
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendList := database_wiiu.GetUserFriendList(client.PID())
+	friendsList := database_3ds.GetUserFriends(client.PID())
 
-	for i := 0; i < len(friendList); i++ {
-		friendPID := friendList[i].NNAInfo.PrincipalBasicInfo.PID
-		connectedUser := globals.ConnectedUsers[friendPID]
+	for i := 0; i < len(friendsList); i++ {
+
+		connectedUser := globals.ConnectedUsers[friendsList[i].PID]
 
 		if connectedUser != nil {
 			requestPacket, _ := nex.NewPacketV0(connectedUser.Client, nil)

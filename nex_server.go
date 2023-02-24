@@ -5,11 +5,11 @@ import (
 	"os"
 	"time"
 
-	friends_3ds "github.com/PretendoNetwork/friends-secure/3ds"
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
-	friends_wiiu "github.com/PretendoNetwork/friends-secure/wiiu"
+	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
+	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
 )
 
@@ -44,10 +44,10 @@ func startNEXServer() {
 
 		if platform == 1 {
 			database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
-			friends_wiiu.SendUserWentOfflineNotifications(packet.Sender())
+			notifications_wiiu.SendUserWentOfflineGlobally(packet.Sender())
 		} else if platform == 2 {
 			database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
-			friends_3ds.SendUserWentOfflineNotificationsGlobally(packet.Sender())
+			notifications_3ds.SendUserWentOfflineGlobally(packet.Sender())
 		}
 
 		delete(globals.ConnectedUsers, pid)

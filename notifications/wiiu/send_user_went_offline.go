@@ -1,40 +1,48 @@
-package friends_3ds
+package notifications_wiiu
 
 import (
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
+	"time"
+
+	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-// Notifications that are used in other files with no main file
-
-func SendUserWentOfflineNotificationsGlobally(client *nex.Client) {
-	friendsList := database_3ds.GetUserFriends(client.PID())
+func SendUserWentOfflineGlobally(client *nex.Client) {
+	friendsList := database_wiiu.GetUserFriendList(client.PID())
 
 	for i := 0; i < len(friendsList); i++ {
-		SendUserWentOfflineNotification(client, friendsList[i].PID)
+		SendUserWentOffline(client, friendsList[i].NNAInfo.PrincipalBasicInfo.PID)
 	}
 }
 
-func SendUserWentOfflineNotification(client *nex.Client, pid uint32) {
-	notificationEvent := nexproto.NewNintendoNotificationEventGeneral()
+func SendUserWentOffline(client *nex.Client, pid uint32) {
+	lastOnline := nex.NewDateTime(0)
+	lastOnline.FromTimestamp(time.Now())
+
+	nintendoNotificationEventGeneral := nexproto.NewNintendoNotificationEventGeneral()
+
+	nintendoNotificationEventGeneral.U32Param = 0
+	nintendoNotificationEventGeneral.U64Param1 = 0
+	nintendoNotificationEventGeneral.U64Param2 = lastOnline.Value()
+	nintendoNotificationEventGeneral.StrParam = ""
 
 	eventObject := nexproto.NewNintendoNotificationEvent()
 	eventObject.Type = 10
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
-	eventObject.DataHolder.SetObjectData(notificationEvent)
+	eventObject.DataHolder.SetObjectData(nintendoNotificationEventGeneral)
 
 	stream := nex.NewStreamOut(globals.NEXServer)
-	eventObjectBytes := eventObject.Bytes(stream)
+	stream.WriteStructure(eventObject)
 
 	rmcRequest := nex.NewRMCRequest()
 	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
 	rmcRequest.SetCallID(3810693103)
 	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent1)
-	rmcRequest.SetParameters(eventObjectBytes)
+	rmcRequest.SetParameters(stream.Bytes())
 
 	rmcRequestBytes := rmcRequest.Bytes()
 

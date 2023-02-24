@@ -3,6 +3,7 @@ package friends_3ds
 import (
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
+	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"golang.org/x/exp/slices"
@@ -26,7 +27,7 @@ func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids [
 			// Alert the other side, in case they weren't able to get our presence data
 			connectedUser := globals.ConnectedUsers[pids[i]]
 			if connectedUser != nil {
-				go sendFriendshipCompletedNotification(connectedUser.Client, pids[i], client.PID())
+				go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pids[i], client.PID())
 			}
 		}
 	}

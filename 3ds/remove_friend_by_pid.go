@@ -3,12 +3,13 @@ package friends_3ds
 import (
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
+	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func RemoveFriendByPrincipalID(err error, client *nex.Client, callID uint32, pid uint32) {
-	go SendUserWentOfflineNotification(client, pid)
+	go notifications_3ds.SendUserWentOffline(client, pid)
 	database_3ds.RemoveFriendship(client.PID(), pid)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.Friends3DSProtocolID, callID)
