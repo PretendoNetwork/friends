@@ -35,7 +35,7 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		VALUES ($1, $2, $3, true)
 		ON CONFLICT (user1_pid, user2_pid)
 		DO UPDATE SET
-		date = $3
+		date = $3,
 		active = true`, senderPID, recipientPID, acceptedTime.Value())
 	if err != nil {
 		globals.Logger.Critical(err.Error())
@@ -47,7 +47,7 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		VALUES ($1, $2, $3, true)
 		ON CONFLICT (user1_pid, user2_pid)
 		DO UPDATE SET
-		date = $3
+		date = $3,
 		active = true`, recipientPID, senderPID, acceptedTime.Value())
 	if err != nil {
 		globals.Logger.Critical(err.Error())
