@@ -23,6 +23,7 @@ func assignNEXProtocols() {
 	// Friends (WiiU) protocol handles
 	friendsWiiUServer.UpdateAndGetAllInformation(friends_wiiu.UpdateAndGetAllInformation)
 	friendsWiiUServer.AddFriendRequest(friends_wiiu.AddFriendRequest)
+	friendsWiiUServer.RemoveFriend(friends_wiiu.RemoveFriend)
 	friendsWiiUServer.AcceptFriendRequest(friends_wiiu.AcceptFriendRequest)
 	friendsWiiUServer.MarkFriendRequestsAsReceived(friends_wiiu.MarkFriendRequestsAsReceived)
 	friendsWiiUServer.UpdatePresence(friends_wiiu.UpdatePresence)
