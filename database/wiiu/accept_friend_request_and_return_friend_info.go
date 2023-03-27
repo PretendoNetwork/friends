@@ -12,7 +12,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.FriendInfo {
+func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *nexproto.FriendInfo {
 	var senderPID uint32
 	var recipientPID uint32
 
