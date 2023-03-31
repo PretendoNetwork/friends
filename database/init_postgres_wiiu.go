@@ -44,8 +44,10 @@ func initPostgresWiiU() {
 		id bigserial PRIMARY KEY,
 		blocker_pid integer,
 		blocked_pid integer,
+		title_id bigint,
+		title_version integer,
 		date bigint,
-		active boolean
+		UNIQUE (blocker_pid, blocked_pid)
 	)`)
 	if err != nil {
 		globals.Logger.Critical(err.Error())

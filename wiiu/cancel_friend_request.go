@@ -9,11 +9,11 @@ import (
 )
 
 func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
-
 	pid := database_wiiu.DeleteFriendRequestAndReturnFriendPID(id)
 
 	connectedUser := globals.ConnectedUsers[pid]
 	if connectedUser != nil {
+		// This may send the friend removed notification, but they are the same.
 		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, client.PID())
 	}
 

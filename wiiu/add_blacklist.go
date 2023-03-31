@@ -1,33 +1,38 @@
 package friends_wiiu
 
 import (
+	"time"
+
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
-	infos := make([]*nexproto.PrincipalBasicInfo, 0)
+func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincipal *nexproto.BlacklistedPrincipal) {
+	currentBlacklistPrincipal := blacklistPrincipal
 
-	for i := 0; i < len(pids); i++ {
-		pid := pids[i]
-		info := database_wiiu.GetUserInfoByPID(pid)
+	senderPID := currentBlacklistPrincipal.PrincipalBasicInfo.PID
+	titleID := currentBlacklistPrincipal.GameKey.TitleID
+	titleVersion := currentBlacklistPrincipal.GameKey.TitleVersion
 
-		if info != nil {
-			infos = append(infos, info)
-		}
-	}
+	database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
+
+	date := nex.NewDateTime(0)
+	date.FromTimestamp(time.Now())
+
+	currentBlacklistPrincipal.PrincipalBasicInfo = database_wiiu.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
+	currentBlacklistPrincipal.BlackListedSince = date
 
 	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
-	rmcResponseStream.WriteListStructure(infos)
+	rmcResponseStream.WriteStructure(blacklistPrincipal)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
 	// Build response packet
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodGetBasicInfo, rmcResponseBody)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodAddBlackList, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

@@ -1,7 +1,6 @@
 package friends_wiiu
 
 import (
-	"encoding/base64"
 	"fmt"
 	"time"
 
@@ -10,7 +9,6 @@ import (
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *nexproto.GameKey, unknown6 *nex.DateTime) {
@@ -53,24 +51,9 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 
 	friendRequestID := database_wiiu.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
 
-	recipientUserInforation := database_wiiu.GetUserInfoByPID(recipientPID)
-
 	friendRequest := nexproto.NewFriendRequest()
 
-	friendRequest.PrincipalInfo = nexproto.NewPrincipalBasicInfo()
-	friendRequest.PrincipalInfo.PID = recipientPID
-	friendRequest.PrincipalInfo.NNID = recipientUserInforation["username"].(string)
-	friendRequest.PrincipalInfo.Mii = nexproto.NewMiiV2()
-	friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
-
-	encodedMiiData := recipientUserInforation["mii"].(bson.M)["data"].(string)
-	decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
-
-	friendRequest.PrincipalInfo.Mii.Name = recipientUserInforation["mii"].(bson.M)["name"].(string)
-	friendRequest.PrincipalInfo.Mii.Unknown1 = 0 // replaying from real server
-	friendRequest.PrincipalInfo.Mii.Unknown2 = 0 // replaying from real server
-	friendRequest.PrincipalInfo.Mii.Data = decodedMiiData
-	friendRequest.PrincipalInfo.Mii.Datetime = nex.NewDateTime(0)
+	friendRequest.PrincipalInfo = database_wiiu.GetUserInfoByPID(recipientPID)
 
 	friendRequest.Message = nexproto.NewFriendRequestMessage()
 	friendRequest.Message.FriendRequestID = friendRequestID
@@ -130,24 +113,10 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	recipientClient := client.Server().FindClientFromPID(recipientPID)
 
 	if recipientClient != nil {
-		senderUserInforation := database_wiiu.GetUserInfoByPID(senderPID)
 
 		friendRequestNotificationData := nexproto.NewFriendRequest()
 
-		friendRequestNotificationData.PrincipalInfo = nexproto.NewPrincipalBasicInfo()
-		friendRequestNotificationData.PrincipalInfo.PID = senderPID
-		friendRequestNotificationData.PrincipalInfo.NNID = senderUserInforation["username"].(string)
-		friendRequestNotificationData.PrincipalInfo.Mii = nexproto.NewMiiV2()
-		friendRequestNotificationData.PrincipalInfo.Unknown = 2 // replaying from real server
-
-		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
-		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
-
-		friendRequestNotificationData.PrincipalInfo.Mii.Name = senderUserInforation["mii"].(bson.M)["name"].(string)
-		friendRequestNotificationData.PrincipalInfo.Mii.Unknown1 = 0 // replaying from real server
-		friendRequestNotificationData.PrincipalInfo.Mii.Unknown2 = 0 // replaying from real server
-		friendRequestNotificationData.PrincipalInfo.Mii.Data = decodedMiiData
-		friendRequestNotificationData.PrincipalInfo.Mii.Datetime = nex.NewDateTime(0)
+		friendRequestNotificationData.PrincipalInfo = database_wiiu.GetUserInfoByPID(senderPID)
 
 		friendRequestNotificationData.Message = nexproto.NewFriendRequestMessage()
 		friendRequestNotificationData.Message.FriendRequestID = friendRequestID

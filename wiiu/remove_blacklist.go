@@ -7,11 +7,11 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func DeleteFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
-	database_wiiu.SetFriendRequestDenied(id)
+func RemoveBlacklist(err error, client *nex.Client, callID uint32, blockedPID uint32) {
+	database_wiiu.UnsetUserBlocked(client.PID(), blockedPID)
 
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodDeleteFriendRequest, nil)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodRemoveBlackList, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
