@@ -16,13 +16,37 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 	titleID := currentBlacklistPrincipal.GameKey.TitleID
 	titleVersion := currentBlacklistPrincipal.GameKey.TitleVersion
 
-	database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
-
 	date := nex.NewDateTime(0)
 	date.FromTimestamp(time.Now())
 
-	currentBlacklistPrincipal.PrincipalBasicInfo = database_wiiu.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
+	userInfo := database_wiiu.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
+
+	if userInfo == nil {
+		rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
+		rmcResponse.SetError(nex.Errors.FPD.FriendNotExists) // TODO: Not sure if this is the correct error.
+
+		rmcResponseBytes := rmcResponse.Bytes()
+
+		responsePacket, _ := nex.NewPacketV0(client, nil)
+
+		responsePacket.SetVersion(0)
+		responsePacket.SetSource(0xA1)
+		responsePacket.SetDestination(0xAF)
+		responsePacket.SetType(nex.DataPacket)
+		responsePacket.SetPayload(rmcResponseBytes)
+
+		responsePacket.AddFlag(nex.FlagNeedsAck)
+		responsePacket.AddFlag(nex.FlagReliable)
+
+		globals.NEXServer.Send(responsePacket)
+
+		return
+	}
+
+	currentBlacklistPrincipal.PrincipalBasicInfo = userInfo
 	currentBlacklistPrincipal.BlackListedSince = date
+
+	database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
 
 	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
 
