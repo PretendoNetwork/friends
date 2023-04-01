@@ -13,7 +13,7 @@ func GetUserFriends(pid uint32) []*nexproto.FriendRelationship {
 	friendRelationships := make([]*nexproto.FriendRelationship, 0)
 
 	rows, err := database.Postgres.Query(`
-	SELECT user2_pid, type FROM "3ds".friendships WHERE user1_pid=$1 AND type=1`, pid)
+	SELECT user2_pid, type FROM "3ds".friendships WHERE user1_pid=$1 AND type=1 LIMIT 100`, pid)
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 	}
