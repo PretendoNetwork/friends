@@ -7,27 +7,11 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
-	infos := make([]*nexproto.PrincipalBasicInfo, 0)
+func DeleteFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
+	database_wiiu.SetFriendRequestDenied(id)
 
-	for i := 0; i < len(pids); i++ {
-		pid := pids[i]
-		info := database_wiiu.GetUserInfoByPID(pid)
-
-		if info != nil {
-			infos = append(infos, info)
-		}
-	}
-
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
-
-	rmcResponseStream.WriteListStructure(infos)
-
-	rmcResponseBody := rmcResponseStream.Bytes()
-
-	// Build response packet
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodGetBasicInfo, rmcResponseBody)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodDeleteFriendRequest, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

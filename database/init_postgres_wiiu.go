@@ -15,11 +15,11 @@ func initPostgresWiiU() {
 
 	_, err = Postgres.Exec(`CREATE TABLE IF NOT EXISTS wiiu.user_data (
 		pid integer PRIMARY KEY,
-		show_online boolean,
-		show_current_game boolean,
-		block_friend_requests boolean,
-		comment text,
-		comment_changed bigint,
+		show_online boolean DEFAULT true,
+		show_current_game boolean DEFAULT true,
+		block_friend_requests boolean DEFAULT false,
+		comment text DEFAULT '',
+		comment_changed bigint DEFAULT 0,
 		last_online bigint
 	)`)
 	if err != nil {
@@ -44,8 +44,10 @@ func initPostgresWiiU() {
 		id bigserial PRIMARY KEY,
 		blocker_pid integer,
 		blocked_pid integer,
+		title_id bigint,
+		title_version integer,
 		date bigint,
-		active boolean
+		UNIQUE (blocker_pid, blocked_pid)
 	)`)
 	if err != nil {
 		globals.Logger.Critical(err.Error())

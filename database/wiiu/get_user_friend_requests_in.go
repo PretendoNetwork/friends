@@ -1,13 +1,10 @@
 package database_wiiu
 
 import (
-	"encoding/base64"
-
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 // Get a users received friend requests
@@ -29,22 +26,9 @@ func GetUserFriendRequestsIn(pid uint32) []*nexproto.FriendRequest {
 		var received bool
 		rows.Scan(&id, &senderPID, &sentOn, &expiresOn, &message, &received)
 
-		senderUserInforation := GetUserInfoByPID(senderPID)
-		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
-		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
-
 		friendRequest := nexproto.NewFriendRequest()
 
-		friendRequest.PrincipalInfo = nexproto.NewPrincipalBasicInfo()
-		friendRequest.PrincipalInfo.PID = senderPID
-		friendRequest.PrincipalInfo.NNID = senderUserInforation["username"].(string)
-		friendRequest.PrincipalInfo.Mii = nexproto.NewMiiV2()
-		friendRequest.PrincipalInfo.Mii.Name = senderUserInforation["mii"].(bson.M)["name"].(string)
-		friendRequest.PrincipalInfo.Mii.Unknown1 = 0 // replaying from real server
-		friendRequest.PrincipalInfo.Mii.Unknown2 = 0 // replaying from real server
-		friendRequest.PrincipalInfo.Mii.Data = decodedMiiData
-		friendRequest.PrincipalInfo.Mii.Datetime = nex.NewDateTime(0)
-		friendRequest.PrincipalInfo.Unknown = 2 // replaying from real server
+		friendRequest.PrincipalInfo = GetUserInfoByPID(senderPID)
 
 		friendRequest.Message = nexproto.NewFriendRequestMessage()
 		friendRequest.Message.FriendRequestID = id

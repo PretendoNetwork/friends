@@ -1,7 +1,6 @@
 package database_wiiu
 
 import (
-	"encoding/base64"
 	"time"
 
 	"github.com/PretendoNetwork/friends-secure/database"
@@ -9,10 +8,9 @@ import (
 	"github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 	"github.com/gocql/gocql"
-	"go.mongodb.org/mongo-driver/bson"
 )
 
-func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.FriendInfo {
+func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *nexproto.FriendInfo {
 	var senderPID uint32
 	var recipientPID uint32
 
@@ -69,21 +67,9 @@ func AcceptFriendshipAndReturnFriendInfo(friendRequestID uint64) *nexproto.Frien
 		lastOnline.FromTimestamp(time.Now())
 	} else {
 		// Offline
-		senderUserInforation := GetUserInfoByPID(senderPID)
-		encodedMiiData := senderUserInforation["mii"].(bson.M)["data"].(string)
-		decodedMiiData, _ := base64.StdEncoding.DecodeString(encodedMiiData)
 
 		friendInfo.NNAInfo = nexproto.NewNNAInfo()
-		friendInfo.NNAInfo.PrincipalBasicInfo = nexproto.NewPrincipalBasicInfo()
-		friendInfo.NNAInfo.PrincipalBasicInfo.PID = senderPID
-		friendInfo.NNAInfo.PrincipalBasicInfo.NNID = senderUserInforation["username"].(string)
-		friendInfo.NNAInfo.PrincipalBasicInfo.Mii = nexproto.NewMiiV2()
-		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = senderUserInforation["mii"].(bson.M)["name"].(string)
-		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = 0
-		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = 0
-		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Data = decodedMiiData
-		friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Datetime = nex.NewDateTime(0)
-		friendInfo.NNAInfo.PrincipalBasicInfo.Unknown = 0
+		friendInfo.NNAInfo.PrincipalBasicInfo = GetUserInfoByPID(senderPID)
 		friendInfo.NNAInfo.Unknown1 = 0
 		friendInfo.NNAInfo.Unknown2 = 0
 

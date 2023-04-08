@@ -3,31 +3,22 @@ package friends_wiiu
 import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
+	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
-	infos := make([]*nexproto.PrincipalBasicInfo, 0)
+func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
+	pid := database_wiiu.DeleteFriendRequestAndReturnFriendPID(id)
 
-	for i := 0; i < len(pids); i++ {
-		pid := pids[i]
-		info := database_wiiu.GetUserInfoByPID(pid)
-
-		if info != nil {
-			infos = append(infos, info)
-		}
+	connectedUser := globals.ConnectedUsers[pid]
+	if connectedUser != nil {
+		// This may send the friend removed notification, but they are the same.
+		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, client.PID())
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
-
-	rmcResponseStream.WriteListStructure(infos)
-
-	rmcResponseBody := rmcResponseStream.Bytes()
-
-	// Build response packet
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodGetBasicInfo, rmcResponseBody)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodCancelFriendRequest, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

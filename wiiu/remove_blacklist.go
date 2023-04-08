@@ -7,27 +7,11 @@ import (
 	nexproto "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
-	infos := make([]*nexproto.PrincipalBasicInfo, 0)
+func RemoveBlacklist(err error, client *nex.Client, callID uint32, blockedPID uint32) {
+	database_wiiu.UnsetUserBlocked(client.PID(), blockedPID)
 
-	for i := 0; i < len(pids); i++ {
-		pid := pids[i]
-		info := database_wiiu.GetUserInfoByPID(pid)
-
-		if info != nil {
-			infos = append(infos, info)
-		}
-	}
-
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
-
-	rmcResponseStream.WriteListStructure(infos)
-
-	rmcResponseBody := rmcResponseStream.Bytes()
-
-	// Build response packet
 	rmcResponse := nex.NewRMCResponse(nexproto.FriendsWiiUProtocolID, callID)
-	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodGetBasicInfo, rmcResponseBody)
+	rmcResponse.SetSuccess(nexproto.FriendsWiiUMethodRemoveBlackList, nil)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 

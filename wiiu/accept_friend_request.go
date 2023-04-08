@@ -9,7 +9,7 @@ import (
 )
 
 func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
-	friendInfo := database_wiiu.AcceptFriendshipAndReturnFriendInfo(id)
+	friendInfo := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(id)
 
 	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID
 	connectedUser := globals.ConnectedUsers[friendPID]
