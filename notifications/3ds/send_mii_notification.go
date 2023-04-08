@@ -4,13 +4,13 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
 )
 
 func SendMiiUpdateNotification(client *nex.Client) {
-	notificationEvent := nexproto.NewNintendoNotificationEventGeneral()
+	notificationEvent := nintendo_notifications.NewNintendoNotificationEventGeneral()
 
-	eventObject := nexproto.NewNintendoNotificationEvent()
+	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
 	eventObject.Type = 5
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
@@ -21,9 +21,9 @@ func SendMiiUpdateNotification(client *nex.Client) {
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
+	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
 	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent1)
+	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent1)
 	rmcRequest.SetParameters(eventObjectBytes)
 
 	rmcRequestBytes := rmcRequest.Bytes()

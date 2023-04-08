@@ -1,55 +1,35 @@
 package main
 
 import (
-	"crypto/rsa"
 	"io/ioutil"
 	"log"
 
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends-secure/types"
+	"github.com/PretendoNetwork/friends-secure/utility"
 
 	"github.com/joho/godotenv"
 )
 
-/*
-type Config struct {
-	Mongo struct {
-	}
-	Cassandra struct{}
-}
-*/
-
-type nexToken struct {
-	SystemType  uint8
-	TokenType   uint8
-	UserPID     uint32
-	AccessLevel uint8
-	TitleID     uint64
-	ExpireTime  uint64
-}
-
-var rsaPrivateKeyBytes []byte
-var rsaPrivateKey *rsa.PrivateKey
-var hmacSecret []byte
-
 func init() {
-	globals.ConnectedUsers = make(map[uint32]*globals.ConnectedUser)
+	globals.ConnectedUsers = make(map[uint32]*types.ConnectedUser)
 	// Setup RSA private key for token parsing
 	var err error
 
-	rsaPrivateKeyBytes, err = ioutil.ReadFile("private.pem")
+	globals.RSAPrivateKeyBytes, err = ioutil.ReadFile("private.pem")
 	if err != nil {
 		// TODO: Handle error
 		globals.Logger.Critical(err.Error())
 	}
 
-	rsaPrivateKey, err = parseRsaPrivateKey(rsaPrivateKeyBytes)
+	globals.RSAPrivateKey, err = utility.ParseRsaPrivateKey(globals.RSAPrivateKeyBytes)
 	if err != nil {
 		// TODO: Handle error
 		globals.Logger.Critical(err.Error())
 	}
 
-	hmacSecret, err = ioutil.ReadFile("secret.key")
+	globals.HMACSecret, err = ioutil.ReadFile("secret.key")
 	if err != nil {
 		// TODO: Handle error
 		globals.Logger.Critical(err.Error())

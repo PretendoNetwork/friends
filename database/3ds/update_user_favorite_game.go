@@ -3,11 +3,11 @@ package database_3ds
 import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
 )
 
 // Update a user's favorite game
-func UpdateUserFavoriteGame(pid uint32, gameKey *nexproto.GameKey) {
+func UpdateUserFavoriteGame(pid uint32, gameKey *friends_3ds.GameKey) {
 	_, err := database.Postgres.Exec(`
 		INSERT INTO "3ds".user_data (pid, favorite_title, favorite_title_version)
 		VALUES ($1, $2, $3)

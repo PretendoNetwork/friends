@@ -3,16 +3,16 @@ package notifications_3ds
 import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
 )
 
 func SendFriendshipCompleted(client *nex.Client, friendPID uint32, senderPID uint32) {
-	notificationEvent := nexproto.NewNintendoNotificationEventGeneral()
+	notificationEvent := nintendo_notifications.NewNintendoNotificationEventGeneral()
 	notificationEvent.U32Param = 0
 	notificationEvent.U64Param1 = 0
 	notificationEvent.U64Param2 = uint64(friendPID)
 
-	eventObject := nexproto.NewNintendoNotificationEvent()
+	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
 	eventObject.Type = 7
 	eventObject.SenderPID = senderPID
 	eventObject.DataHolder = nex.NewDataHolder()
@@ -23,9 +23,9 @@ func SendFriendshipCompleted(client *nex.Client, friendPID uint32, senderPID uin
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
+	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
 	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent1)
+	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent1)
 	rmcRequest.SetParameters(eventObjectBytes)
 
 	rmcRequestBytes := rmcRequest.Bytes()

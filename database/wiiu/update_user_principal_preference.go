@@ -3,10 +3,10 @@ package database_wiiu
 import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
 )
 
-func UpdateUserPrincipalPreference(pid uint32, principalPreference *nexproto.PrincipalPreference) {
+func UpdateUserPrincipalPreference(pid uint32, principalPreference *friends_wiiu.PrincipalPreference) {
 	_, err := database.Postgres.Exec(`
 		INSERT INTO wiiu.user_data (pid, show_online, show_current_game, block_friend_requests)
 		VALUES ($1, $2, $3, $4)

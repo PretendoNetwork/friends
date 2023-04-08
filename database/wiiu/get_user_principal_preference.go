@@ -5,11 +5,11 @@ import (
 
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
 )
 
-func GetUserPrincipalPreference(pid uint32) *nexproto.PrincipalPreference {
-	preference := nexproto.NewPrincipalPreference()
+func GetUserPrincipalPreference(pid uint32) *friends_wiiu.PrincipalPreference {
+	preference := friends_wiiu.NewPrincipalPreference()
 
 	err := database.Postgres.QueryRow(`SELECT show_online, show_current_game, block_friend_requests FROM wiiu.user_data WHERE pid=$1`, pid).Scan(&preference.ShowOnlinePresence, &preference.ShowCurrentTitle, &preference.BlockFriendRequests)
 	if err != nil {

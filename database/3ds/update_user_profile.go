@@ -3,11 +3,11 @@ package database_3ds
 import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
 )
 
 // Update a user's profile
-func UpdateUserProfile(pid uint32, profileData *nexproto.MyProfile) {
+func UpdateUserProfile(pid uint32, profileData *friends_3ds.MyProfile) {
 	_, err := database.Postgres.Exec(`
 		INSERT INTO "3ds".user_data (pid, region, area, language)
 		VALUES ($1, $2, $3, $4)

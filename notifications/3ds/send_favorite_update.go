@@ -4,11 +4,12 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
 )
 
-func SendFavoriteUpdate(client *nex.Client, gameKey *nexproto.GameKey) {
-	eventObject := nexproto.NewNintendoNotificationEvent()
+func SendFavoriteUpdate(client *nex.Client, gameKey *friends_3ds.GameKey) {
+	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
 	eventObject.Type = 2
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
@@ -19,9 +20,9 @@ func SendFavoriteUpdate(client *nex.Client, gameKey *nexproto.GameKey) {
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
+	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
 	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent1)
+	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent1)
 	rmcRequest.SetParameters(eventObjectBytes)
 
 	rmcRequestBytes := rmcRequest.Bytes()

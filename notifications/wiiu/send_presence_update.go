@@ -6,11 +6,12 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
 )
 
-func SendPresenceUpdate(presence *nexproto.NintendoPresenceV2) {
-	eventObject := nexproto.NewNintendoNotificationEvent()
+func SendPresenceUpdate(presence *friends_wiiu.NintendoPresenceV2) {
+	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
 	eventObject.Type = 24
 	eventObject.SenderPID = presence.PID
 	eventObject.DataHolder = nex.NewDataHolder()
@@ -21,9 +22,9 @@ func SendPresenceUpdate(presence *nexproto.NintendoPresenceV2) {
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
+	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
 	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent2)
+	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent2)
 	rmcRequest.SetParameters(eventObjectBytes)
 
 	rmcRequestBytes := rmcRequest.Bytes()

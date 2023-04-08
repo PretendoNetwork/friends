@@ -6,7 +6,7 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
 )
 
 func SendUserWentOfflineGlobally(client *nex.Client) {
@@ -21,14 +21,14 @@ func SendUserWentOffline(client *nex.Client, pid uint32) {
 	lastOnline := nex.NewDateTime(0)
 	lastOnline.FromTimestamp(time.Now())
 
-	nintendoNotificationEventGeneral := nexproto.NewNintendoNotificationEventGeneral()
+	nintendoNotificationEventGeneral := nintendo_notifications.NewNintendoNotificationEventGeneral()
 
 	nintendoNotificationEventGeneral.U32Param = 0
 	nintendoNotificationEventGeneral.U64Param1 = 0
 	nintendoNotificationEventGeneral.U64Param2 = lastOnline.Value()
 	nintendoNotificationEventGeneral.StrParam = ""
 
-	eventObject := nexproto.NewNintendoNotificationEvent()
+	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
 	eventObject.Type = 10
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
@@ -39,9 +39,9 @@ func SendUserWentOffline(client *nex.Client, pid uint32) {
 	stream.WriteStructure(eventObject)
 
 	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nexproto.NintendoNotificationsProtocolID)
+	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
 	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nexproto.NintendoNotificationsMethodProcessNintendoNotificationEvent1)
+	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent1)
 	rmcRequest.SetParameters(stream.Bytes())
 
 	rmcRequestBytes := rmcRequest.Bytes()

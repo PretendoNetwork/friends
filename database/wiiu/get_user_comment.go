@@ -6,12 +6,12 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	nexproto "github.com/PretendoNetwork/nex-protocols-go"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
 )
 
 // Get a users comment
-func GetUserComment(pid uint32) *nexproto.Comment {
-	comment := nexproto.NewComment()
+func GetUserComment(pid uint32) *friends_wiiu.Comment {
+	comment := friends_wiiu.NewComment()
 	comment.Unknown = 0
 
 	var changed uint64 = 0
