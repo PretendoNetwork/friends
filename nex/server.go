@@ -12,6 +12,7 @@ import (
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	"github.com/PretendoNetwork/friends-secure/types"
 	nex "github.com/PretendoNetwork/nex-go"
+	_ "github.com/PretendoNetwork/nex-protocols-go"
 )
 
 func StartNEXServer() {
