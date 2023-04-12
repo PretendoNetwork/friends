@@ -3,8 +3,8 @@ module github.com/PretendoNetwork/friends-secure
 go 1.18
 
 require (
-	github.com/PretendoNetwork/grpc-go v0.0.0-20230411011443-bb1bba45a95b
-	github.com/PretendoNetwork/nex-go v1.0.18
+	github.com/PretendoNetwork/grpc-go v0.0.0-20230412021055-22e9fed362e1
+	github.com/PretendoNetwork/nex-go v1.0.19
 	github.com/PretendoNetwork/nex-protocols-go v1.0.24
 	github.com/PretendoNetwork/plogger-go v1.0.2
 	github.com/gocql/gocql v1.3.2
