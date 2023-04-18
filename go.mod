@@ -3,14 +3,14 @@ module github.com/PretendoNetwork/friends-secure
 go 1.18
 
 require (
-	github.com/PretendoNetwork/grpc-go v0.0.0-20230412025419-f2ffdad6ef37
+	github.com/PretendoNetwork/grpc-go v0.0.0-20230418154649-25a94d02f01f
 	github.com/PretendoNetwork/nex-go v1.0.19
 	github.com/PretendoNetwork/nex-protocols-go v1.0.24
 	github.com/PretendoNetwork/plogger-go v1.0.2
 	github.com/gocql/gocql v1.3.2
 	github.com/golang/protobuf v1.5.3
 	github.com/joho/godotenv v1.5.1
-	github.com/lib/pq v1.10.7
+	github.com/lib/pq v1.10.8
 	go.mongodb.org/mongo-driver v1.11.4
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29
 	google.golang.org/grpc v1.54.0
@@ -21,7 +21,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/jwalton/go-supportscolor v1.1.0 // indirect
-	github.com/klauspost/compress v1.16.4 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.18 // indirect
 	github.com/montanaflynn/stats v0.7.0 // indirect
