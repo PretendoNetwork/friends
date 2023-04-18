@@ -1,6 +1,8 @@
 package database_wiiu
 
 import (
+	"time"
+
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
@@ -44,7 +46,10 @@ func GetUserFriendRequestsIn(pid uint32) []*friends_wiiu.FriendRequest {
 		friendRequest.Message.ExpiresOn = nex.NewDateTime(expiresOn)
 		friendRequest.SentOn = nex.NewDateTime(sentOn)
 
-		friendRequestsIn = append(friendRequestsIn, friendRequest)
+		// * Filter out expired requests
+		if friendRequest.Message.ExpiresOn.Standard().After(time.Now()) {
+			friendRequestsIn = append(friendRequestsIn, friendRequest)
+		}
 	}
 
 	return friendRequestsIn
