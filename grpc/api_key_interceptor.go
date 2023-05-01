@@ -15,7 +15,7 @@ func apiKeyInterceptor(ctx context.Context, req interface{}, info *grpc.UnarySer
 	if ok {
 		apiKeyHeader := md.Get("X-API-Key")
 
-		if len(apiKeyHeader) == 0 || apiKeyHeader[0] != os.Getenv("PN_ACT_CONFIG_GRPC_API_KEY") {
+		if len(apiKeyHeader) == 0 || apiKeyHeader[0] != os.Getenv("PN_FRIENDS_CONFIG_GRPC_API_KEY") {
 			return nil, errors.New("Missing or invalid API key")
 		}
 	}

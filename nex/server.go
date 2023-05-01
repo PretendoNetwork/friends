@@ -20,7 +20,7 @@ func StartNEXServer() {
 	globals.NEXServer.SetFragmentSize(900)
 	globals.NEXServer.SetPRUDPVersion(0)
 	globals.NEXServer.SetKerberosKeySize(16)
-	globals.NEXServer.SetKerberosPassword(os.Getenv("KERBEROS_PASSWORD"))
+	globals.NEXServer.SetKerberosPassword(os.Getenv("PN_FRIENDS_CONFIG_KERBEROS_PASSWORD"))
 	globals.NEXServer.SetPingTimeout(20) // Maybe too long?
 	globals.NEXServer.SetAccessKey("ridfebb9")
 

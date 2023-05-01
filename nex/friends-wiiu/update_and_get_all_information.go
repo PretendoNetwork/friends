@@ -38,7 +38,7 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	blockList := database_wiiu.GetUserBlockList(pid)
 	notifications := database_wiiu.GetUserNotifications(pid)
 
-	if os.Getenv("ENABLE_BELLA") == "true" {
+	if os.Getenv("PN_FRIENDS_CONFIG_ENABLE_BELLA") == "true" {
 		bella := friends_wiiu.NewFriendInfo()
 
 		bella.NNAInfo = friends_wiiu.NewNNAInfo()
