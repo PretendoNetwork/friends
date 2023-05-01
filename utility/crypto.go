@@ -4,63 +4,42 @@ import (
 	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/hmac"
-	"crypto/rand"
-	"crypto/rsa"
-	"crypto/sha1"
-	"crypto/sha256"
-	"crypto/x509"
 	"encoding/binary"
-	"encoding/pem"
 	"errors"
+	"hash/crc32"
 
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/friends-secure/types"
 )
 
 func DecryptToken(encryptedToken []byte) (*types.NEXToken, error) {
-	// Split the encoded token into it's parts
-	cryptoConfig := encryptedToken[:0x82]
-	signature := encryptedToken[0x82:0x96]
-	encryptedBody := encryptedToken[0x96:]
-
-	// Parse crypto config into parts
-	encryptedAESKey := cryptoConfig[:128]
-	point1 := cryptoConfig[128]
-	point2 := cryptoConfig[129]
-
-	// Rebuild the IV
-	iv := make([]byte, 0)
-	iv = append(iv, encryptedAESKey[point1:point1+8]...)
-	iv = append(iv, encryptedAESKey[point2:point2+8]...)
-
-	// Decrypt the AES key
-	decryptedAESKey, err := rsa.DecryptOAEP(sha256.New(), rand.Reader, globals.RSAPrivateKey, encryptedAESKey, nil)
-	if err != nil {
-		return nil, err
-	}
-
 	// Decrypt the token body
-	block, err := aes.NewCipher(decryptedAESKey)
+	block, err := aes.NewCipher(globals.AESKey)
 	if err != nil {
 		return nil, err
 	}
 
-	decryptedBody := make([]byte, len(encryptedBody))
+	expectedChecksum := binary.BigEndian.Uint32(encryptedToken[0:4])
+	encryptedBody := encryptedToken[4:]
+
+	decrypted := make([]byte, len(encryptedBody))
+	iv := make([]byte, 16)
 	mode := cipher.NewCBCDecrypter(block, iv)
-	mode.CryptBlocks(decryptedBody, encryptedBody)
+	mode.CryptBlocks(decrypted, encryptedBody)
 
-	decryptedBody = decryptedBody[:0x17] // Remove AES padding
+	paddingSize := int(decrypted[len(decrypted)-1])
+	decrypted = decrypted[:len(decrypted)-paddingSize]
 
-	// Verify the token body
-	err = verifySignature(decryptedBody, signature, globals.HMACSecret)
-	if err != nil {
-		return nil, err
+	table := crc32.MakeTable(crc32.IEEE)
+	calculatedChecksum := crc32.Checksum(decrypted, table)
+
+	if expectedChecksum != calculatedChecksum {
+		return nil, errors.New("Checksum did not match. Failed decrypt. Are you using the right key?")
 	}
 
 	// Unpack the token body to struct
 	token := &types.NEXToken{}
-	tokenReader := bytes.NewBuffer(decryptedBody)
+	tokenReader := bytes.NewBuffer(decrypted)
 
 	err = binary.Read(tokenReader, binary.LittleEndian, token)
 	if err != nil {
@@ -68,32 +47,4 @@ func DecryptToken(encryptedToken []byte) (*types.NEXToken, error) {
 	}
 
 	return token, nil
-}
-
-func verifySignature(body []byte, expectedSignature []byte, secret []byte) error {
-
-	mac := hmac.New(sha1.New, secret)
-	mac.Write(body)
-
-	calculatedSignature := mac.Sum(nil)
-
-	if !bytes.Equal(expectedSignature, calculatedSignature) {
-		return errors.New("[ERROR] Calculated signature did not match")
-	}
-
-	return nil
-}
-
-func ParseRsaPrivateKey(keyBytes []byte) (*rsa.PrivateKey, error) {
-	block, _ := pem.Decode(keyBytes)
-	if block == nil {
-		return nil, errors.New("Failed to parse RSA key")
-	}
-
-	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
-	if err != nil {
-		return nil, err
-	}
-
-	return privateKey, nil
 }
