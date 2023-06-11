@@ -18,22 +18,22 @@ func connect(packet *nex.PacketV0) {
 	serverKey := nex.DeriveKerberosKey(2, []byte(globals.NEXServer.KerberosPassword()))
 
 	// TODO: use random key from auth server
-	ticketDataEncryption := nex.NewKerberosEncryption(serverKey)
+	ticketDataEncryption, _ := nex.NewKerberosEncryption(serverKey)
 	decryptedTicketData := ticketDataEncryption.Decrypt(ticketData)
 	ticketDataStream := nex.NewStreamIn(decryptedTicketData, globals.NEXServer)
 
-	_ = ticketDataStream.ReadUInt64LE() // expiration time
-	_ = ticketDataStream.ReadUInt32LE() // User PID
+	_, _ = ticketDataStream.ReadUInt64LE() // expiration time
+	_, _ = ticketDataStream.ReadUInt32LE() // User PID
 	sessionKey := ticketDataStream.ReadBytesNext(16)
 
-	requestDataEncryption := nex.NewKerberosEncryption(sessionKey)
+	requestDataEncryption, _ := nex.NewKerberosEncryption(sessionKey)
 	decryptedRequestData := requestDataEncryption.Decrypt(requestData)
 	requestDataStream := nex.NewStreamIn(decryptedRequestData, globals.NEXServer)
 
-	userPID := requestDataStream.ReadUInt32LE() // User PID
+	userPID, _ := requestDataStream.ReadUInt32LE() // User PID
 
-	_ = requestDataStream.ReadUInt32LE() //CID of secure server station url
-	responseCheck := requestDataStream.ReadUInt32LE()
+	_, _ = requestDataStream.ReadUInt32LE() //CID of secure server station url
+	responseCheck, _ := requestDataStream.ReadUInt32LE()
 
 	responseValueStream := nex.NewStreamOut(globals.NEXServer)
 	responseValueStream.WriteUInt32LE(responseCheck + 1)
