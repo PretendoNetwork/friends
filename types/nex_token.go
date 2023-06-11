@@ -6,5 +6,5 @@ type NEXToken struct {
 	UserPID     uint32
 	ExpireTime  uint64
 	TitleID     uint64
-	AccessLevel uint8
+	AccessLevel int8
 }
