@@ -6,6 +6,7 @@ import (
 	"crypto/cipher"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"hash/crc32"
 
 	"github.com/PretendoNetwork/friends-secure/globals"
@@ -28,6 +29,11 @@ func DecryptToken(encryptedToken []byte) (*types.NEXToken, error) {
 	mode.CryptBlocks(decrypted, encryptedBody)
 
 	paddingSize := int(decrypted[len(decrypted)-1])
+
+	if paddingSize < 0 || paddingSize >= len(decrypted) {
+		return nil, fmt.Errorf("Invalid padding size %d for token %x", paddingSize, encryptedToken)
+	}
+
 	decrypted = decrypted[:len(decrypted)-paddingSize]
 
 	table := crc32.MakeTable(crc32.IEEE)
