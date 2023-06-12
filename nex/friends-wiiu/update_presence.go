@@ -13,7 +13,10 @@ func UpdatePresence(err error, client *nex.Client, callID uint32, presence *frie
 	presence.Online = true      // Force online status. I have no idea why this is always false
 	presence.PID = client.PID() // WHY IS THIS SET TO 0 BY DEFAULT??
 
-	globals.ConnectedUsers[pid].PresenceV2 = presence
+	if globals.ConnectedUsers[pid] != nil {
+		globals.ConnectedUsers[pid].PresenceV2 = presence
+	}
+
 	notifications_wiiu.SendPresenceUpdate(presence)
 
 	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
