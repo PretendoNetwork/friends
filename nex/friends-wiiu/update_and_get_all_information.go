@@ -6,6 +6,7 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
+	"github.com/PretendoNetwork/friends-secure/types"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
 )
@@ -26,6 +27,16 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 
 	// Get user information
 	pid := client.PID()
+
+	if globals.ConnectedUsers[pid] == nil {
+		// TODO - Figure out why this is getting removed
+		connectedUser := types.NewConnectedUser()
+		connectedUser.PID = pid
+		connectedUser.Platform = types.WUP
+		connectedUser.Client = client
+
+		globals.ConnectedUsers[pid] = connectedUser
+	}
 
 	globals.ConnectedUsers[pid].NNAInfo = nnaInfo
 	globals.ConnectedUsers[pid].PresenceV2 = presence
