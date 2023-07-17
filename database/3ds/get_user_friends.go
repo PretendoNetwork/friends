@@ -5,7 +5,7 @@ import (
 
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
 // Get all of a user's friend relationships

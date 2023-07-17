@@ -3,19 +3,20 @@ package notifications_wiiu
 import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
+	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
-func SendFriendRequestAccepted(client *nex.Client, friendInfo *friends_wiiu.FriendInfo) {
-	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
+func SendFriendRequestAccepted(client *nex.Client, friendInfo *friends_wiiu_types.FriendInfo) {
+	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 30
 	eventObject.SenderPID = friendInfo.NNAInfo.PrincipalBasicInfo.PID
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("FriendInfo")
 	eventObject.DataHolder.SetObjectData(friendInfo)
 
-	stream := nex.NewStreamOut(globals.NEXServer)
+	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -37,5 +38,5 @@ func SendFriendRequestAccepted(client *nex.Client, friendInfo *friends_wiiu.Frie
 	requestPacket.AddFlag(nex.FlagNeedsAck)
 	requestPacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(requestPacket)
+	globals.SecureServer.Send(requestPacket)
 }

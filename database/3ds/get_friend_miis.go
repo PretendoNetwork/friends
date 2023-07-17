@@ -7,7 +7,7 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
 // Get a friend's mii

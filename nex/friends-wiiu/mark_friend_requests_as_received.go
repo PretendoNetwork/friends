@@ -4,7 +4,7 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
 func MarkFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, ids []uint64) {
@@ -29,5 +29,5 @@ func MarkFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

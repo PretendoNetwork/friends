@@ -6,10 +6,11 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincipal *friends_wiiu.BlacklistedPrincipal) {
+func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincipal *friends_wiiu_types.BlacklistedPrincipal) {
 	currentBlacklistPrincipal := blacklistPrincipal
 
 	senderPID := currentBlacklistPrincipal.PrincipalBasicInfo.PID
@@ -38,7 +39,7 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 		responsePacket.AddFlag(nex.FlagNeedsAck)
 		responsePacket.AddFlag(nex.FlagReliable)
 
-		globals.NEXServer.Send(responsePacket)
+		globals.SecureServer.Send(responsePacket)
 
 		return
 	}
@@ -48,7 +49,7 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 
 	database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteStructure(blacklistPrincipal)
 
@@ -71,5 +72,5 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

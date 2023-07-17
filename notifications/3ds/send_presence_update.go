@@ -4,19 +4,20 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
+	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
-func SendPresenceUpdate(client *nex.Client, presence *friends_3ds.NintendoPresence) {
-	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
+func SendPresenceUpdate(client *nex.Client, presence *friends_3ds_types.NintendoPresence) {
+	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 1
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoPresence")
 	eventObject.DataHolder.SetObjectData(presence)
 
-	stream := nex.NewStreamOut(globals.NEXServer)
+	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -46,7 +47,7 @@ func SendPresenceUpdate(client *nex.Client, presence *friends_3ds.NintendoPresen
 			requestPacket.AddFlag(nex.FlagNeedsAck)
 			requestPacket.AddFlag(nex.FlagReliable)
 
-			globals.NEXServer.Send(requestPacket)
+			globals.SecureServer.Send(requestPacket)
 		}
 	}
 }

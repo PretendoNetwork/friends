@@ -4,22 +4,23 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
+	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
 func SendFriendshipCompleted(client *nex.Client, friendPID uint32, senderPID uint32) {
-	notificationEvent := nintendo_notifications.NewNintendoNotificationEventGeneral()
+	notificationEvent := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
 	notificationEvent.U32Param = 0
 	notificationEvent.U64Param1 = 0
 	notificationEvent.U64Param2 = uint64(friendPID)
 
-	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
+	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 7
 	eventObject.SenderPID = senderPID
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(notificationEvent)
 
-	stream := nex.NewStreamOut(globals.NEXServer)
+	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -41,5 +42,5 @@ func SendFriendshipCompleted(client *nex.Client, friendPID uint32, senderPID uin
 	requestPacket.AddFlag(nex.FlagNeedsAck)
 	requestPacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(requestPacket)
+	globals.SecureServer.Send(requestPacket)
 }

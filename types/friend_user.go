@@ -2,7 +2,7 @@ package types
 
 import (
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
 // FriendUser represents a user connected to the friends server

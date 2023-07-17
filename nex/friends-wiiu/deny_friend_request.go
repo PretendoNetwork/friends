@@ -6,7 +6,8 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
 func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
@@ -21,13 +22,13 @@ func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) 
 	date.FromTimestamp(time.Now())
 
 	// Create a new blacklist principal for the client, as unlike AddBlacklist they don't send one to us.
-	blacklistPrincipal := friends_wiiu.NewBlacklistedPrincipal()
+	blacklistPrincipal := friends_wiiu_types.NewBlacklistedPrincipal()
 
 	blacklistPrincipal.PrincipalBasicInfo = info
-	blacklistPrincipal.GameKey = friends_wiiu.NewGameKey()
+	blacklistPrincipal.GameKey = friends_wiiu_types.NewGameKey()
 	blacklistPrincipal.BlackListedSince = date
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteStructure(blacklistPrincipal)
 
@@ -50,5 +51,5 @@ func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

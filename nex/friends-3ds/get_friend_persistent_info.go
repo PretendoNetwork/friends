@@ -4,13 +4,13 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
 func GetFriendPersistentInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 	infoList := database_3ds.GetFriendPersistentInfos(client.PID(), pids)
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteListStructure(infoList)
 
@@ -32,5 +32,5 @@ func GetFriendPersistentInfo(err error, client *nex.Client, callID uint32, pids 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

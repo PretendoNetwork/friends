@@ -5,7 +5,8 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 	"golang.org/x/exp/slices"
 )
 
@@ -32,7 +33,7 @@ func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids [
 		}
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteListStructure(friendRelationships)
 
@@ -54,10 +55,10 @@ func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids [
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }
 
-func isPIDInRelationships(relationships []*friends_3ds.FriendRelationship, pid uint32) bool {
+func isPIDInRelationships(relationships []*friends_3ds_types.FriendRelationship, pid uint32) bool {
 	for i := range relationships {
 		if relationships[i].PID == pid {
 			return true

@@ -5,7 +5,8 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
 func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
@@ -18,7 +19,7 @@ func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 		senderPID := client.PID()
 		senderConnectedUser := globals.ConnectedUsers[senderPID]
 
-		senderFriendInfo := friends_wiiu.NewFriendInfo()
+		senderFriendInfo := friends_wiiu_types.NewFriendInfo()
 
 		senderFriendInfo.NNAInfo = senderConnectedUser.NNAInfo
 		senderFriendInfo.Presence = senderConnectedUser.PresenceV2
@@ -30,7 +31,7 @@ func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 		go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Client, senderFriendInfo)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteStructure(friendInfo)
 
@@ -53,5 +54,5 @@ func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

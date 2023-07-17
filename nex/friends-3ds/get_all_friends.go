@@ -4,13 +4,13 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
 func GetAllFriends(err error, client *nex.Client, callID uint32) {
 	friendRelationships := database_3ds.GetUserFriends(client.PID())
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteListStructure(friendRelationships)
 
@@ -32,5 +32,5 @@ func GetAllFriends(err error, client *nex.Client, callID uint32) {
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

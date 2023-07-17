@@ -5,7 +5,7 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
 func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lfc uint64, pid uint32) {
@@ -16,7 +16,7 @@ func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lf
 		go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pid, client.PID())
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteStructure(friendRelationship)
 
@@ -38,5 +38,5 @@ func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lf
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

@@ -1,6 +1,6 @@
 package database_wiiu
 
-import friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+import friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 
 // Get notifications for a user
 func GetUserNotifications(pid uint32) []*friends_wiiu.PersistentNotification {

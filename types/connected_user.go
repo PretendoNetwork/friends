@@ -2,8 +2,8 @@ package types
 
 import (
 	"github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
 type ConnectedUser struct {

@@ -8,10 +8,11 @@ import (
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	"github.com/PretendoNetwork/friends-secure/types"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nnaInfo *friends_wiiu.NNAInfo, presence *friends_wiiu.NintendoPresenceV2, birthday *nex.DateTime) {
+func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nnaInfo *friends_wiiu_types.NNAInfo, presence *friends_wiiu_types.NintendoPresenceV2, birthday *nex.DateTime) {
 
 	if err != nil {
 		// TODO: Handle error
@@ -50,22 +51,22 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	notifications := database_wiiu.GetUserNotifications(pid)
 
 	if os.Getenv("PN_FRIENDS_CONFIG_ENABLE_BELLA") == "true" {
-		bella := friends_wiiu.NewFriendInfo()
+		bella := friends_wiiu_types.NewFriendInfo()
 
-		bella.NNAInfo = friends_wiiu.NewNNAInfo()
-		bella.Presence = friends_wiiu.NewNintendoPresenceV2()
-		bella.Status = friends_wiiu.NewComment()
+		bella.NNAInfo = friends_wiiu_types.NewNNAInfo()
+		bella.Presence = friends_wiiu_types.NewNintendoPresenceV2()
+		bella.Status = friends_wiiu_types.NewComment()
 		bella.BecameFriend = nex.NewDateTime(0)
 		bella.LastOnline = nex.NewDateTime(0)
 		bella.Unknown = 0
 
-		bella.NNAInfo.PrincipalBasicInfo = friends_wiiu.NewPrincipalBasicInfo()
+		bella.NNAInfo.PrincipalBasicInfo = friends_wiiu_types.NewPrincipalBasicInfo()
 		bella.NNAInfo.Unknown1 = 0
 		bella.NNAInfo.Unknown2 = 0
 
 		bella.NNAInfo.PrincipalBasicInfo.PID = 1743126339
 		bella.NNAInfo.PrincipalBasicInfo.NNID = "bells1998"
-		bella.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu.NewMiiV2()
+		bella.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu_types.NewMiiV2()
 		bella.NNAInfo.PrincipalBasicInfo.Unknown = 0
 
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Name = "bella"
@@ -89,7 +90,7 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 
 		bella.Presence.ChangedFlags = 0x1EE
 		bella.Presence.Online = true
-		bella.Presence.GameKey = friends_wiiu.NewGameKey()
+		bella.Presence.GameKey = friends_wiiu_types.NewGameKey()
 		bella.Presence.Unknown1 = 0
 		bella.Presence.Message = "Testing"
 		//bella.Presence.Unknown2 = 2
@@ -121,7 +122,7 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 		friendList = append(friendList, bella)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteStructure(principalPreference)
 	rmcResponseStream.WriteStructure(comment)
@@ -154,5 +155,5 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

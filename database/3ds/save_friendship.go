@@ -6,7 +6,7 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
 // Save a friend relationship for a user
