@@ -16,7 +16,7 @@ func StartAuthenticationServer() {
 	globals.AuthenticationServer.SetPRUDPProtocolMinorVersion(0) // TODO: Figure out what to put here
 	globals.AuthenticationServer.SetDefaultNEXVersion(&nex.NEXVersion{
 		Major: 1,
-		Minor: 0, // TODO: Figure out what to put here
+		Minor: 1,
 		Patch: 0,
 	})
 	globals.AuthenticationServer.SetKerberosKeySize(16)
