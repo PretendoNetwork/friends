@@ -20,9 +20,15 @@ func StartSecureServer() {
 	globals.SecureServer.SetFragmentSize(900)
 	globals.SecureServer.SetPRUDPVersion(0)
 	globals.SecureServer.SetKerberosKeySize(16)
-	globals.SecureServer.SetKerberosPassword(os.Getenv("PN_FRIENDS_CONFIG_KERBEROS_PASSWORD"))
+	globals.SecureServer.SetKerberosPassword(globals.KerberosPassword)
 	globals.SecureServer.SetPingTimeout(20) // Maybe too long?
 	globals.SecureServer.SetAccessKey("ridfebb9")
+	globals.AuthenticationServer.SetPRUDPProtocolMinorVersion(0) // TODO: Figure out what to put here
+	globals.AuthenticationServer.SetDefaultNEXVersion(&nex.NEXVersion{
+		Major: 1,
+		Minor: 1,
+		Patch: 0,
+	})
 
 	globals.SecureServer.On("Data", func(packet *nex.PacketV0) {
 		request := packet.RMCRequest()
