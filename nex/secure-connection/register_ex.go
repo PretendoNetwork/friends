@@ -40,10 +40,10 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 
 	localStationURL := localStation.EncodeToString()
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteUInt32LE(0x10001) // Success
-	rmcResponseStream.WriteUInt32LE(globals.NEXServer.ConnectionIDCounter().Increment())
+	rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
 	rmcResponseStream.WriteString(localStationURL)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
@@ -65,5 +65,5 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

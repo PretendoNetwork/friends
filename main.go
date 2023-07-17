@@ -10,10 +10,11 @@ import (
 var wg sync.WaitGroup
 
 func main() {
-	wg.Add(2)
+	wg.Add(3)
 
 	go grpc.StartGRPCServer()
-	go nex.StartNEXServer()
+	go nex.StartAuthenticationServer()
+	go nex.StartSecureServer()
 
 	wg.Wait()
 }

@@ -7,16 +7,16 @@ import (
 	nex_friends_wiiu "github.com/PretendoNetwork/friends-secure/nex/friends-wiiu"
 	nex_secure_connection "github.com/PretendoNetwork/friends-secure/nex/secure-connection"
 	account_management "github.com/PretendoNetwork/nex-protocols-go/account-management"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 	secure_connection "github.com/PretendoNetwork/nex-protocols-go/secure-connection"
 )
 
 func registerNEXProtocols() {
-	secureConnectionProtocol := secure_connection.NewSecureConnectionProtocol(globals.NEXServer)
-	accountManagementProtocol := account_management.NewAccountManagementProtocol(globals.NEXServer)
-	friendsWiiUProtocol := friends_wiiu.NewFriendsWiiUProtocol(globals.NEXServer)
-	friends3DSProtocol := friends_3ds.NewFriends3DSProtocol(globals.NEXServer)
+	secureConnectionProtocol := secure_connection.NewSecureConnectionProtocol(globals.SecureServer)
+	accountManagementProtocol := account_management.NewAccountManagementProtocol(globals.SecureServer)
+	friendsWiiUProtocol := friends_wiiu.NewFriendsWiiUProtocol(globals.SecureServer)
+	friends3DSProtocol := friends_3ds.NewFriends3DSProtocol(globals.SecureServer)
 
 	// Account Management protocol handles
 	accountManagementProtocol.NintendoCreateAccount(nex_account_management.NintendoCreateAccount)
