@@ -43,5 +43,7 @@ func init() {
 		"X-API-Key", os.Getenv("PN_FRIENDS_ACCOUNT_GRPC_APIKEY"),
 	)
 
+	globals.KerberosPassword = os.Getenv("PN_FRIENDS_CONFIG_KERBEROS_PASSWORD")
+
 	database.Connect()
 }
