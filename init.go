@@ -1,13 +1,13 @@
 package main
 
 import (
-	"io/ioutil"
+	"encoding/hex"
 	"log"
+	"os"
 
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/friends-secure/types"
-	"github.com/PretendoNetwork/friends-secure/utility"
 
 	"github.com/joho/godotenv"
 )
@@ -17,27 +17,14 @@ func init() {
 	// Setup RSA private key for token parsing
 	var err error
 
-	globals.RSAPrivateKeyBytes, err = ioutil.ReadFile("private.pem")
-	if err != nil {
-		// TODO: Handle error
-		globals.Logger.Critical(err.Error())
-	}
-
-	globals.RSAPrivateKey, err = utility.ParseRsaPrivateKey(globals.RSAPrivateKeyBytes)
-	if err != nil {
-		// TODO: Handle error
-		globals.Logger.Critical(err.Error())
-	}
-
-	globals.HMACSecret, err = ioutil.ReadFile("secret.key")
-	if err != nil {
-		// TODO: Handle error
-		globals.Logger.Critical(err.Error())
-	}
-
 	err = godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
+	}
+
+	globals.AESKey, err = hex.DecodeString(os.Getenv("PN_FRIENDS_CONFIG_AES_KEY"))
+	if err != nil {
+		log.Fatal(err)
 	}
 
 	database.Connect()

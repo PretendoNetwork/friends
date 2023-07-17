@@ -20,6 +20,8 @@ func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 		globals.Logger.Critical(err.Error())
 	}
 
+	rmcResponse := nex.NewRMCResponse(account_management.ProtocolID, callID)
+
 	var tokenBase64 string
 
 	oAuthDataType := oAuthData.TypeName()
@@ -41,29 +43,28 @@ func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 
 	decryptedToken, err := utility.DecryptToken(encryptedToken)
 	if err != nil {
-		// TODO: Handle error
-		globals.Logger.Critical(err.Error())
+		globals.Logger.Error(err.Error())
+		rmcResponse.SetError(nex.Errors.Authentication.TokenParseError)
+	} else {
+		pid := decryptedToken.UserPID
+
+		pidByteArray := make([]byte, 4)
+		binary.LittleEndian.PutUint32(pidByteArray, pid)
+
+		mac := hmac.New(md5.New, []byte(strKey))
+		mac.Write(pidByteArray)
+
+		pidHmac := hex.EncodeToString(mac.Sum(nil))
+
+		rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+
+		rmcResponseStream.WriteUInt32LE(pid)
+		rmcResponseStream.WriteString(pidHmac)
+
+		rmcResponseBody := rmcResponseStream.Bytes()
+
+		rmcResponse.SetSuccess(account_management.MethodNintendoCreateAccount, rmcResponseBody)
 	}
-
-	pid := decryptedToken.UserPID
-
-	pidByteArray := make([]byte, 4)
-	binary.LittleEndian.PutUint32(pidByteArray, pid)
-
-	mac := hmac.New(md5.New, []byte(strKey))
-	mac.Write(pidByteArray)
-
-	pidHmac := hex.EncodeToString(mac.Sum(nil))
-
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
-
-	rmcResponseStream.WriteUInt32LE(pid)
-	rmcResponseStream.WriteString(pidHmac)
-
-	rmcResponseBody := rmcResponseStream.Bytes()
-
-	rmcResponse := nex.NewRMCResponse(account_management.ProtocolID, callID)
-	rmcResponse.SetSuccess(account_management.MethodNintendoCreateAccount, rmcResponseBody)
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
