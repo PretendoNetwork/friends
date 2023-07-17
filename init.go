@@ -19,7 +19,7 @@ func init() {
 
 	err = godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		globals.Logger.Warning("Error loading .env file")
 	}
 
 	globals.AESKey, err = hex.DecodeString(os.Getenv("PN_FRIENDS_CONFIG_AES_KEY"))
