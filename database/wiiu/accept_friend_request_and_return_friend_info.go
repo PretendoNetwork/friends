@@ -6,11 +6,11 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 	"github.com/gocql/gocql"
 )
 
-func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wiiu.FriendInfo {
+func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wiiu_types.FriendInfo {
 	var senderPID uint32
 	var recipientPID uint32
 
@@ -54,7 +54,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wii
 
 	SetFriendRequestAccepted(friendRequestID)
 
-	friendInfo := friends_wiiu.NewFriendInfo()
+	friendInfo := friends_wiiu_types.NewFriendInfo()
 	connectedUser := globals.ConnectedUsers[senderPID]
 	var lastOnline *nex.DateTime
 
@@ -68,15 +68,15 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wii
 	} else {
 		// Offline
 
-		friendInfo.NNAInfo = friends_wiiu.NewNNAInfo()
+		friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
 		friendInfo.NNAInfo.PrincipalBasicInfo = GetUserInfoByPID(senderPID)
 		friendInfo.NNAInfo.Unknown1 = 0
 		friendInfo.NNAInfo.Unknown2 = 0
 
-		friendInfo.Presence = friends_wiiu.NewNintendoPresenceV2()
+		friendInfo.Presence = friends_wiiu_types.NewNintendoPresenceV2()
 		friendInfo.Presence.ChangedFlags = 0
 		friendInfo.Presence.Online = false
-		friendInfo.Presence.GameKey = friends_wiiu.NewGameKey()
+		friendInfo.Presence.GameKey = friends_wiiu_types.NewGameKey()
 		friendInfo.Presence.GameKey.TitleID = 0
 		friendInfo.Presence.GameKey.TitleVersion = 0
 		friendInfo.Presence.Unknown1 = 0

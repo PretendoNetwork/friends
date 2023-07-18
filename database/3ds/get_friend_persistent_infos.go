@@ -7,12 +7,12 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
 // Get a friend's persistent information
-func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds.FriendPersistentInfo {
-	persistentInfos := make([]*friends_3ds.FriendPersistentInfo, 0)
+func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds_types.FriendPersistentInfo {
+	persistentInfos := make([]*friends_3ds_types.FriendPersistentInfo, 0)
 
 	rows, err := database.Postgres.Query(`
 	SELECT pid, region, area, language, favorite_title, favorite_title_version, comment, comment_changed, last_online FROM "3ds".user_data WHERE pid IN ($1)`, database.PIDArrayToString(pids))
@@ -25,9 +25,9 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds.Fr
 	}
 
 	for rows.Next() {
-		persistentInfo := friends_3ds.NewFriendPersistentInfo()
+		persistentInfo := friends_3ds_types.NewFriendPersistentInfo()
 
-		gameKey := friends_3ds.NewGameKey()
+		gameKey := friends_3ds_types.NewGameKey()
 
 		var lastOnlineTime uint64
 		var msgUpdateTime uint64

@@ -7,13 +7,13 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetUserInfoByPID(pid uint32) *friends_wiiu.PrincipalBasicInfo {
+func GetUserInfoByPID(pid uint32) *friends_wiiu_types.PrincipalBasicInfo {
 	var result bson.M
 
 	err := database.MongoCollection.FindOne(context.TODO(), bson.D{{Key: "pid", Value: pid}}, options.FindOne()).Decode(&result)
@@ -26,10 +26,10 @@ func GetUserInfoByPID(pid uint32) *friends_wiiu.PrincipalBasicInfo {
 		globals.Logger.Critical(err.Error())
 	}
 
-	info := friends_wiiu.NewPrincipalBasicInfo()
+	info := friends_wiiu_types.NewPrincipalBasicInfo()
 	info.PID = pid
 	info.NNID = result["username"].(string)
-	info.Mii = friends_wiiu.NewMiiV2()
+	info.Mii = friends_wiiu_types.NewMiiV2()
 	info.Unknown = 2
 
 	encodedMiiData := result["mii"].(bson.M)["data"].(string)

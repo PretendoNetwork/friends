@@ -4,11 +4,11 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
 // Update a user's mii
-func UpdateUserMii(pid uint32, mii *friends_3ds.Mii) {
+func UpdateUserMii(pid uint32, mii *friends_3ds_types.Mii) {
 	_, err := database.Postgres.Exec(`
 		INSERT INTO "3ds".user_data (pid, mii_name, mii_data, mii_changed)
 		VALUES ($1, $2, $3, $4)
