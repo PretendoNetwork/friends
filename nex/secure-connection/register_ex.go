@@ -42,7 +42,8 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteUInt32LE(0x10001) // Success
+	retval := nex.NewResultSuccess(nex.Errors.Core.Unknown)
+	rmcResponseStream.WriteResult(retval)
 	rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
 	rmcResponseStream.WriteString(localStationURL)
 
