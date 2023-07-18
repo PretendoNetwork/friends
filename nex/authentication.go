@@ -23,7 +23,7 @@ func StartAuthenticationServer() {
 	globals.AuthenticationServer.SetKerberosPassword(globals.KerberosPassword)
 	globals.AuthenticationServer.SetAccessKey("ridfebb9")
 
-	globals.AuthenticationServer.On("Data", func(packet *nex.PacketV1) {
+	globals.AuthenticationServer.On("Data", func(packet *nex.PacketV0) {
 		request := packet.RMCRequest()
 
 		fmt.Println("==Friends - Auth==")
