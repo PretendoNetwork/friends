@@ -68,7 +68,8 @@ func StartSecureServer() {
 
 	globals.SecureServer.On("Connect", connect)
 
-	registerNEXProtocols()
+	registerCommonSecureServerProtocols()
+	registerSecureServerProtocols()
 
 	globals.SecureServer.Listen(":" + os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT"))
 }
