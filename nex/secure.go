@@ -71,5 +71,5 @@ func StartSecureServer() {
 	registerCommonSecureServerProtocols()
 	registerSecureServerProtocols()
 
-	globals.SecureServer.Listen(":" + os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT"))
+	globals.SecureServer.Listen(fmt.Sprintf(":%s", os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT")))
 }

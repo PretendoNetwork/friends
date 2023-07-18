@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -14,7 +15,7 @@ type gRPCFriendsServer struct {
 }
 
 func StartGRPCServer() {
-	listener, err := net.Listen("tcp", ":"+os.Getenv("PN_FRIENDS_GRPC_SERVER_PORT"))
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", os.Getenv("PN_FRIENDS_GRPC_SERVER_PORT")))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
