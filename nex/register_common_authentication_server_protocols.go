@@ -23,6 +23,7 @@ func registerCommonAuthenticationServerProtocols() {
 
 	ticketGrantingProtocol.SetSecureStationURL(secureStationURL)
 	ticketGrantingProtocol.SetBuildName(serverBuildString)
+	ticketGrantingProtocol.EnableInsecureLogin()
 
 	globals.AuthenticationServer.SetPasswordFromPIDFunction(globals.PasswordFromPID)
 }
