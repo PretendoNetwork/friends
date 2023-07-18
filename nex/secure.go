@@ -23,8 +23,7 @@ func StartSecureServer() {
 	globals.SecureServer.SetKerberosPassword(globals.KerberosPassword)
 	globals.SecureServer.SetPingTimeout(20) // Maybe too long?
 	globals.SecureServer.SetAccessKey("ridfebb9")
-	globals.AuthenticationServer.SetPRUDPProtocolMinorVersion(0) // TODO: Figure out what to put here
-	globals.AuthenticationServer.SetDefaultNEXVersion(&nex.NEXVersion{
+	globals.SecureServer.SetDefaultNEXVersion(&nex.NEXVersion{
 		Major: 1,
 		Minor: 1,
 		Patch: 0,
