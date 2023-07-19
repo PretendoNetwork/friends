@@ -4,11 +4,12 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
 func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
-	infos := make([]*friends_wiiu.PrincipalBasicInfo, 0)
+	infos := make([]*friends_wiiu_types.PrincipalBasicInfo, 0)
 
 	for i := 0; i < len(pids); i++ {
 		pid := pids[i]
@@ -19,7 +20,7 @@ func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 		}
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteListStructure(infos)
 
@@ -42,5 +43,5 @@ func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) {
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

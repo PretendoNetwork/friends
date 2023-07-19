@@ -34,7 +34,7 @@ func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb
 		requestPacket.AddFlag(nex.FlagNeedsAck)
 		requestPacket.AddFlag(nex.FlagReliable)
 
-		globals.NEXServer.Send(requestPacket)
+		globals.SecureServer.Send(requestPacket)
 	}
 
 	return &empty.Empty{}, nil

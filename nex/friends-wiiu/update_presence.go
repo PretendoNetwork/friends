@@ -5,10 +5,11 @@ import (
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	"github.com/PretendoNetwork/friends-secure/types"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdatePresence(err error, client *nex.Client, callID uint32, presence *friends_wiiu.NintendoPresenceV2) {
+func UpdatePresence(err error, client *nex.Client, callID uint32, presence *friends_wiiu_types.NintendoPresenceV2) {
 	pid := client.PID()
 
 	presence.Online = true // Force online status. I have no idea why this is always false
@@ -45,5 +46,5 @@ func UpdatePresence(err error, client *nex.Client, callID uint32, presence *frie
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

@@ -7,13 +7,13 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 	"github.com/gocql/gocql"
 )
 
 // Get a users friend list
-func GetUserFriendList(pid uint32) []*friends_wiiu.FriendInfo {
-	friendList := make([]*friends_wiiu.FriendInfo, 0)
+func GetUserFriendList(pid uint32) []*friends_wiiu_types.FriendInfo {
+	friendList := make([]*friends_wiiu_types.FriendInfo, 0)
 
 	rows, err := database.Postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1 AND active=true LIMIT 100`, pid)
 	if err != nil {
@@ -26,7 +26,7 @@ func GetUserFriendList(pid uint32) []*friends_wiiu.FriendInfo {
 		var date uint64
 		rows.Scan(&friendPID, &date)
 
-		friendInfo := friends_wiiu.NewFriendInfo()
+		friendInfo := friends_wiiu_types.NewFriendInfo()
 		connectedUser := globals.ConnectedUsers[friendPID]
 		var lastOnline *nex.DateTime
 
@@ -52,15 +52,15 @@ func GetUserFriendList(pid uint32) []*friends_wiiu.FriendInfo {
 		} else {
 			// Offline
 
-			friendInfo.NNAInfo = friends_wiiu.NewNNAInfo()
+			friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
 			friendInfo.NNAInfo.PrincipalBasicInfo = GetUserInfoByPID(friendPID)
 			friendInfo.NNAInfo.Unknown1 = 0
 			friendInfo.NNAInfo.Unknown2 = 0
 
-			friendInfo.Presence = friends_wiiu.NewNintendoPresenceV2()
+			friendInfo.Presence = friends_wiiu_types.NewNintendoPresenceV2()
 			friendInfo.Presence.ChangedFlags = 0
 			friendInfo.Presence.Online = false
-			friendInfo.Presence.GameKey = friends_wiiu.NewGameKey()
+			friendInfo.Presence.GameKey = friends_wiiu_types.NewGameKey()
 			friendInfo.Presence.GameKey.TitleID = 0
 			friendInfo.Presence.GameKey.TitleVersion = 0
 			friendInfo.Presence.Unknown1 = 0

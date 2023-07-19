@@ -5,7 +5,7 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
 func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
@@ -33,5 +33,5 @@ func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

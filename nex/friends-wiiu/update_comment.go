@@ -4,15 +4,16 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdateComment(err error, client *nex.Client, callID uint32, comment *friends_wiiu.Comment) {
+func UpdateComment(err error, client *nex.Client, callID uint32, comment *friends_wiiu_types.Comment) {
 	// TODO: Do something with this
 
 	changed := database_wiiu.UpdateUserComment(client.PID(), comment.Contents)
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteUInt64LE(changed)
 
@@ -34,5 +35,5 @@ func UpdateComment(err error, client *nex.Client, callID uint32, comment *friend
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

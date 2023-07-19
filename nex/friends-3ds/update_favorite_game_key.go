@@ -5,10 +5,11 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-func UpdateFavoriteGameKey(err error, client *nex.Client, callID uint32, gameKey *friends_3ds.GameKey) {
+func UpdateFavoriteGameKey(err error, client *nex.Client, callID uint32, gameKey *friends_3ds_types.GameKey) {
 	go notifications_3ds.SendFavoriteUpdate(client, gameKey)
 	database_3ds.UpdateUserFavoriteGame(client.PID(), gameKey)
 
@@ -28,5 +29,5 @@ func UpdateFavoriteGameKey(err error, client *nex.Client, callID uint32, gameKey
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

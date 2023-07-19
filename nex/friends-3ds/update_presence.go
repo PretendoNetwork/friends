@@ -5,16 +5,17 @@ import (
 	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	"github.com/PretendoNetwork/friends-secure/types"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-func UpdatePresence(err error, client *nex.Client, callID uint32, presence *friends_3ds.NintendoPresence, showGame bool) {
+func UpdatePresence(err error, client *nex.Client, callID uint32, presence *friends_3ds_types.NintendoPresence, showGame bool) {
 	currentPresence := presence
 
 	// Send an entirely empty status, with every flag set to update
 	if !showGame {
-		currentPresence = friends_3ds.NewNintendoPresence()
-		currentPresence.GameKey = friends_3ds.NewGameKey()
+		currentPresence = friends_3ds_types.NewNintendoPresence()
+		currentPresence.GameKey = friends_3ds_types.NewGameKey()
 		currentPresence.ChangedFlags = 0xFFFFFFFF // All flags
 	}
 
@@ -50,5 +51,5 @@ func UpdatePresence(err error, client *nex.Client, callID uint32, presence *frie
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

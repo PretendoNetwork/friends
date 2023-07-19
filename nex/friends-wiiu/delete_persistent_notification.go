@@ -3,10 +3,11 @@ package nex_friends_wiiu
 import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func DeletePersistentNotification(err error, client *nex.Client, callID uint32, notifications []*friends_wiiu.PersistentNotification) {
+func DeletePersistentNotification(err error, client *nex.Client, callID uint32, notifications []*friends_wiiu_types.PersistentNotification) {
 	// TODO: Do something here
 
 	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
@@ -25,5 +26,5 @@ func DeletePersistentNotification(err error, client *nex.Client, callID uint32, 
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

@@ -4,10 +4,11 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdatePreference(err error, client *nex.Client, callID uint32, principalPreference *friends_wiiu.PrincipalPreference) {
+func UpdatePreference(err error, client *nex.Client, callID uint32, principalPreference *friends_wiiu_types.PrincipalPreference) {
 	database_wiiu.UpdateUserPrincipalPreference(client.PID(), principalPreference)
 
 	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
@@ -26,5 +27,5 @@ func UpdatePreference(err error, client *nex.Client, callID uint32, principalPre
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

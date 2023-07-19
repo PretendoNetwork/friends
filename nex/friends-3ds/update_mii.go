@@ -5,10 +5,11 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-func UpdateMii(err error, client *nex.Client, callID uint32, mii *friends_3ds.Mii) {
+func UpdateMii(err error, client *nex.Client, callID uint32, mii *friends_3ds_types.Mii) {
 	go notifications_3ds.SendMiiUpdateNotification(client)
 	database_3ds.UpdateUserMii(client.PID(), mii)
 
@@ -28,5 +29,5 @@ func UpdateMii(err error, client *nex.Client, callID uint32, mii *friends_3ds.Mi
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

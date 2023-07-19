@@ -6,12 +6,12 @@ import (
 	"github.com/PretendoNetwork/friends-secure/database"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
 // Save a friend relationship for a user
-func SaveFriendship(senderPID uint32, recipientPID uint32) *friends_3ds.FriendRelationship {
-	friendRelationship := friends_3ds.NewFriendRelationship()
+func SaveFriendship(senderPID uint32, recipientPID uint32) *friends_3ds_types.FriendRelationship {
+	friendRelationship := friends_3ds_types.NewFriendRelationship()
 	friendRelationship.PID = recipientPID
 	friendRelationship.LFC = 0
 	friendRelationship.RelationshipType = 0 // Incomplete

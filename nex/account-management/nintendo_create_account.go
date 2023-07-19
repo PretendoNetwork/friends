@@ -12,6 +12,7 @@ import (
 	"github.com/PretendoNetwork/friends-secure/utility"
 	nex "github.com/PretendoNetwork/nex-go"
 	account_management "github.com/PretendoNetwork/nex-protocols-go/account-management"
+	account_management_types "github.com/PretendoNetwork/nex-protocols-go/account-management/types"
 )
 
 func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) {
@@ -27,11 +28,11 @@ func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 	oAuthDataType := oAuthData.TypeName()
 
 	if oAuthDataType == "NintendoCreateAccountData" { // Wii U
-		nintendoCreateAccountData := oAuthData.ObjectData().(*account_management.NintendoCreateAccountData)
+		nintendoCreateAccountData := oAuthData.ObjectData().(*account_management_types.NintendoCreateAccountData)
 
 		tokenBase64 = nintendoCreateAccountData.Token
 	} else if oAuthDataType == "AccountExtraInfo" { // 3DS
-		accountExtraInfo := oAuthData.ObjectData().(*account_management.AccountExtraInfo)
+		accountExtraInfo := oAuthData.ObjectData().(*account_management_types.AccountExtraInfo)
 
 		tokenBase64 = accountExtraInfo.NEXToken
 		tokenBase64 = strings.Replace(tokenBase64, ".", "+", -1)
@@ -56,7 +57,7 @@ func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 
 		pidHmac := hex.EncodeToString(mac.Sum(nil))
 
-		rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+		rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 		rmcResponseStream.WriteUInt32LE(pid)
 		rmcResponseStream.WriteString(pidHmac)
@@ -79,5 +80,5 @@ func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }

@@ -15,16 +15,21 @@ import (
 	_ "github.com/PretendoNetwork/nex-protocols-go"
 )
 
-func StartNEXServer() {
-	globals.NEXServer = nex.NewServer()
-	globals.NEXServer.SetFragmentSize(900)
-	globals.NEXServer.SetPRUDPVersion(0)
-	globals.NEXServer.SetKerberosKeySize(16)
-	globals.NEXServer.SetKerberosPassword(os.Getenv("PN_FRIENDS_CONFIG_KERBEROS_PASSWORD"))
-	globals.NEXServer.SetPingTimeout(20) // Maybe too long?
-	globals.NEXServer.SetAccessKey("ridfebb9")
+func StartSecureServer() {
+	globals.SecureServer = nex.NewServer()
+	globals.SecureServer.SetFragmentSize(900)
+	globals.SecureServer.SetPRUDPVersion(0)
+	globals.SecureServer.SetKerberosKeySize(16)
+	globals.SecureServer.SetKerberosPassword(globals.KerberosPassword)
+	globals.SecureServer.SetPingTimeout(20) // Maybe too long?
+	globals.SecureServer.SetAccessKey("ridfebb9")
+	globals.SecureServer.SetDefaultNEXVersion(&nex.NEXVersion{
+		Major: 1,
+		Minor: 1,
+		Patch: 0,
+	})
 
-	globals.NEXServer.On("Data", func(packet *nex.PacketV0) {
+	globals.SecureServer.On("Data", func(packet *nex.PacketV0) {
 		request := packet.RMCRequest()
 
 		fmt.Println("==Friends - Secure==")
@@ -33,7 +38,7 @@ func StartNEXServer() {
 		fmt.Println("====================")
 	})
 
-	globals.NEXServer.On("Kick", func(packet *nex.PacketV0) {
+	globals.SecureServer.On("Kick", func(packet *nex.PacketV0) {
 		pid := packet.Sender().PID()
 
 		if globals.ConnectedUsers[pid] == nil {
@@ -56,13 +61,14 @@ func StartNEXServer() {
 		fmt.Println("Leaving (Kick)")
 	})
 
-	globals.NEXServer.On("Disconnect", func(packet *nex.PacketV0) {
+	globals.SecureServer.On("Disconnect", func(packet *nex.PacketV0) {
 		fmt.Println("Leaving (Disconnect)")
 	})
 
-	globals.NEXServer.On("Connect", connect)
+	globals.SecureServer.On("Connect", connect)
 
-	registerNEXProtocols()
+	registerCommonSecureServerProtocols()
+	registerSecureServerProtocols()
 
-	globals.NEXServer.Listen(":60001")
+	globals.SecureServer.Listen(fmt.Sprintf(":%s", os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT")))
 }

@@ -5,7 +5,7 @@ import (
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
 func UpdateComment(err error, client *nex.Client, callID uint32, comment string) {
@@ -28,5 +28,5 @@ func UpdateComment(err error, client *nex.Client, callID uint32, comment string)
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
 }
