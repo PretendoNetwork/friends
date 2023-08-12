@@ -16,17 +16,18 @@ import (
 func GetUserInfoByPID(pid uint32) *friends_wiiu_types.PrincipalBasicInfo {
 	var result bson.M
 
+	info := friends_wiiu_types.NewPrincipalBasicInfo()
+
 	err := database.MongoCollection.FindOne(context.TODO(), bson.D{{Key: "pid", Value: pid}}, options.FindOne()).Decode(&result)
 
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil
+		if err != mongo.ErrNoDocuments {
+			globals.Logger.Critical(err.Error())
 		}
 
-		globals.Logger.Critical(err.Error())
+		return info
 	}
 
-	info := friends_wiiu_types.NewPrincipalBasicInfo()
 	info.PID = pid
 	info.NNID = result["username"].(string)
 	info.Mii = friends_wiiu_types.NewMiiV2()
@@ -38,7 +39,7 @@ func GetUserInfoByPID(pid uint32) *friends_wiiu_types.PrincipalBasicInfo {
 	info.Mii.Name = result["mii"].(bson.M)["name"].(string)
 	info.Mii.Unknown1 = 0
 	info.Mii.Unknown2 = 0
-	info.Mii.Data = decodedMiiData
+	info.Mii.MiiData = decodedMiiData
 	info.Mii.Datetime = nex.NewDateTime(0)
 
 	return info

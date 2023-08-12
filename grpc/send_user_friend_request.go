@@ -24,9 +24,9 @@ func (s *gRPCFriendsServer) SendUserFriendRequest(ctx context.Context, in *pb.Se
 
 	message := in.GetMessage()
 
-	id := database_wiiu.SaveFriendRequest(sender, recipient, sentTime.Value(), expireTime.Value(), message)
+	id, _ := database_wiiu.SaveFriendRequest(sender, recipient, sentTime.Value(), expireTime.Value(), message)
 
 	return &pb.SendUserFriendRequestResponse{
-		Success: id == 0,
+		Success: id != 0,
 	}, nil
 }

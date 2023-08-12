@@ -10,7 +10,7 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-// Get a friend's persistent information
+// GetFriendPersistentInfos returns the persistent information of all friends
 func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds_types.FriendPersistentInfo {
 	persistentInfos := make([]*friends_3ds_types.FriendPersistentInfo, 0)
 

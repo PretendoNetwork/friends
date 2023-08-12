@@ -7,8 +7,17 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
-func RemoveBlacklist(err error, client *nex.Client, callID uint32, blockedPID uint32) {
-	database_wiiu.UnsetUserBlocked(client.PID(), blockedPID)
+func RemoveBlacklist(err error, client *nex.Client, callID uint32, blockedPID uint32) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
+	err = database_wiiu.UnsetUserBlocked(client.PID(), blockedPID)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
 	rmcResponse.SetSuccess(friends_wiiu.MethodRemoveBlackList, nil)
@@ -27,4 +36,6 @@ func RemoveBlacklist(err error, client *nex.Client, callID uint32, blockedPID ui
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

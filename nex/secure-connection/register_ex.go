@@ -12,22 +12,31 @@ import (
 	secure_connection "github.com/PretendoNetwork/nex-protocols-go/secure-connection"
 )
 
-func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) {
-	// TODO: Validate loginData
+func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.Core.InvalidArgument
+	}
 
+	// TODO: Validate loginData
 	pid := client.PID()
 	user := globals.ConnectedUsers[pid]
 	lastOnline := nex.NewDateTime(0)
 	lastOnline.FromTimestamp(time.Now())
 
-	if loginData.TypeName() == "NintendoLoginData" {
+	loginDataType := loginData.TypeName()
+	switch loginDataType {
+	case "NintendoLoginData":
 		user.Platform = types.WUP // Platform is Wii U
 
 		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
-	} else if loginData.TypeName() == "AccountExtraInfo" {
+	case "AccountExtraInfo":
 		user.Platform = types.CTR // Platform is 3DS
 
 		database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+	default:
+		globals.Logger.Errorf("Unknown loginData data type %s!", loginDataType)
+		return nex.Errors.Authentication.TokenParseError
 	}
 
 	localStation := stationUrls[0]
@@ -67,4 +76,6 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

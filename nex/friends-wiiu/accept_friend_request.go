@@ -1,6 +1,8 @@
 package nex_friends_wiiu
 
 import (
+	"database/sql"
+
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
@@ -9,8 +11,21 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
-	friendInfo := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(id)
+func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
+	friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nex.Errors.FPD.InvalidMessageID
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
+	}
 
 	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID
 	connectedUser := globals.ConnectedUsers[friendPID]
@@ -55,4 +70,6 @@ func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

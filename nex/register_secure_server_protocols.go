@@ -11,9 +11,9 @@ import (
 )
 
 func registerSecureServerProtocols() {
-	accountManagementProtocol := account_management.NewAccountManagementProtocol(globals.SecureServer)
-	friendsWiiUProtocol := friends_wiiu.NewFriendsWiiUProtocol(globals.SecureServer)
-	friends3DSProtocol := friends_3ds.NewFriends3DSProtocol(globals.SecureServer)
+	accountManagementProtocol := account_management.NewProtocol(globals.SecureServer)
+	friendsWiiUProtocol := friends_wiiu.NewProtocol(globals.SecureServer)
+	friends3DSProtocol := friends_3ds.NewProtocol(globals.SecureServer)
 
 	// Account Management protocol handles
 	accountManagementProtocol.NintendoCreateAccount(nex_account_management.NintendoCreateAccount)

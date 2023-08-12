@@ -12,11 +12,10 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nnaInfo *friends_wiiu_types.NNAInfo, presence *friends_wiiu_types.NintendoPresenceV2, birthday *nex.DateTime) {
-
+func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nnaInfo *friends_wiiu_types.NNAInfo, presence *friends_wiiu_types.NintendoPresenceV2, birthday *nex.DateTime) uint32 {
 	if err != nil {
-		// TODO: Handle error
-		globals.Logger.Critical(err.Error())
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
 	}
 
 	// Update user information
@@ -72,7 +71,7 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Name = "bella"
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = 0
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = 0
-		bella.NNAInfo.PrincipalBasicInfo.Mii.Data = []byte{
+		bella.NNAInfo.PrincipalBasicInfo.Mii.MiiData = []byte{
 			0x03, 0x00, 0x00, 0x40, 0xE9, 0x55, 0xA2, 0x09,
 			0xE7, 0xC7, 0x41, 0x82, 0xD9, 0x7D, 0x0B, 0x2D,
 			0x03, 0xB3, 0xB8, 0x8D, 0x27, 0xD9, 0x00, 0x00,
@@ -156,4 +155,6 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

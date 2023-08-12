@@ -10,7 +10,12 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincipal *friends_wiiu_types.BlacklistedPrincipal) {
+func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincipal *friends_wiiu_types.BlacklistedPrincipal) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
 	currentBlacklistPrincipal := blacklistPrincipal
 
 	senderPID := currentBlacklistPrincipal.PrincipalBasicInfo.PID
@@ -22,32 +27,18 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 
 	userInfo := database_wiiu.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
 
-	if userInfo == nil {
-		rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-		rmcResponse.SetError(nex.Errors.FPD.FriendNotExists) // TODO: Not sure if this is the correct error.
-
-		rmcResponseBytes := rmcResponse.Bytes()
-
-		responsePacket, _ := nex.NewPacketV0(client, nil)
-
-		responsePacket.SetVersion(0)
-		responsePacket.SetSource(0xA1)
-		responsePacket.SetDestination(0xAF)
-		responsePacket.SetType(nex.DataPacket)
-		responsePacket.SetPayload(rmcResponseBytes)
-
-		responsePacket.AddFlag(nex.FlagNeedsAck)
-		responsePacket.AddFlag(nex.FlagReliable)
-
-		globals.SecureServer.Send(responsePacket)
-
-		return
+	if userInfo.PID == 0 {
+		return nex.Errors.FPD.InvalidPrincipalID // TODO: Not sure if this is the correct error.
 	}
 
 	currentBlacklistPrincipal.PrincipalBasicInfo = userInfo
 	currentBlacklistPrincipal.BlackListedSince = date
 
-	database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
+	err = database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
@@ -73,4 +64,6 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

@@ -4,11 +4,10 @@ import (
 	"time"
 
 	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
 )
 
-func SetUserBlocked(blockerPID uint32, blockedPID uint32, titleId uint64, titleVersion uint16) {
+func SetUserBlocked(blockerPID uint32, blockedPID uint32, titleId uint64, titleVersion uint16) error {
 	date := nex.NewDateTime(0)
 	date.FromTimestamp(time.Now())
 
@@ -19,6 +18,8 @@ func SetUserBlocked(blockerPID uint32, blockedPID uint32, titleId uint64, titleV
 	DO UPDATE SET
 	date = $5`, blockerPID, blockedPID, titleId, titleVersion, date.Value())
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return err
 	}
+
+	return nil
 }

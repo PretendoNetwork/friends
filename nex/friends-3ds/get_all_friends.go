@@ -7,7 +7,12 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
-func GetAllFriends(err error, client *nex.Client, callID uint32) {
+func GetAllFriends(err error, client *nex.Client, callID uint32) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
 	friendRelationships := database_3ds.GetUserFriends(client.PID())
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
@@ -33,4 +38,6 @@ func GetAllFriends(err error, client *nex.Client, callID uint32) {
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

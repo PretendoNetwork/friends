@@ -8,7 +8,12 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids []uint32) {
+func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids []uint32) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
 	settings := make([]*friends_wiiu_types.PrincipalRequestBlockSetting, 0)
 
 	// TODO:
@@ -47,4 +52,6 @@ func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

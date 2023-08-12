@@ -10,7 +10,7 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-// Get a friend's mii
+// GetFriendMiis returns the Mii of all friends
 func GetFriendMiis(pids []uint32) []*friends_3ds_types.FriendMii {
 	friendMiis := make([]*friends_3ds_types.FriendMii, 0)
 

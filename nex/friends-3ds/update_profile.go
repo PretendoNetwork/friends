@@ -8,8 +8,17 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *friends_3ds_types.MyProfile) {
-	database_3ds.UpdateUserProfile(client.PID(), profileData)
+func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *friends_3ds_types.MyProfile) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
+	err = database_3ds.UpdateUserProfile(client.PID(), profileData)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
 	rmcResponse.SetSuccess(friends_3ds.MethodUpdateProfile, nil)
@@ -28,4 +37,6 @@ func UpdateProfile(err error, client *nex.Client, callID uint32, profileData *fr
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

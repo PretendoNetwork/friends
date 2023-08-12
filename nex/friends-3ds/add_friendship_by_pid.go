@@ -8,8 +8,17 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
-func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lfc uint64, pid uint32) {
-	friendRelationship := database_3ds.SaveFriendship(client.PID(), pid)
+func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lfc uint64, pid uint32) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
+	friendRelationship, err := database_3ds.SaveFriendship(client.PID(), pid)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	connectedUser := globals.ConnectedUsers[pid]
 	if connectedUser != nil {
@@ -39,4 +48,6 @@ func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lf
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

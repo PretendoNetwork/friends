@@ -4,10 +4,10 @@ go 1.18
 
 require (
 	github.com/PretendoNetwork/grpc-go v1.0.2
-	github.com/PretendoNetwork/nex-go v1.0.29
-	github.com/PretendoNetwork/nex-protocols-common-go v1.0.23
-	github.com/PretendoNetwork/nex-protocols-go v1.0.41
-	github.com/PretendoNetwork/plogger-go v1.0.3
+	github.com/PretendoNetwork/nex-go v1.0.35
+	github.com/PretendoNetwork/nex-protocols-common-go v1.0.25
+	github.com/PretendoNetwork/nex-protocols-go v1.0.49
+	github.com/PretendoNetwork/plogger-go v1.0.4
 	github.com/gocql/gocql v1.5.2
 	github.com/golang/protobuf v1.5.3
 	github.com/joho/godotenv v1.5.1
@@ -26,8 +26,6 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/montanaflynn/stats v0.7.1 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
-	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/superwhiskers/crunch/v3 v3.5.7 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect

@@ -10,11 +10,24 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
-	database_wiiu.SetFriendRequestDenied(id)
+func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
+	err = database_wiiu.SetFriendRequestDenied(id)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	senderPID, _ := database_wiiu.GetPIDsByFriendRequestID(id)
-	database_wiiu.SetUserBlocked(client.PID(), senderPID, 0, 0)
+	err = database_wiiu.SetUserBlocked(client.PID(), senderPID, 0, 0)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	info := database_wiiu.GetUserInfoByPID(senderPID)
 
@@ -52,4 +65,6 @@ func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) 
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

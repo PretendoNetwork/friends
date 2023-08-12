@@ -1,6 +1,8 @@
 package nex_friends_wiiu
 
 import (
+	"database/sql"
+
 	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
 	"github.com/PretendoNetwork/friends-secure/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
@@ -8,8 +10,21 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
-func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64) {
-	pid := database_wiiu.DeleteFriendRequestAndReturnFriendPID(id)
+func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
+	pid, err := database_wiiu.DeleteFriendRequestAndReturnFriendPID(id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nex.Errors.FPD.InvalidMessageID
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
+	}
 
 	connectedUser := globals.ConnectedUsers[pid]
 	if connectedUser != nil {
@@ -34,4 +49,6 @@ func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

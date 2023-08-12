@@ -8,7 +8,7 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-// Get all of a user's friend relationships
+// GetUserFriends returns all friend relationships of a user
 func GetUserFriends(pid uint32) []*friends_3ds_types.FriendRelationship {
 	friendRelationships := make([]*friends_3ds_types.FriendRelationship, 0)
 

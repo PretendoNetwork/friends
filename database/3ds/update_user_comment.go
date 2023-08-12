@@ -2,12 +2,11 @@ package database_3ds
 
 import (
 	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
 	"github.com/PretendoNetwork/nex-go"
 )
 
-// Update a user's comment
-func UpdateUserComment(pid uint32, message string) {
+// UpdateUserComment updates a user's comment
+func UpdateUserComment(pid uint32, message string) error {
 	changed := nex.NewDateTime(0).Now()
 
 	_, err := database.Postgres.Exec(`
@@ -19,6 +18,8 @@ func UpdateUserComment(pid uint32, message string) {
 		comment_changed = $3`, pid, message, changed)
 
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return err
 	}
+
+	return nil
 }

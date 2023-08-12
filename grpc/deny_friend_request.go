@@ -8,10 +8,9 @@ import (
 )
 
 func (s *gRPCFriendsServer) DenyFriendRequest(ctx context.Context, in *pb.DenyFriendRequestRequest) (*pb.DenyFriendRequestResponse, error) {
-	// TODO - Make this return an error
-	database_wiiu.SetFriendRequestDenied(in.GetFriendRequestId())
+	err := database_wiiu.SetFriendRequestDenied(in.GetFriendRequestId())
 
 	return &pb.DenyFriendRequestResponse{
-		Success: true,
+		Success: err == nil,
 	}, nil
 }
