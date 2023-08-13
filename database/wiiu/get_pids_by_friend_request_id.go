@@ -3,8 +3,8 @@ package database_wiiu
 import (
 	"database/sql"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/globals"
 )
 
 // Get a users outgoing friend request

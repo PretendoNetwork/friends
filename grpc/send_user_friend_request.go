@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
 	nex "github.com/PretendoNetwork/nex-go"
 )

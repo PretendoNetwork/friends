@@ -3,8 +3,8 @@ package grpc
 import (
 	"context"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
 )
 

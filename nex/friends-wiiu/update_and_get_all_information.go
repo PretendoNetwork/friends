@@ -3,10 +3,10 @@ package nex_friends_wiiu
 import (
 	"os"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
-	"github.com/PretendoNetwork/friends-secure/types"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
+	"github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"

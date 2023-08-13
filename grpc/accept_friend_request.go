@@ -7,7 +7,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
 )
 

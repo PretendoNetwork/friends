@@ -4,10 +4,10 @@ import (
 	"strconv"
 	"time"
 
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
-	"github.com/PretendoNetwork/friends-secure/types"
+	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
 	secure_connection "github.com/PretendoNetwork/nex-protocols-go/secure-connection"
 )

@@ -8,8 +8,8 @@ import (
 	"encoding/hex"
 	"strings"
 
-	"github.com/PretendoNetwork/friends-secure/globals"
-	"github.com/PretendoNetwork/friends-secure/utility"
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/utility"
 	nex "github.com/PretendoNetwork/nex-go"
 	account_management "github.com/PretendoNetwork/nex-protocols-go/account-management"
 	account_management_types "github.com/PretendoNetwork/nex-protocols-go/account-management/types"

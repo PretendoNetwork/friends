@@ -3,7 +3,7 @@ package database_wiiu
 import (
 	"database/sql"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends/database"
 )
 
 func SaveFriendRequest(senderPID uint32, recipientPID uint32, sentTime uint64, expireTime uint64, message string) (uint64, error) {

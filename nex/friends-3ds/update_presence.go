@@ -1,9 +1,9 @@
 package nex_friends_3ds
 
 import (
-	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
-	"github.com/PretendoNetwork/friends-secure/types"
+	"github.com/PretendoNetwork/friends/globals"
+	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
+	"github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"

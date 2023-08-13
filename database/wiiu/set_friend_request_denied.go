@@ -1,7 +1,7 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends/database"
 )
 
 func SetFriendRequestDenied(friendRequestID uint64) error {

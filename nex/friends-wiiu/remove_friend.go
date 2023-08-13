@@ -1,9 +1,9 @@
 package nex_friends_wiiu
 
 import (
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )

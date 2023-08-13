@@ -1,6 +1,6 @@
 package database
 
-import "github.com/PretendoNetwork/friends-secure/globals"
+import "github.com/PretendoNetwork/friends/globals"
 
 func initPostgres3DS() {
 	var err error

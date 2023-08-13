@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )

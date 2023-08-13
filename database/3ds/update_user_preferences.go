@@ -1,7 +1,7 @@
 package database_3ds
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends/database"
 )
 
 // UpdateUserPreferences updates a user's preferences

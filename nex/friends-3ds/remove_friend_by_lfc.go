@@ -1,7 +1,7 @@
 package nex_friends_3ds
 
 import (
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )

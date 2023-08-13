@@ -3,7 +3,7 @@ package nex
 import (
 	"os"
 
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	ticket_granting "github.com/PretendoNetwork/nex-protocols-common-go/ticket-granting"
 )

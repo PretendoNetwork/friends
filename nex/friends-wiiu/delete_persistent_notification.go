@@ -1,7 +1,7 @@
 package nex_friends_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"

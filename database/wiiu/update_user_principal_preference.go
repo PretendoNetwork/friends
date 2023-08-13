@@ -1,7 +1,7 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends/database"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 

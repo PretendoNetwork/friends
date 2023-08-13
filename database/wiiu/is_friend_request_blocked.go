@@ -1,8 +1,8 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/globals"
 )
 
 func IsFriendRequestBlocked(requesterPID uint32, requestedPID uint32) bool {

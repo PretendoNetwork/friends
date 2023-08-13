@@ -1,7 +1,7 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends/database"
 )
 
 func DeleteFriendRequestAndReturnFriendPID(friendRequestID uint64) (uint32, error) {

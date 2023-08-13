@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/nex-go"
 )
 

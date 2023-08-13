@@ -3,7 +3,7 @@ package database_wiiu
 import (
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
+	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 )
 

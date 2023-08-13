@@ -3,8 +3,8 @@ package nex
 import (
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/globals"
-	"github.com/PretendoNetwork/friends-secure/types"
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
 )
 

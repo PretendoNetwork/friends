@@ -1,7 +1,7 @@
 package globals
 
 import (
-	"github.com/PretendoNetwork/friends-secure/types"
+	"github.com/PretendoNetwork/friends/types"
 	pb "github.com/PretendoNetwork/grpc-go/account"
 	"github.com/PretendoNetwork/nex-go"
 	"github.com/PretendoNetwork/plogger-go"
@@ -9,7 +9,7 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-var Logger = plogger.NewLogger()
+var Logger *plogger.Logger
 var KerberosPassword = "password" // * Default password
 var AuthenticationServer *nex.Server
 var SecureServer *nex.Server
