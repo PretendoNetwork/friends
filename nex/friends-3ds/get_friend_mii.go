@@ -1,6 +1,8 @@
 package nex_friends_3ds
 
 import (
+	"database/sql"
+
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
@@ -13,7 +15,11 @@ func GetFriendMii(err error, client *nex.Client, callID uint32, pids []uint32) u
 		return nex.Errors.FPD.InvalidArgument
 	}
 
-	miiList := database_3ds.GetFriendMiis(pids)
+	miiList, err := database_3ds.GetFriendMiis(pids)
+	if err != nil && err != sql.ErrNoRows {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 

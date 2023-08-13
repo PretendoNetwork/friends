@@ -1,8 +1,7 @@
 package nex_friends_wiiu
 
 import (
-	"database/sql"
-
+	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
@@ -18,7 +17,7 @@ func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 
 	pid, err := database_wiiu.DeleteFriendRequestAndReturnFriendPID(id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == database.ErrFriendRequestNotFound {
 			return nex.Errors.FPD.InvalidMessageID
 		} else {
 			globals.Logger.Critical(err.Error())

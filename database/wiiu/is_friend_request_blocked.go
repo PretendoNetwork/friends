@@ -2,15 +2,15 @@ package database_wiiu
 
 import (
 	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/friends/globals"
 )
 
-func IsFriendRequestBlocked(requesterPID uint32, requestedPID uint32) bool {
+// IsFriendRequestBlocked determines if a requester PID has blocked a requested PID
+func IsFriendRequestBlocked(requesterPID uint32, requestedPID uint32) (bool, error) {
 	var found bool
 	err := database.Postgres.QueryRow(`SELECT COUNT(*) FROM wiiu.blocks WHERE blocker_pid=$1 AND blocked_pid=$2 LIMIT 1`, requesterPID, requestedPID).Scan(&found)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return false, err
 	}
 
-	return found
+	return found, nil
 }

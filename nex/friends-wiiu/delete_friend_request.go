@@ -1,6 +1,7 @@
 package nex_friends_wiiu
 
 import (
+	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
@@ -15,8 +16,12 @@ func DeleteFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 
 	err = database_wiiu.SetFriendRequestDenied(id)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		if err == database.ErrFriendRequestNotFound {
+			return nex.Errors.FPD.InvalidMessageID
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
 	}
 
 	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)

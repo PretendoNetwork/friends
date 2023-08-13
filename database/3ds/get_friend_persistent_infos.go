@@ -11,17 +11,13 @@ import (
 )
 
 // GetFriendPersistentInfos returns the persistent information of all friends
-func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds_types.FriendPersistentInfo {
+func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) ([]*friends_3ds_types.FriendPersistentInfo, error) {
 	persistentInfos := make([]*friends_3ds_types.FriendPersistentInfo, 0)
 
 	rows, err := database.Postgres.Query(`
 	SELECT pid, region, area, language, favorite_title, favorite_title_version, comment, comment_changed, last_online FROM "3ds".user_data WHERE pid IN ($1)`, database.PIDArrayToString(pids))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			globals.Logger.Warning(err.Error())
-		} else {
-			globals.Logger.Critical(err.Error())
-		}
+		return persistentInfos, err
 	}
 
 	for rows.Next() {
@@ -44,6 +40,7 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds_ty
 				friendedAtTime = uint64(time.Now().Unix())
 			} else {
 				globals.Logger.Critical(err.Error())
+				continue
 			}
 		}
 
@@ -56,5 +53,5 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds_ty
 		persistentInfos = append(persistentInfos, persistentInfo)
 	}
 
-	return persistentInfos
+	return persistentInfos, nil
 }

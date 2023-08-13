@@ -1,6 +1,7 @@
 package database_wiiu
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/PretendoNetwork/friends/database"
@@ -9,13 +10,18 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
+// AcceptFriendRequestAndReturnFriendInfo accepts the given friend reuqest and returns the friend's information
 func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wiiu_types.FriendInfo, error) {
 	var senderPID uint32
 	var recipientPID uint32
 
 	err := database.Postgres.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID).Scan(&senderPID, &recipientPID)
 	if err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, database.ErrFriendRequestNotFound
+		} else {
+			return nil, err
+		}
 	}
 
 	acceptedTime := nex.NewDateTime(0)
@@ -66,9 +72,18 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		lastOnline.FromTimestamp(time.Now())
 	} else {
 		// Offline
+		userData, err := globals.GetUserData(senderPID)
+		if err != nil {
+			return nil, err
+		}
 
 		friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
-		friendInfo.NNAInfo.PrincipalBasicInfo = GetUserInfoByPID(senderPID)
+		userInfo, err := GetUserInfoByPNIDData(userData)
+		if err != nil {
+			return nil, err
+		}
+
+		friendInfo.NNAInfo.PrincipalBasicInfo = userInfo
 		friendInfo.NNAInfo.Unknown1 = 0
 		friendInfo.NNAInfo.Unknown2 = 0
 
@@ -92,18 +107,24 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		friendInfo.Presence.Unknown7 = 0
 
 		var lastOnlineTime uint64
-		err := database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID).Scan(&lastOnlineTime)
+		err = database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID).Scan(&lastOnlineTime)
 		if err != nil {
-			lastOnlineTime = nex.NewDateTime(0).Now()
-
-			// TODO: Should we return the error here?
-			globals.Logger.Critical(err.Error())
+			if err == sql.ErrNoRows {
+				return nil, database.ErrPIDNotFound
+			} else {
+				return nil, err
+			}
 		}
 
 		lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
 	}
 
-	friendInfo.Status = GetUserComment(senderPID)
+	status, err := GetUserComment(senderPID)
+	if err != nil {
+		return nil, err
+	}
+
+	friendInfo.Status = status
 	friendInfo.BecameFriend = acceptedTime
 	friendInfo.LastOnline = lastOnline // TODO: Change this
 	friendInfo.Unknown = 0

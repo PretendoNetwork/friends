@@ -1,6 +1,7 @@
 package nex_friends_wiiu
 
 import (
+	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
@@ -16,8 +17,12 @@ func RemoveFriend(err error, client *nex.Client, callID uint32, pid uint32) uint
 
 	err = database_wiiu.RemoveFriendship(client.PID(), pid)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		if err == database.ErrFriendshipNotFound {
+			return nex.Errors.FPD.NotInMyFriendList
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
 	}
 
 	connectedUser := globals.ConnectedUsers[pid]

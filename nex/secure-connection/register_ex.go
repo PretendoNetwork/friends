@@ -18,6 +18,9 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 		return nex.Errors.Core.InvalidArgument
 	}
 
+	retval := nex.NewResultSuccess(nex.Errors.Core.Unknown)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+
 	// TODO: Validate loginData
 	pid := client.PID()
 	user := globals.ConnectedUsers[pid]
@@ -36,25 +39,28 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 		database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
 	default:
 		globals.Logger.Errorf("Unknown loginData data type %s!", loginDataType)
-		return nex.Errors.Authentication.TokenParseError
+		retval = nex.NewResultError(nex.Errors.Authentication.ValidationFailed)
 	}
 
-	localStation := stationUrls[0]
+	if retval.IsSuccess() {
+		localStation := stationUrls[0]
 
-	address := client.Address().IP.String()
-	port := strconv.Itoa(client.Address().Port)
+		address := client.Address().IP.String()
+		port := strconv.Itoa(client.Address().Port)
 
-	localStation.SetAddress(address)
-	localStation.SetPort(port)
+		localStation.SetAddress(address)
+		localStation.SetPort(port)
 
-	localStationURL := localStation.EncodeToString()
+		localStationURL := localStation.EncodeToString()
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
-
-	retval := nex.NewResultSuccess(nex.Errors.Core.Unknown)
-	rmcResponseStream.WriteResult(retval)
-	rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
-	rmcResponseStream.WriteString(localStationURL)
+		rmcResponseStream.WriteResult(retval)
+		rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
+		rmcResponseStream.WriteString(localStationURL)
+	} else {
+		rmcResponseStream.WriteResult(retval)
+		rmcResponseStream.WriteUInt32LE(0)
+		rmcResponseStream.WriteString("prudp:/")
+	}
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

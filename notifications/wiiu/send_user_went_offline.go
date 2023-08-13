@@ -3,6 +3,7 @@ package notifications_wiiu
 import (
 	"time"
 
+	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
@@ -11,7 +12,10 @@ import (
 )
 
 func SendUserWentOfflineGlobally(client *nex.Client) {
-	friendsList := database_wiiu.GetUserFriendList(client.PID())
+	friendsList, err := database_wiiu.GetUserFriendList(client.PID())
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+	}
 
 	for i := 0; i < len(friendsList); i++ {
 		SendUserWentOffline(client, friendsList[i].NNAInfo.PrincipalBasicInfo.PID)

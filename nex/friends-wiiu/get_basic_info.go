@@ -18,7 +18,18 @@ func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) u
 
 	for i := 0; i < len(pids); i++ {
 		pid := pids[i]
-		info := database_wiiu.GetUserInfoByPID(pid)
+
+		userData, err := globals.GetUserData(pid)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			continue
+		}
+
+		info, err := database_wiiu.GetUserInfoByPNIDData(userData)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			continue
+		}
 
 		if info.PID != 0 {
 			infos = append(infos, info)

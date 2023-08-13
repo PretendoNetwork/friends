@@ -1,6 +1,8 @@
 package notifications_3ds
 
 import (
+	"database/sql"
+
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
@@ -9,7 +11,10 @@ import (
 )
 
 func SendUserWentOfflineGlobally(client *nex.Client) {
-	friendsList := database_3ds.GetUserFriends(client.PID())
+	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	if err != nil && err != sql.ErrNoRows {
+		globals.Logger.Critical(err.Error())
+	}
 
 	for i := 0; i < len(friendsList); i++ {
 		SendUserWentOffline(client, friendsList[i].PID)

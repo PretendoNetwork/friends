@@ -3,6 +3,7 @@ package nex_friends_wiiu
 import (
 	"time"
 
+	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
@@ -22,14 +23,33 @@ func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) 
 		return nex.Errors.FPD.Unknown
 	}
 
-	senderPID, _ := database_wiiu.GetPIDsByFriendRequestID(id)
+	senderPID, _, err := database_wiiu.GetPIDsByFriendRequestID(id)
+	if err != nil {
+		if err == database.ErrFriendRequestNotFound {
+			return nex.Errors.FPD.InvalidMessageID
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
+	}
+
 	err = database_wiiu.SetUserBlocked(client.PID(), senderPID, 0, 0)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown
 	}
 
-	info := database_wiiu.GetUserInfoByPID(senderPID)
+	userData, err := globals.GetUserData(senderPID)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	info, err := database_wiiu.GetUserInfoByPNIDData(userData)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	date := nex.NewDateTime(0)
 	date.FromTimestamp(time.Now())

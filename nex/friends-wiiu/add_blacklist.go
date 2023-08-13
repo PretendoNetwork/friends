@@ -3,6 +3,9 @@ package nex_friends_wiiu
 import (
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
@@ -25,10 +28,20 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 	date := nex.NewDateTime(0)
 	date.FromTimestamp(time.Now())
 
-	userInfo := database_wiiu.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
+	userData, err := globals.GetUserData(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
+	if err != nil {
+		if status.Code(err) == codes.InvalidArgument {
+			return nex.Errors.FPD.InvalidPrincipalID // TODO: Not sure if this is the correct error.
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
+	}
 
-	if userInfo.PID == 0 {
-		return nex.Errors.FPD.InvalidPrincipalID // TODO: Not sure if this is the correct error.
+	userInfo, err := database_wiiu.GetUserInfoByPNIDData(userData)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
 	}
 
 	currentBlacklistPrincipal.PrincipalBasicInfo = userInfo

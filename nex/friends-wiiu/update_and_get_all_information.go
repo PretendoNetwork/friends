@@ -3,6 +3,7 @@ package nex_friends_wiiu
 import (
 	"os"
 
+	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
@@ -17,13 +18,6 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 		globals.Logger.Error(err.Error())
 		return nex.Errors.FPD.InvalidArgument
 	}
-
-	// Update user information
-
-	presence.Online = true      // Force online status. I have no idea why this is always false
-	presence.PID = client.PID() // WHY IS THIS SET TO 0 BY DEFAULT??
-
-	notifications_wiiu.SendPresenceUpdate(presence)
 
 	// Get user information
 	pid := client.PID()
@@ -41,13 +35,58 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	globals.ConnectedUsers[pid].NNAInfo = nnaInfo
 	globals.ConnectedUsers[pid].PresenceV2 = presence
 
-	principalPreference := database_wiiu.GetUserPrincipalPreference(pid)
-	comment := database_wiiu.GetUserComment(pid)
-	friendList := database_wiiu.GetUserFriendList(pid)
-	friendRequestsOut := database_wiiu.GetUserFriendRequestsOut(pid)
-	friendRequestsIn := database_wiiu.GetUserFriendRequestsIn(pid)
-	blockList := database_wiiu.GetUserBlockList(pid)
+	principalPreference, err := database_wiiu.GetUserPrincipalPreference(pid)
+	if err != nil {
+		if err == database.ErrPIDNotFound {
+			return nex.Errors.FPD.InvalidPrincipalID
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
+	}
+
+	comment, err := database_wiiu.GetUserComment(pid)
+	if err != nil {
+		if err == database.ErrPIDNotFound {
+			return nex.Errors.FPD.InvalidPrincipalID
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
+	}
+
+	friendList, err := database_wiiu.GetUserFriendList(pid)
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	friendRequestsOut, err := database_wiiu.GetUserFriendRequestsOut(pid)
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	friendRequestsIn, err := database_wiiu.GetUserFriendRequestsIn(pid)
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	blockList, err := database_wiiu.GetUserBlockList(pid)
+	if err != nil && err != database.ErrBlacklistNotFound {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
 	notifications := database_wiiu.GetUserNotifications(pid)
+
+	// Update user information
+
+	presence.Online = true // Force online status. I have no idea why this is always false
+	presence.PID = pid     // WHY IS THIS SET TO 0 BY DEFAULT??
+
+	notifications_wiiu.SendPresenceUpdate(presence)
 
 	if os.Getenv("PN_FRIENDS_CONFIG_ENABLE_BELLA") == "true" {
 		bella := friends_wiiu_types.NewFriendInfo()

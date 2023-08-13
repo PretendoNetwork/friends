@@ -1,6 +1,7 @@
 package nex_friends_3ds
 
 import (
+	"github.com/PretendoNetwork/friends/database"
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
@@ -16,8 +17,14 @@ func RemoveFriendByPrincipalID(err error, client *nex.Client, callID uint32, pid
 
 	err = database_3ds.RemoveFriendship(client.PID(), pid)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		if err == database.ErrFriendshipNotFound {
+			// * Official servers don't actually check this, but
+			// * we'll do it ourselves
+			return nex.Errors.FPD.NotFriend
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
 	}
 
 	go notifications_3ds.SendUserWentOffline(client, pid)

@@ -1,6 +1,8 @@
 package nex_friends_3ds
 
 import (
+	"database/sql"
+
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
@@ -13,7 +15,11 @@ func GetFriendPersistentInfo(err error, client *nex.Client, callID uint32, pids 
 		return nex.Errors.FPD.Unknown
 	}
 
-	infoList := database_3ds.GetFriendPersistentInfos(client.PID(), pids)
+	infoList, err := database_3ds.GetFriendPersistentInfos(client.PID(), pids)
+	if err != nil && err != sql.ErrNoRows {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 

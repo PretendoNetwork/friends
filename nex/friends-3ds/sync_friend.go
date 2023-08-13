@@ -1,6 +1,9 @@
 package nex_friends_3ds
 
 import (
+	"database/sql"
+
+	"github.com/PretendoNetwork/friends/database"
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
@@ -16,12 +19,16 @@ func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids [
 		return nex.Errors.FPD.InvalidArgument
 	}
 
-	friendRelationships := database_3ds.GetUserFriends(client.PID())
+	friendRelationships, err := database_3ds.GetUserFriends(client.PID())
+	if err != nil && err != sql.ErrNoRows {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	for i := 0; i < len(friendRelationships); i++ {
 		if !slices.Contains(pids, friendRelationships[i].PID) {
 			err := database_3ds.RemoveFriendship(client.PID(), friendRelationships[i].PID)
-			if err != nil {
+			if err != nil && err != database.ErrFriendshipNotFound {
 				globals.Logger.Critical(err.Error())
 				return nex.Errors.FPD.Unknown
 			}
