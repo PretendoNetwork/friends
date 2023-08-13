@@ -4,7 +4,11 @@ import (
 	"context"
 	"time"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
 	nex "github.com/PretendoNetwork/nex-go"
 )
@@ -24,7 +28,13 @@ func (s *gRPCFriendsServer) SendUserFriendRequest(ctx context.Context, in *pb.Se
 
 	message := in.GetMessage()
 
-	id, _ := database_wiiu.SaveFriendRequest(sender, recipient, sentTime.Value(), expireTime.Value(), message)
+	id, err := database_wiiu.SaveFriendRequest(sender, recipient, sentTime.Value(), expireTime.Value(), message)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return &pb.SendUserFriendRequestResponse{
+			Success: false,
+		}, status.Errorf(codes.Internal, "internal server error")
+	}
 
 	return &pb.SendUserFriendRequestResponse{
 		Success: id != 0,
