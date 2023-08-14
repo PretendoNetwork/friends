@@ -6,6 +6,7 @@ import (
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
@@ -72,16 +73,12 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		lastOnline.FromTimestamp(time.Now())
 	} else {
 		// Offline
-		userData, err := globals.GetUserData(senderPID)
+		userInfo, err := utility.GetUserInfoByPID(senderPID)
 		if err != nil {
 			return nil, err
 		}
 
 		friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
-		userInfo, err := GetUserInfoByPNIDData(userData)
-		if err != nil {
-			return nil, err
-		}
 
 		friendInfo.NNAInfo.PrincipalBasicInfo = userInfo
 		friendInfo.NNAInfo.Unknown1 = 0

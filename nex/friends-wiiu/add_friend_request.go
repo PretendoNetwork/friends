@@ -3,12 +3,11 @@ package nex_friends_wiiu
 import (
 	"time"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
-
+	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
+	"github.com/PretendoNetwork/friends/utility"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
@@ -23,33 +22,21 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	senderPID := client.PID()
 	recipientPID := pid
 
-	senderUserData, err := globals.GetUserData(senderPID)
+	senderPrincipalInfo, err := utility.GetUserInfoByPID(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown
 	}
 
-	senderPrincipalInfo, err := database_wiiu.GetUserInfoByPNIDData(senderUserData)
+	recipientPrincipalInfo, err := utility.GetUserInfoByPID(recipientPID)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
-	}
-
-	recipientUserData, err := globals.GetUserData(recipientPID)
-	if err != nil {
-		if status.Code(err) == codes.InvalidArgument {
+		if err == database.ErrPIDNotFound {
 			globals.Logger.Errorf("User %d has sent friend request to invalid PID %d", senderPID, pid)
 			return nex.Errors.FPD.InvalidPrincipalID // TODO: Not sure if this is the correct error.
 		} else {
 			globals.Logger.Critical(err.Error())
 			return nex.Errors.FPD.Unknown
 		}
-	}
-
-	recipientPrincipalInfo, err := database_wiiu.GetUserInfoByPNIDData(recipientUserData)
-	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
 	}
 
 	currentTimestamp := time.Now()

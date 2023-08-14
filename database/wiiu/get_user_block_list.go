@@ -5,6 +5,7 @@ import (
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
@@ -29,13 +30,7 @@ func GetUserBlockList(pid uint32) ([]*friends_wiiu_types.BlacklistedPrincipal, e
 		var date *nex.DateTime
 		rows.Scan(&pid, &titleId, &titleVersion, &date)
 
-		userData, err := globals.GetUserData(pid)
-		if err != nil {
-			globals.Logger.Critical(err.Error())
-			continue
-		}
-
-		userInfo, err := GetUserInfoByPNIDData(userData)
+		userInfo, err := utility.GetUserInfoByPID(pid)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
 			continue

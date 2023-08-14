@@ -1,15 +1,28 @@
-package database_wiiu
+package utility
 
 import (
 	"encoding/base64"
 
-	pb "github.com/PretendoNetwork/grpc-go/account"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/globals"
 )
 
-// GetUserInfoByPNIDData converts the account's PNID data into user info for friends
-func GetUserInfoByPNIDData(userData *pb.GetUserDataResponse) (*friends_wiiu_types.PrincipalBasicInfo, error) {
+// GetUserInfoByPID returns the user information for a given PID
+func GetUserInfoByPID(pid uint32) (*friends_wiiu_types.PrincipalBasicInfo, error) {
+	userData, err := globals.GetUserData(pid)
+	if err != nil {
+		if status.Code(err) == codes.InvalidArgument {
+			return nil, database.ErrPIDNotFound
+		} else {
+			return nil, err
+		}
+	}
+
 	info := friends_wiiu_types.NewPrincipalBasicInfo()
 
 	info.PID = userData.Pid
