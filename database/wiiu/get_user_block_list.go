@@ -31,7 +31,7 @@ func GetUserBlockList(pid uint32) ([]*friends_wiiu_types.BlacklistedPrincipal, e
 
 		userInfo, err := utility.GetUserInfoByPID(pid)
 		if err != nil {
-			return make([]*friends_wiiu_types.BlacklistedPrincipal, 0), err
+			return nil, err
 		}
 
 		blacklistPrincipal := friends_wiiu_types.NewBlacklistedPrincipal()

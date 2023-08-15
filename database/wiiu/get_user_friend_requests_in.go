@@ -34,7 +34,7 @@ func GetUserFriendRequestsIn(pid uint32) ([]*friends_wiiu_types.FriendRequest, e
 
 		userInfo, err := utility.GetUserInfoByPID(senderPID)
 		if err != nil {
-			return make([]*friends_wiiu_types.FriendRequest, 0), err
+			return nil, err
 		}
 
 		friendRequest := friends_wiiu_types.NewFriendRequest()

@@ -35,9 +35,9 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) ([]*friends_3ds_t
 			SELECT date FROM "3ds".friendships WHERE user1_pid=$1 AND user2_pid=$2 AND type=0 LIMIT 1`, user1_pid, persistentInfo.PID).Scan(&friendedAtTime)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				return make([]*friends_3ds_types.FriendPersistentInfo, 0), database.ErrFriendshipNotFound
+				return nil, database.ErrFriendshipNotFound
 			} else {
-				return make([]*friends_3ds_types.FriendPersistentInfo, 0), err
+				return nil, err
 			}
 		}
 
