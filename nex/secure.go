@@ -50,10 +50,18 @@ func StartSecureServer() {
 		lastOnline.FromTimestamp(time.Now())
 
 		if platform == types.WUP {
-			database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+			err := database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+			}
+
 			notifications_wiiu.SendUserWentOfflineGlobally(packet.Sender())
 		} else if platform == types.CTR {
-			database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+			err := database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+			}
+
 			notifications_3ds.SendUserWentOfflineGlobally(packet.Sender())
 		}
 

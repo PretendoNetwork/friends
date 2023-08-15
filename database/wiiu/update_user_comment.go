@@ -5,7 +5,7 @@ import (
 	"github.com/PretendoNetwork/nex-go"
 )
 
-// Update a users comment
+// UpdateUserComment updates a user's comment
 func UpdateUserComment(pid uint32, message string) (uint64, error) {
 	changed := nex.NewDateTime(0).Now()
 

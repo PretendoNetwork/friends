@@ -1,7 +1,6 @@
 package nex_secure_connection
 
 import (
-	"strconv"
 	"time"
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
@@ -32,11 +31,19 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	case "NintendoLoginData":
 		user.Platform = types.WUP // Platform is Wii U
 
-		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+		err = database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			retval = nex.NewResultError(nex.Errors.Authentication.Unknown)
+		}
 	case "AccountExtraInfo":
 		user.Platform = types.CTR // Platform is 3DS
 
-		database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+		err = database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			retval = nex.NewResultError(nex.Errors.Authentication.Unknown)
+		}
 	default:
 		globals.Logger.Errorf("Unknown loginData data type %s!", loginDataType)
 		retval = nex.NewResultError(nex.Errors.Authentication.ValidationFailed)
@@ -46,10 +53,9 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 		localStation := stationUrls[0]
 
 		address := client.Address().IP.String()
-		port := strconv.Itoa(client.Address().Port)
 
 		localStation.SetAddress(address)
-		localStation.SetPort(port)
+		localStation.SetPort(uint32(client.Address().Port))
 
 		localStationURL := localStation.EncodeToString()
 

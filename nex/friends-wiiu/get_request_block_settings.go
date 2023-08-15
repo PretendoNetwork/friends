@@ -26,7 +26,7 @@ func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 		isBlocked, err := database_wiiu.IsFriendRequestBlocked(client.PID(), requestedPID)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			continue
+			return nex.Errors.Core.Unknown
 		}
 
 		setting.IsBlocked = isBlocked

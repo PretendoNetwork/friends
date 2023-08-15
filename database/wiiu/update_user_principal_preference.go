@@ -5,6 +5,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
+// UpdateUserPrincipalPreference updates the user preferences
 func UpdateUserPrincipalPreference(pid uint32, principalPreference *friends_wiiu_types.PrincipalPreference) error {
 	_, err := database.Postgres.Exec(`
 		INSERT INTO wiiu.user_data (pid, show_online, show_current_game, block_friend_requests)

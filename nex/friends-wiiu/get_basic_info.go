@@ -22,7 +22,7 @@ func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) u
 		info, err := utility.GetUserInfoByPID(pid)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			continue
+			return nex.Errors.FPD.Unknown
 		}
 
 		if info.PID != 0 {

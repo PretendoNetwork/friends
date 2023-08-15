@@ -58,8 +58,7 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 
 			userInfo, err := utility.GetUserInfoByPID(friendPID)
 			if err != nil {
-				globals.Logger.Critical(err.Error())
-				continue
+				return make([]*friends_wiiu_types.FriendInfo, 0), err
 			}
 
 			friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
@@ -90,8 +89,7 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 			var lastOnlineTime uint64
 			err = database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID).Scan(&lastOnlineTime)
 			if err != nil {
-				globals.Logger.Critical(err.Error())
-				continue
+				return make([]*friends_wiiu_types.FriendInfo, 0), err
 			}
 
 			lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
@@ -99,8 +97,7 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 
 		status, err := GetUserComment(friendPID)
 		if err != nil {
-			globals.Logger.Critical(err.Error())
-			continue
+			return make([]*friends_wiiu_types.FriendInfo, 0), err
 		}
 
 		friendInfo.Status = status

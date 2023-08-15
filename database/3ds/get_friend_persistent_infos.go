@@ -2,10 +2,8 @@ package database_3ds
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
@@ -37,10 +35,9 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) ([]*friends_3ds_t
 			SELECT date FROM "3ds".friendships WHERE user1_pid=$1 AND user2_pid=$2 AND type=0 LIMIT 1`, user1_pid, persistentInfo.PID).Scan(&friendedAtTime)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				friendedAtTime = uint64(time.Now().Unix())
+				return make([]*friends_3ds_types.FriendPersistentInfo, 0), database.ErrFriendshipNotFound
 			} else {
-				globals.Logger.Critical(err.Error())
-				continue
+				return make([]*friends_3ds_types.FriendPersistentInfo, 0), err
 			}
 		}
 

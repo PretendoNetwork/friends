@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
@@ -35,8 +34,7 @@ func GetUserFriendRequestsIn(pid uint32) ([]*friends_wiiu_types.FriendRequest, e
 
 		userInfo, err := utility.GetUserInfoByPID(senderPID)
 		if err != nil {
-			globals.Logger.Critical(err.Error())
-			continue
+			return make([]*friends_wiiu_types.FriendRequest, 0), err
 		}
 
 		friendRequest := friends_wiiu_types.NewFriendRequest()
