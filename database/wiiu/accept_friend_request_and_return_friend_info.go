@@ -1,23 +1,28 @@
 package database_wiiu
 
 import (
+	"database/sql"
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
-	"github.com/gocql/gocql"
 )
 
-func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wiiu_types.FriendInfo {
+// AcceptFriendRequestAndReturnFriendInfo accepts the given friend reuqest and returns the friend's information
+func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wiiu_types.FriendInfo, error) {
 	var senderPID uint32
 	var recipientPID uint32
 
 	err := database.Postgres.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID).Scan(&senderPID, &recipientPID)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nil
+		if err == sql.ErrNoRows {
+			return nil, database.ErrFriendRequestNotFound
+		} else {
+			return nil, err
+		}
 	}
 
 	acceptedTime := nex.NewDateTime(0)
@@ -36,8 +41,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wii
 		date = $3,
 		active = true`, senderPID, recipientPID, acceptedTime.Value())
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nil
+		return nil, err
 	}
 
 	_, err = database.Postgres.Exec(`
@@ -48,11 +52,13 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wii
 		date = $3,
 		active = true`, recipientPID, senderPID, acceptedTime.Value())
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nil
+		return nil, err
 	}
 
-	SetFriendRequestAccepted(friendRequestID)
+	err = SetFriendRequestAccepted(friendRequestID)
+	if err != nil {
+		return nil, err
+	}
 
 	friendInfo := friends_wiiu_types.NewFriendInfo()
 	connectedUser := globals.ConnectedUsers[senderPID]
@@ -67,9 +73,14 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wii
 		lastOnline.FromTimestamp(time.Now())
 	} else {
 		// Offline
+		userInfo, err := utility.GetUserInfoByPID(senderPID)
+		if err != nil {
+			return nil, err
+		}
 
 		friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
-		friendInfo.NNAInfo.PrincipalBasicInfo = GetUserInfoByPID(senderPID)
+
+		friendInfo.NNAInfo.PrincipalBasicInfo = userInfo
 		friendInfo.NNAInfo.Unknown1 = 0
 		friendInfo.NNAInfo.Unknown2 = 0
 
@@ -87,30 +98,33 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) *friends_wii
 		friendInfo.Presence.Unknown4 = 0
 		friendInfo.Presence.PID = senderPID
 		friendInfo.Presence.GatheringID = 0
-		friendInfo.Presence.ApplicationData = []byte{0x00}
+		friendInfo.Presence.ApplicationData = make([]byte, 0)
 		friendInfo.Presence.Unknown5 = 0
 		friendInfo.Presence.Unknown6 = 0
 		friendInfo.Presence.Unknown7 = 0
 
 		var lastOnlineTime uint64
-		err := database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID).Scan(&lastOnlineTime)
+		err = database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID).Scan(&lastOnlineTime)
 		if err != nil {
-			lastOnlineTime = nex.NewDateTime(0).Now()
-
-			if err == gocql.ErrNotFound {
-				globals.Logger.Error(err.Error())
+			if err == sql.ErrNoRows {
+				return nil, database.ErrPIDNotFound
 			} else {
-				globals.Logger.Critical(err.Error())
+				return nil, err
 			}
 		}
 
 		lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
 	}
 
-	friendInfo.Status = GetUserComment(senderPID)
+	status, err := GetUserComment(senderPID)
+	if err != nil {
+		return nil, err
+	}
+
+	friendInfo.Status = status
 	friendInfo.BecameFriend = acceptedTime
 	friendInfo.LastOnline = lastOnline // TODO: Change this
 	friendInfo.Unknown = 0
 
-	return friendInfo
+	return friendInfo, nil
 }

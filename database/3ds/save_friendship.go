@@ -3,14 +3,13 @@ package database_3ds
 import (
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-// Save a friend relationship for a user
-func SaveFriendship(senderPID uint32, recipientPID uint32) *friends_3ds_types.FriendRelationship {
+// SaveFriendship saves a friend relationship for a user
+func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.FriendRelationship, error) {
 	friendRelationship := friends_3ds_types.NewFriendRelationship()
 	friendRelationship.PID = recipientPID
 	friendRelationship.LFC = 0
@@ -23,18 +22,18 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) *friends_3ds_types.Fr
 	var found bool
 	err := database.Postgres.QueryRow(`SELECT COUNT(*) FROM "3ds".user_data WHERE pid=$1 LIMIT 1`, recipientPID).Scan(&found)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return nil, err
 	}
 	if !found {
 		friendRelationship.RelationshipType = 2 // Non-existent
-		return friendRelationship
+		return friendRelationship, nil
 	}
 
 	// Get the other side's relationship, we need to know if we've already got one sent to us.
 	err = database.Postgres.QueryRow(`
 	SELECT COUNT(*) FROM "3ds".friendships WHERE user1_pid=$1 AND user2_pid=$2 AND type=0 LIMIT 1`, recipientPID, senderPID).Scan(&found)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return nil, err
 	}
 	if !found {
 		_, err = database.Postgres.Exec(`
@@ -43,9 +42,9 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) *friends_3ds_types.Fr
 		ON CONFLICT (user1_pid, user2_pid)
 		DO NOTHING`, senderPID, recipientPID)
 		if err != nil {
-			globals.Logger.Critical(err.Error())
+			return nil, err
 		}
-		return friendRelationship
+		return friendRelationship, nil
 	}
 
 	acceptedTime := nex.NewDateTime(0).Now()
@@ -59,8 +58,7 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) *friends_3ds_types.Fr
 		date = $3,
 		type = 1`, senderPID, recipientPID, acceptedTime)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nil
+		return nil, err
 	}
 
 	_, err = database.Postgres.Exec(`
@@ -71,10 +69,9 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) *friends_3ds_types.Fr
 		date = $3,
 		type = 1`, recipientPID, senderPID, acceptedTime)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return nil
+		return nil, err
 	}
 
 	friendRelationship.RelationshipType = 1 // Complete
-	return friendRelationship
+	return friendRelationship, nil
 }

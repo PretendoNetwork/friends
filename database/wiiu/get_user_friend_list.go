@@ -1,24 +1,28 @@
 package database_wiiu
 
 import (
+	"database/sql"
 	"fmt"
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
-	"github.com/gocql/gocql"
 )
 
-// Get a users friend list
-func GetUserFriendList(pid uint32) []*friends_wiiu_types.FriendInfo {
+// GetUserFriendList returns a user's friend list
+func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 	friendList := make([]*friends_wiiu_types.FriendInfo, 0)
 
 	rows, err := database.Postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1 AND active=true LIMIT 100`, pid)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return friendList
+		if err == sql.ErrNoRows {
+			return friendList, database.ErrEmptyList
+		} else {
+			return friendList, err
+		}
 	}
 
 	for rows.Next() {
@@ -52,8 +56,14 @@ func GetUserFriendList(pid uint32) []*friends_wiiu_types.FriendInfo {
 		} else {
 			// Offline
 
+			userInfo, err := utility.GetUserInfoByPID(friendPID)
+			if err != nil {
+				return nil, err
+			}
+
 			friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
-			friendInfo.NNAInfo.PrincipalBasicInfo = GetUserInfoByPID(friendPID)
+
+			friendInfo.NNAInfo.PrincipalBasicInfo = userInfo
 			friendInfo.NNAInfo.Unknown1 = 0
 			friendInfo.NNAInfo.Unknown2 = 0
 
@@ -77,21 +87,21 @@ func GetUserFriendList(pid uint32) []*friends_wiiu_types.FriendInfo {
 			friendInfo.Presence.Unknown7 = 0
 
 			var lastOnlineTime uint64
-			err := database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID).Scan(&lastOnlineTime)
+			err = database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID).Scan(&lastOnlineTime)
 			if err != nil {
-				lastOnlineTime = nex.NewDateTime(0).Now()
-
-				if err == gocql.ErrNotFound {
-					globals.Logger.Error(err.Error())
-				} else {
-					globals.Logger.Critical(err.Error())
-				}
+				return nil, err
 			}
 
 			lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
 		}
 
-		friendInfo.Status = GetUserComment(friendPID)
+		status, err := GetUserComment(friendPID)
+		if err != nil {
+			return nil, err
+		}
+
+		friendInfo.Status = status
+
 		friendInfo.BecameFriend = nex.NewDateTime(date)
 		friendInfo.LastOnline = lastOnline
 		friendInfo.Unknown = 0
@@ -99,5 +109,5 @@ func GetUserFriendList(pid uint32) []*friends_wiiu_types.FriendInfo {
 		friendList = append(friendList, friendInfo)
 	}
 
-	return friendList
+	return friendList, nil
 }

@@ -1,27 +1,21 @@
 package database_3ds
 
 import (
-	"database/sql"
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-// Get a friend's mii
-func GetFriendMiis(pids []uint32) []*friends_3ds_types.FriendMii {
+// GetFriendMiis returns the Mii of all friends
+func GetFriendMiis(pids []uint32) ([]*friends_3ds_types.FriendMii, error) {
 	friendMiis := make([]*friends_3ds_types.FriendMii, 0)
 
 	rows, err := database.Postgres.Query(`
 	SELECT pid, mii_name, mii_data FROM "3ds".user_data WHERE pid IN ($1)`, database.PIDArrayToString(pids))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			globals.Logger.Warning(err.Error())
-		} else {
-			globals.Logger.Critical(err.Error())
-		}
+		return friendMiis, err
 	}
 
 	changedTime := nex.NewDateTime(0)
@@ -44,5 +38,5 @@ func GetFriendMiis(pids []uint32) []*friends_3ds_types.FriendMii {
 		friendMiis = append(friendMiis, friendMii)
 	}
 
-	return friendMiis
+	return friendMiis, nil
 }

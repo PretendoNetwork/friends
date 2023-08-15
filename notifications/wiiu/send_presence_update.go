@@ -3,8 +3,9 @@ package notifications_wiiu
 import (
 	"fmt"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
@@ -30,7 +31,10 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendList := database_wiiu.GetUserFriendList(presence.PID)
+	friendList, err := database_wiiu.GetUserFriendList(presence.PID)
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+	}
 
 	for i := 0; i < len(friendList); i++ {
 		if friendList[i] == nil || friendList[i].NNAInfo == nil || friendList[i].NNAInfo.PrincipalBasicInfo == nil {

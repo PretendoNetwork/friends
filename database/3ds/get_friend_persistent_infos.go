@@ -2,26 +2,20 @@ package database_3ds
 
 import (
 	"database/sql"
-	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-// Get a friend's persistent information
-func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds_types.FriendPersistentInfo {
+// GetFriendPersistentInfos returns the persistent information of all friends
+func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) ([]*friends_3ds_types.FriendPersistentInfo, error) {
 	persistentInfos := make([]*friends_3ds_types.FriendPersistentInfo, 0)
 
 	rows, err := database.Postgres.Query(`
 	SELECT pid, region, area, language, favorite_title, favorite_title_version, comment, comment_changed, last_online FROM "3ds".user_data WHERE pid IN ($1)`, database.PIDArrayToString(pids))
 	if err != nil {
-		if err == sql.ErrNoRows {
-			globals.Logger.Warning(err.Error())
-		} else {
-			globals.Logger.Critical(err.Error())
-		}
+		return persistentInfos, err
 	}
 
 	for rows.Next() {
@@ -41,9 +35,9 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds_ty
 			SELECT date FROM "3ds".friendships WHERE user1_pid=$1 AND user2_pid=$2 AND type=0 LIMIT 1`, user1_pid, persistentInfo.PID).Scan(&friendedAtTime)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				friendedAtTime = uint64(time.Now().Unix())
+				return nil, database.ErrFriendshipNotFound
 			} else {
-				globals.Logger.Critical(err.Error())
+				return nil, err
 			}
 		}
 
@@ -56,5 +50,5 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) []*friends_3ds_ty
 		persistentInfos = append(persistentInfos, persistentInfo)
 	}
 
-	return persistentInfos
+	return persistentInfos, nil
 }

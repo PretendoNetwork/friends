@@ -1,14 +1,19 @@
 package nex_friends_wiiu
 
 import (
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids []uint32) {
+func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids []uint32) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
 	settings := make([]*friends_wiiu_types.PrincipalRequestBlockSetting, 0)
 
 	// TODO:
@@ -18,7 +23,13 @@ func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 
 		setting := friends_wiiu_types.NewPrincipalRequestBlockSetting()
 		setting.PID = requestedPID
-		setting.IsBlocked = database_wiiu.IsFriendRequestBlocked(client.PID(), requestedPID)
+		isBlocked, err := database_wiiu.IsFriendRequestBlocked(client.PID(), requestedPID)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.Core.Unknown
+		}
+
+		setting.IsBlocked = isBlocked
 
 		settings = append(settings, setting)
 	}
@@ -47,4 +58,6 @@ func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

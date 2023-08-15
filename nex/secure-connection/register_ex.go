@@ -1,51 +1,72 @@
 package nex_secure_connection
 
 import (
-	"strconv"
 	"time"
 
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
-	"github.com/PretendoNetwork/friends-secure/types"
+	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
 	secure_connection "github.com/PretendoNetwork/nex-protocols-go/secure-connection"
 )
 
-func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) {
-	// TODO: Validate loginData
+func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.Core.InvalidArgument
+	}
 
+	retval := nex.NewResultSuccess(nex.Errors.Core.Unknown)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+
+	// TODO: Validate loginData
 	pid := client.PID()
 	user := globals.ConnectedUsers[pid]
 	lastOnline := nex.NewDateTime(0)
 	lastOnline.FromTimestamp(time.Now())
 
-	if loginData.TypeName() == "NintendoLoginData" {
+	loginDataType := loginData.TypeName()
+	switch loginDataType {
+	case "NintendoLoginData":
 		user.Platform = types.WUP // Platform is Wii U
 
-		database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
-	} else if loginData.TypeName() == "AccountExtraInfo" {
+		err = database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			retval = nex.NewResultError(nex.Errors.Authentication.Unknown)
+		}
+	case "AccountExtraInfo":
 		user.Platform = types.CTR // Platform is 3DS
 
-		database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+		err = database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			retval = nex.NewResultError(nex.Errors.Authentication.Unknown)
+		}
+	default:
+		globals.Logger.Errorf("Unknown loginData data type %s!", loginDataType)
+		retval = nex.NewResultError(nex.Errors.Authentication.ValidationFailed)
 	}
 
-	localStation := stationUrls[0]
+	if retval.IsSuccess() {
+		localStation := stationUrls[0]
 
-	address := client.Address().IP.String()
-	port := strconv.Itoa(client.Address().Port)
+		address := client.Address().IP.String()
 
-	localStation.SetAddress(address)
-	localStation.SetPort(port)
+		localStation.SetAddress(address)
+		localStation.SetPort(uint32(client.Address().Port))
 
-	localStationURL := localStation.EncodeToString()
+		localStationURL := localStation.EncodeToString()
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
-
-	retval := nex.NewResultSuccess(nex.Errors.Core.Unknown)
-	rmcResponseStream.WriteResult(retval)
-	rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
-	rmcResponseStream.WriteString(localStationURL)
+		rmcResponseStream.WriteResult(retval)
+		rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
+		rmcResponseStream.WriteString(localStationURL)
+	} else {
+		rmcResponseStream.WriteResult(retval)
+		rmcResponseStream.WriteUInt32LE(0)
+		rmcResponseStream.WriteString("prudp:/")
+	}
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
@@ -67,4 +88,6 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

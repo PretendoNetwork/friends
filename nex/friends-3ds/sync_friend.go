@@ -1,27 +1,47 @@
 package nex_friends_3ds
 
 import (
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
-	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
+	"database/sql"
+
+	"github.com/PretendoNetwork/friends/database"
+	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
+	"github.com/PretendoNetwork/friends/globals"
+	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 	"golang.org/x/exp/slices"
 )
 
-func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids []uint32, lfcList []uint64) {
-	friendRelationships := database_3ds.GetUserFriends(client.PID())
+func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids []uint32, lfcList []uint64) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
+	friendRelationships, err := database_3ds.GetUserFriends(client.PID())
+	if err != nil && err != sql.ErrNoRows {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	for i := 0; i < len(friendRelationships); i++ {
 		if !slices.Contains(pids, friendRelationships[i].PID) {
-			database_3ds.RemoveFriendship(client.PID(), friendRelationships[i].PID)
+			err := database_3ds.RemoveFriendship(client.PID(), friendRelationships[i].PID)
+			if err != nil && err != database.ErrFriendshipNotFound {
+				globals.Logger.Critical(err.Error())
+				return nex.Errors.FPD.Unknown
+			}
 		}
 	}
 
 	for i := 0; i < len(pids); i++ {
 		if !isPIDInRelationships(friendRelationships, pids[i]) {
-			friendRelationship := database_3ds.SaveFriendship(client.PID(), pids[i])
+			friendRelationship, err := database_3ds.SaveFriendship(client.PID(), pids[i])
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+				return nex.Errors.FPD.Unknown
+			}
 
 			friendRelationships = append(friendRelationships, friendRelationship)
 
@@ -56,6 +76,8 @@ func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids [
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }
 
 func isPIDInRelationships(relationships []*friends_3ds_types.FriendRelationship, pid uint32) bool {

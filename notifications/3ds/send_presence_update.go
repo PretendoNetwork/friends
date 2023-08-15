@@ -1,8 +1,10 @@
 package notifications_3ds
 
 import (
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"database/sql"
+
+	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
@@ -28,7 +30,10 @@ func SendPresenceUpdate(client *nex.Client, presence *friends_3ds_types.Nintendo
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendsList := database_3ds.GetUserFriends(client.PID())
+	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	if err != nil && err != sql.ErrNoRows {
+		globals.Logger.Critical(err.Error())
+	}
 
 	for i := 0; i < len(friendsList); i++ {
 

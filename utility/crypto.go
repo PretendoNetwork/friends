@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"hash/crc32"
 
-	"github.com/PretendoNetwork/friends-secure/globals"
-	"github.com/PretendoNetwork/friends-secure/types"
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/types"
 )
 
 func DecryptToken(encryptedToken []byte) (*types.NEXToken, error) {

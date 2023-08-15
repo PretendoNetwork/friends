@@ -5,12 +5,12 @@ import (
 	"os"
 	"time"
 
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_3ds "github.com/PretendoNetwork/friends-secure/notifications/3ds"
-	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
-	"github.com/PretendoNetwork/friends-secure/types"
+	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
+	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
+	"github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
 	_ "github.com/PretendoNetwork/nex-protocols-go"
 )
@@ -50,10 +50,18 @@ func StartSecureServer() {
 		lastOnline.FromTimestamp(time.Now())
 
 		if platform == types.WUP {
-			database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+			err := database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+			}
+
 			notifications_wiiu.SendUserWentOfflineGlobally(packet.Sender())
 		} else if platform == types.CTR {
-			database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+			err := database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+			}
+
 			notifications_3ds.SendUserWentOfflineGlobally(packet.Sender())
 		}
 

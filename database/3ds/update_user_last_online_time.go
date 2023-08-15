@@ -3,21 +3,20 @@ package database_3ds
 import (
 	"database/sql"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 )
 
-// Update a user's last online time
-func UpdateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
+// UpdateUserLastOnlineTime updates a user's last online time
+func UpdateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) error {
 	var showOnline bool
 
 	err := database.Postgres.QueryRow(`SELECT show_online FROM "3ds".user_data WHERE pid=$1`, pid).Scan(&showOnline)
 	if err != nil && err != sql.ErrNoRows {
-		globals.Logger.Critical(err.Error())
+		return err
 	}
 	if !showOnline {
-		return
+		return nil
 	}
 
 	_, err = database.Postgres.Exec(`
@@ -27,6 +26,8 @@ func UpdateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
 		DO UPDATE SET 
 		last_online = $2`, pid, lastOnline.Value())
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return err
 	}
+
+	return nil
 }

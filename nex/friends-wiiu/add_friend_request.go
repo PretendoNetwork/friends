@@ -1,44 +1,42 @@
 package nex_friends_wiiu
 
 import (
-	"fmt"
 	"time"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
+	"github.com/PretendoNetwork/friends/database"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
+	"github.com/PretendoNetwork/friends/utility"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *friends_wiiu_types.GameKey, unknown6 *nex.DateTime) {
+func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *friends_wiiu_types.GameKey, unknown6 *nex.DateTime) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
 	senderPID := client.PID()
 	recipientPID := pid
 
-	recipient := database_wiiu.GetUserInfoByPID(recipientPID)
-	if recipient == nil {
-		globals.Logger.Error(fmt.Sprintf("User %d has sent friend request to invalid PID %d", senderPID, pid))
+	senderPrincipalInfo, err := utility.GetUserInfoByPID(senderPID)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
-		rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-		rmcResponse.SetError(nex.Errors.FPD.InvalidPrincipalID) // TODO - Is this the right error?
-
-		rmcResponseBytes := rmcResponse.Bytes()
-
-		responsePacket, _ := nex.NewPacketV0(client, nil)
-
-		responsePacket.SetVersion(0)
-		responsePacket.SetSource(0xA1)
-		responsePacket.SetDestination(0xAF)
-		responsePacket.SetType(nex.DataPacket)
-		responsePacket.SetPayload(rmcResponseBytes)
-
-		responsePacket.AddFlag(nex.FlagNeedsAck)
-		responsePacket.AddFlag(nex.FlagReliable)
-
-		globals.SecureServer.Send(responsePacket)
-
-		return
+	recipientPrincipalInfo, err := utility.GetUserInfoByPID(recipientPID)
+	if err != nil {
+		if err == database.ErrPIDNotFound {
+			globals.Logger.Errorf("User %d has sent friend request to invalid PID %d", senderPID, pid)
+			return nex.Errors.FPD.InvalidPrincipalID // TODO: Not sure if this is the correct error.
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
 	}
 
 	currentTimestamp := time.Now()
@@ -50,11 +48,15 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	sentTime.FromTimestamp(currentTimestamp)
 	expireTime.FromTimestamp(expireTimestamp)
 
-	friendRequestID := database_wiiu.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
+	friendRequestID, err := database_wiiu.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	friendRequest := friends_wiiu_types.NewFriendRequest()
 
-	friendRequest.PrincipalInfo = database_wiiu.GetUserInfoByPID(recipientPID)
+	friendRequest.PrincipalInfo = recipientPrincipalInfo
 
 	friendRequest.Message = friends_wiiu_types.NewFriendRequestMessage()
 	friendRequest.Message.FriendRequestID = friendRequestID
@@ -79,7 +81,7 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = ""
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = 0
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = 0
-	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Data = []byte{}
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.MiiData = []byte{}
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Datetime = nex.NewDateTime(0)
 	friendInfo.NNAInfo.PrincipalBasicInfo.Unknown = 0
 	friendInfo.NNAInfo.Unknown1 = 0
@@ -117,7 +119,7 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 
 		friendRequestNotificationData := friends_wiiu_types.NewFriendRequest()
 
-		friendRequestNotificationData.PrincipalInfo = database_wiiu.GetUserInfoByPID(senderPID)
+		friendRequestNotificationData.PrincipalInfo = senderPrincipalInfo
 
 		friendRequestNotificationData.Message = friends_wiiu_types.NewFriendRequestMessage()
 		friendRequestNotificationData.Message.FriendRequestID = friendRequestID
@@ -159,4 +161,6 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	responsePacket.AddFlag(nex.FlagReliable)
 
 	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

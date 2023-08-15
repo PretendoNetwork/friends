@@ -1,22 +1,26 @@
 package database_wiiu
 
 import (
+	"database/sql"
 	"time"
 
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-// Get a users received friend requests
-func GetUserFriendRequestsIn(pid uint32) []*friends_wiiu_types.FriendRequest {
+// GetUserFriendRequestsIn returns the friend requests received by a user
+func GetUserFriendRequestsIn(pid uint32) ([]*friends_wiiu_types.FriendRequest, error) {
 	friendRequestsIn := make([]*friends_wiiu_types.FriendRequest, 0)
 
 	rows, err := database.Postgres.Query(`SELECT id, sender_pid, sent_on, expires_on, message, received FROM wiiu.friend_requests WHERE recipient_pid=$1 AND accepted=false AND denied=false`, pid)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return friendRequestsIn
+		if err == sql.ErrNoRows {
+			return friendRequestsIn, database.ErrEmptyList
+		} else {
+			return friendRequestsIn, err
+		}
 	}
 
 	for rows.Next() {
@@ -28,10 +32,14 @@ func GetUserFriendRequestsIn(pid uint32) []*friends_wiiu_types.FriendRequest {
 		var received bool
 		rows.Scan(&id, &senderPID, &sentOn, &expiresOn, &message, &received)
 
+		userInfo, err := utility.GetUserInfoByPID(senderPID)
+		if err != nil {
+			return nil, err
+		}
+
 		friendRequest := friends_wiiu_types.NewFriendRequest()
 
-		friendRequest.PrincipalInfo = GetUserInfoByPID(senderPID)
-
+		friendRequest.PrincipalInfo = userInfo
 		friendRequest.Message = friends_wiiu_types.NewFriendRequestMessage()
 		friendRequest.Message.FriendRequestID = id
 		friendRequest.Message.Received = received
@@ -52,5 +60,5 @@ func GetUserFriendRequestsIn(pid uint32) []*friends_wiiu_types.FriendRequest {
 		}
 	}
 
-	return friendRequestsIn
+	return friendRequestsIn, nil
 }
