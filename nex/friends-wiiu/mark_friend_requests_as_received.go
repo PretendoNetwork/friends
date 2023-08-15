@@ -13,18 +13,13 @@ func MarkFriendRequestsAsReceived(err error, client *nex.Client, callID uint32, 
 		return nex.Errors.FPD.InvalidArgument
 	}
 
-	var markErr error
 	for i := 0; i < len(ids); i++ {
 		id := ids[i]
 		err = database_wiiu.SetFriendRequestReceived(id)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			markErr = err
+			return nex.Errors.FPD.Unknown
 		}
-	}
-
-	if markErr != nil {
-		return nex.Errors.FPD.Unknown
 	}
 
 	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
