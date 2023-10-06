@@ -2,8 +2,6 @@ package database
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 )
 
 var (
@@ -22,8 +20,3 @@ var (
 	// ErrEmptyList is returned if a given PID returned an empty list on an operation
 	ErrEmptyList = errors.New("List is empty")
 )
-
-// PIDArrayToString converts an array of PIDs to a string usable in Postgres queries
-func PIDArrayToString(array []uint32) string {
-	return strings.Trim(strings.Replace(fmt.Sprint(array), " ", ",", -1), "[]")
-}

@@ -6,6 +6,7 @@ import (
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
+	"github.com/lib/pq"
 )
 
 // GetFriendPersistentInfos returns the persistent information of all friends
@@ -13,7 +14,7 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) ([]*friends_3ds_t
 	persistentInfos := make([]*friends_3ds_types.FriendPersistentInfo, 0)
 
 	rows, err := database.Postgres.Query(`
-	SELECT pid, region, area, language, favorite_title, favorite_title_version, comment, comment_changed, last_online FROM "3ds".user_data WHERE pid IN ($1)`, database.PIDArrayToString(pids))
+	SELECT pid, region, area, language, favorite_title, favorite_title_version, comment, comment_changed, last_online FROM "3ds".user_data WHERE pid=ANY($1::int[])`, pq.Array(pids))
 	if err != nil {
 		return persistentInfos, err
 	}
