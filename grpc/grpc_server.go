@@ -1,8 +1,10 @@
 package grpc
 
 import (
+	"fmt"
 	"log"
 	"net"
+	"os"
 
 	pb "github.com/PretendoNetwork/grpc-go/friends"
 	"google.golang.org/grpc"
@@ -13,7 +15,7 @@ type gRPCFriendsServer struct {
 }
 
 func StartGRPCServer() {
-	listener, err := net.Listen("tcp", ":50051")
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%s", os.Getenv("PN_FRIENDS_GRPC_SERVER_PORT")))
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

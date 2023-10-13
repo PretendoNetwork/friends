@@ -3,27 +3,21 @@ package nex_friends_wiiu
 import (
 	"os"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
-	notifications_wiiu "github.com/PretendoNetwork/friends-secure/notifications/wiiu"
-	"github.com/PretendoNetwork/friends-secure/types"
+	"github.com/PretendoNetwork/friends/database"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
+	"github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nnaInfo *friends_wiiu.NNAInfo, presence *friends_wiiu.NintendoPresenceV2, birthday *nex.DateTime) {
-
+func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nnaInfo *friends_wiiu_types.NNAInfo, presence *friends_wiiu_types.NintendoPresenceV2, birthday *nex.DateTime) uint32 {
 	if err != nil {
-		// TODO: Handle error
-		globals.Logger.Critical(err.Error())
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
 	}
-
-	// Update user information
-
-	presence.Online = true      // Force online status. I have no idea why this is always false
-	presence.PID = client.PID() // WHY IS THIS SET TO 0 BY DEFAULT??
-
-	notifications_wiiu.SendPresenceUpdate(presence)
 
 	// Get user information
 	pid := client.PID()
@@ -41,37 +35,82 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	globals.ConnectedUsers[pid].NNAInfo = nnaInfo
 	globals.ConnectedUsers[pid].PresenceV2 = presence
 
-	principalPreference := database_wiiu.GetUserPrincipalPreference(pid)
-	comment := database_wiiu.GetUserComment(pid)
-	friendList := database_wiiu.GetUserFriendList(pid)
-	friendRequestsOut := database_wiiu.GetUserFriendRequestsOut(pid)
-	friendRequestsIn := database_wiiu.GetUserFriendRequestsIn(pid)
-	blockList := database_wiiu.GetUserBlockList(pid)
+	principalPreference, err := database_wiiu.GetUserPrincipalPreference(pid)
+	if err != nil {
+		if err == database.ErrPIDNotFound {
+			return nex.Errors.FPD.InvalidPrincipalID
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
+	}
+
+	comment, err := database_wiiu.GetUserComment(pid)
+	if err != nil {
+		if err == database.ErrPIDNotFound {
+			return nex.Errors.FPD.InvalidPrincipalID
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
+	}
+
+	friendList, err := database_wiiu.GetUserFriendList(pid)
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	friendRequestsOut, err := database_wiiu.GetUserFriendRequestsOut(pid)
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	friendRequestsIn, err := database_wiiu.GetUserFriendRequestsIn(pid)
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	blockList, err := database_wiiu.GetUserBlockList(pid)
+	if err != nil && err != database.ErrBlacklistNotFound {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
 	notifications := database_wiiu.GetUserNotifications(pid)
 
-	if os.Getenv("PN_FRIENDS_CONFIG_ENABLE_BELLA") == "true" {
-		bella := friends_wiiu.NewFriendInfo()
+	// Update user information
 
-		bella.NNAInfo = friends_wiiu.NewNNAInfo()
-		bella.Presence = friends_wiiu.NewNintendoPresenceV2()
-		bella.Status = friends_wiiu.NewComment()
+	presence.Online = true // Force online status. I have no idea why this is always false
+	presence.PID = pid     // WHY IS THIS SET TO 0 BY DEFAULT??
+
+	notifications_wiiu.SendPresenceUpdate(presence)
+
+	if os.Getenv("PN_FRIENDS_CONFIG_ENABLE_BELLA") == "true" {
+		bella := friends_wiiu_types.NewFriendInfo()
+
+		bella.NNAInfo = friends_wiiu_types.NewNNAInfo()
+		bella.Presence = friends_wiiu_types.NewNintendoPresenceV2()
+		bella.Status = friends_wiiu_types.NewComment()
 		bella.BecameFriend = nex.NewDateTime(0)
 		bella.LastOnline = nex.NewDateTime(0)
 		bella.Unknown = 0
 
-		bella.NNAInfo.PrincipalBasicInfo = friends_wiiu.NewPrincipalBasicInfo()
+		bella.NNAInfo.PrincipalBasicInfo = friends_wiiu_types.NewPrincipalBasicInfo()
 		bella.NNAInfo.Unknown1 = 0
 		bella.NNAInfo.Unknown2 = 0
 
 		bella.NNAInfo.PrincipalBasicInfo.PID = 1743126339
 		bella.NNAInfo.PrincipalBasicInfo.NNID = "bells1998"
-		bella.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu.NewMiiV2()
+		bella.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu_types.NewMiiV2()
 		bella.NNAInfo.PrincipalBasicInfo.Unknown = 0
 
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Name = "bella"
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = 0
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = 0
-		bella.NNAInfo.PrincipalBasicInfo.Mii.Data = []byte{
+		bella.NNAInfo.PrincipalBasicInfo.Mii.MiiData = []byte{
 			0x03, 0x00, 0x00, 0x40, 0xE9, 0x55, 0xA2, 0x09,
 			0xE7, 0xC7, 0x41, 0x82, 0xD9, 0x7D, 0x0B, 0x2D,
 			0x03, 0xB3, 0xB8, 0x8D, 0x27, 0xD9, 0x00, 0x00,
@@ -89,7 +128,7 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 
 		bella.Presence.ChangedFlags = 0x1EE
 		bella.Presence.Online = true
-		bella.Presence.GameKey = friends_wiiu.NewGameKey()
+		bella.Presence.GameKey = friends_wiiu_types.NewGameKey()
 		bella.Presence.Unknown1 = 0
 		bella.Presence.Message = "Testing"
 		//bella.Presence.Unknown2 = 2
@@ -121,7 +160,7 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 		friendList = append(friendList, bella)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteStructure(principalPreference)
 	rmcResponseStream.WriteStructure(comment)
@@ -154,5 +193,7 @@ func UpdateAndGetAllInformation(err error, client *nex.Client, callID uint32, nn
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

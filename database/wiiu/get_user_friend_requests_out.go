@@ -1,20 +1,25 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"database/sql"
+
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-// Get a users sent friend requests
-func GetUserFriendRequestsOut(pid uint32) []*friends_wiiu.FriendRequest {
-	friendRequestsOut := make([]*friends_wiiu.FriendRequest, 0)
+// GetUserFriendRequestsOut returns the friend requests sent by a user
+func GetUserFriendRequestsOut(pid uint32) ([]*friends_wiiu_types.FriendRequest, error) {
+	friendRequestsOut := make([]*friends_wiiu_types.FriendRequest, 0)
 
 	rows, err := database.Postgres.Query(`SELECT id, recipient_pid, sent_on, expires_on, message, received FROM wiiu.friend_requests WHERE sender_pid=$1 AND accepted=false`, pid)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return friendRequestsOut
+		if err == sql.ErrNoRows {
+			return friendRequestsOut, database.ErrEmptyList
+		} else {
+			return friendRequestsOut, err
+		}
 	}
 
 	for rows.Next() {
@@ -26,18 +31,22 @@ func GetUserFriendRequestsOut(pid uint32) []*friends_wiiu.FriendRequest {
 		var received bool
 		rows.Scan(&id, &recipientPID, &sentOn, &expiresOn, &message, &received)
 
-		friendRequest := friends_wiiu.NewFriendRequest()
+		userInfo, err := utility.GetUserInfoByPID(recipientPID)
+		if err != nil {
+			return nil, err
+		}
 
-		friendRequest.PrincipalInfo = GetUserInfoByPID(recipientPID)
+		friendRequest := friends_wiiu_types.NewFriendRequest()
 
-		friendRequest.Message = friends_wiiu.NewFriendRequestMessage()
+		friendRequest.PrincipalInfo = userInfo
+		friendRequest.Message = friends_wiiu_types.NewFriendRequestMessage()
 		friendRequest.Message.FriendRequestID = id
 		friendRequest.Message.Received = received
 		friendRequest.Message.Unknown2 = 1
 		friendRequest.Message.Message = message
 		friendRequest.Message.Unknown3 = 0
 		friendRequest.Message.Unknown4 = ""
-		friendRequest.Message.GameKey = friends_wiiu.NewGameKey()
+		friendRequest.Message.GameKey = friends_wiiu_types.NewGameKey()
 		friendRequest.Message.GameKey.TitleID = 0
 		friendRequest.Message.GameKey.TitleVersion = 0
 		friendRequest.Message.Unknown5 = nex.NewDateTime(134222053376) // idk what this value means but its always this
@@ -47,5 +56,5 @@ func GetUserFriendRequestsOut(pid uint32) []*friends_wiiu.FriendRequest {
 		friendRequestsOut = append(friendRequestsOut, friendRequest)
 	}
 
-	return friendRequestsOut
+	return friendRequestsOut, nil
 }

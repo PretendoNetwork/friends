@@ -1,23 +1,26 @@
 package notifications_3ds
 
 import (
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"database/sql"
+
+	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
+	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
 func SendMiiUpdateNotification(client *nex.Client) {
-	notificationEvent := nintendo_notifications.NewNintendoNotificationEventGeneral()
+	notificationEvent := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
 
-	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
+	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 5
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(notificationEvent)
 
-	stream := nex.NewStreamOut(globals.NEXServer)
+	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -28,7 +31,10 @@ func SendMiiUpdateNotification(client *nex.Client) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendsList := database_3ds.GetUserFriends(client.PID())
+	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	if err != nil && err != sql.ErrNoRows {
+		globals.Logger.Critical(err.Error())
+	}
 
 	for i := 0; i < len(friendsList); i++ {
 
@@ -46,7 +52,7 @@ func SendMiiUpdateNotification(client *nex.Client) {
 			requestPacket.AddFlag(nex.FlagNeedsAck)
 			requestPacket.AddFlag(nex.FlagReliable)
 
-			globals.NEXServer.Send(requestPacket)
+			globals.SecureServer.Send(requestPacket)
 		}
 	}
 }

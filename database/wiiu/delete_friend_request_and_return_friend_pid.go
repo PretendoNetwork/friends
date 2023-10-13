@@ -1,23 +1,34 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"database/sql"
+
+	"github.com/PretendoNetwork/friends/database"
 )
 
-func DeleteFriendRequestAndReturnFriendPID(friendRequestID uint64) uint32 {
+// DeleteFriendRequestAndReturnFriendPID deletes a given friend request and returns the friend's PID
+func DeleteFriendRequestAndReturnFriendPID(friendRequestID uint64) (uint32, error) {
 	var recipientPID uint32
 
 	err := database.Postgres.QueryRow(`SELECT recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID).Scan(&recipientPID)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		if err == sql.ErrNoRows {
+			return 0, database.ErrFriendRequestNotFound
+		} else {
+			return 0, err
+		}
 	}
 
-	_, err = database.Postgres.Exec(`
+	result, err := database.Postgres.Exec(`
 		DELETE FROM wiiu.friend_requests WHERE id=$1`, friendRequestID)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return 0, err
 	}
 
-	return recipientPID
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		return 0, database.ErrFriendRequestNotFound
+	}
+
+	return recipientPID, nil
 }

@@ -1,54 +1,73 @@
 package nex
 
 import (
-	"github.com/PretendoNetwork/friends-secure/globals"
-	"github.com/PretendoNetwork/friends-secure/types"
+	"time"
+
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
 )
 
 func connect(packet *nex.PacketV0) {
-	packet.Sender().SetClientConnectionSignature(packet.ConnectionSignature())
-
+	// * We aren't making any replies here because the common Secure Protocol already does that
+	// *
+	// * We only want to check that the data given is right so that we don't register a client
+	// * with an invalid request
 	payload := packet.Payload()
-	stream := nex.NewStreamIn(payload, globals.NEXServer)
+	stream := nex.NewStreamIn(payload, globals.SecureServer)
 
-	ticketData, _ := stream.ReadBuffer()
-	requestData, _ := stream.ReadBuffer()
+	ticketData, err := stream.ReadBuffer()
+	if err != nil {
+		return
+	}
 
-	serverKey := nex.DeriveKerberosKey(2, []byte(globals.NEXServer.KerberosPassword()))
+	requestData, err := stream.ReadBuffer()
+	if err != nil {
+		return
+	}
 
-	// TODO: use random key from auth server
-	ticketDataEncryption, _ := nex.NewKerberosEncryption(serverKey)
-	decryptedTicketData := ticketDataEncryption.Decrypt(ticketData)
-	ticketDataStream := nex.NewStreamIn(decryptedTicketData, globals.NEXServer)
+	serverKey := nex.DeriveKerberosKey(2, []byte(globals.SecureServer.KerberosPassword()))
 
-	_, _ = ticketDataStream.ReadUInt64LE() // expiration time
-	_, _ = ticketDataStream.ReadUInt32LE() // User PID
-	sessionKey := ticketDataStream.ReadBytesNext(16)
+	ticket := nex.NewKerberosTicketInternalData()
+	err = ticket.Decrypt(nex.NewStreamIn(ticketData, globals.SecureServer), serverKey)
+	if err != nil {
+		return
+	}
 
-	requestDataEncryption, _ := nex.NewKerberosEncryption(sessionKey)
-	decryptedRequestData := requestDataEncryption.Decrypt(requestData)
-	requestDataStream := nex.NewStreamIn(decryptedRequestData, globals.NEXServer)
+	ticketTime := ticket.Timestamp().Standard()
+	serverTime := time.Now().UTC()
 
-	userPID, _ := requestDataStream.ReadUInt32LE() // User PID
+	timeLimit := ticketTime.Add(time.Minute * 2)
+	if serverTime.After(timeLimit) {
+		return
+	}
 
-	_, _ = requestDataStream.ReadUInt32LE() //CID of secure server station url
-	responseCheck, _ := requestDataStream.ReadUInt32LE()
+	sessionKey := ticket.SessionKey()
+	kerberos, err := nex.NewKerberosEncryption(sessionKey)
+	if err != nil {
+		return
+	}
 
-	responseValueStream := nex.NewStreamOut(globals.NEXServer)
-	responseValueStream.WriteUInt32LE(responseCheck + 1)
+	decryptedRequestData := kerberos.Decrypt(requestData)
+	checkDataStream := nex.NewStreamIn(decryptedRequestData, globals.SecureServer)
 
-	responseValueBufferStream := nex.NewStreamOut(globals.NEXServer)
-	responseValueBufferStream.WriteBuffer(responseValueStream.Bytes())
+	userPID, err := checkDataStream.ReadUInt32LE()
+	if err != nil {
+		return
+	}
 
-	packet.Sender().UpdateRC4Key(sessionKey)
+	_, err = checkDataStream.ReadUInt32LE() // CID of secure server station url
+	if err != nil {
+		return
+	}
 
-	globals.NEXServer.AcknowledgePacket(packet, responseValueBufferStream.Bytes())
-
-	packet.Sender().SetPID(userPID)
+	_, err = checkDataStream.ReadUInt32LE() // Response check
+	if err != nil {
+		return
+	}
 
 	connectedUser := types.NewConnectedUser()
-	connectedUser.PID = packet.Sender().PID()
+	connectedUser.PID = userPID
 	connectedUser.Client = packet.Sender()
 	globals.ConnectedUsers[userPID] = connectedUser
 }

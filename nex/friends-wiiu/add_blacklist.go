@@ -3,13 +3,21 @@ package nex_friends_wiiu
 import (
 	"time"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	"github.com/PretendoNetwork/friends/utility"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincipal *friends_wiiu.BlacklistedPrincipal) {
+func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincipal *friends_wiiu_types.BlacklistedPrincipal) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
 	currentBlacklistPrincipal := blacklistPrincipal
 
 	senderPID := currentBlacklistPrincipal.PrincipalBasicInfo.PID
@@ -19,36 +27,26 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 	date := nex.NewDateTime(0)
 	date.FromTimestamp(time.Now())
 
-	userInfo := database_wiiu.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
-
-	if userInfo == nil {
-		rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-		rmcResponse.SetError(nex.Errors.FPD.FriendNotExists) // TODO: Not sure if this is the correct error.
-
-		rmcResponseBytes := rmcResponse.Bytes()
-
-		responsePacket, _ := nex.NewPacketV0(client, nil)
-
-		responsePacket.SetVersion(0)
-		responsePacket.SetSource(0xA1)
-		responsePacket.SetDestination(0xAF)
-		responsePacket.SetType(nex.DataPacket)
-		responsePacket.SetPayload(rmcResponseBytes)
-
-		responsePacket.AddFlag(nex.FlagNeedsAck)
-		responsePacket.AddFlag(nex.FlagReliable)
-
-		globals.NEXServer.Send(responsePacket)
-
-		return
+	userInfo, err := utility.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
+	if err != nil {
+		if err == database.ErrPIDNotFound {
+			return nex.Errors.FPD.InvalidPrincipalID // TODO: Not sure if this is the correct error.
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nex.Errors.FPD.Unknown
+		}
 	}
 
 	currentBlacklistPrincipal.PrincipalBasicInfo = userInfo
 	currentBlacklistPrincipal.BlackListedSince = date
 
-	database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
+	err = database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteStructure(blacklistPrincipal)
 
@@ -71,5 +69,7 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

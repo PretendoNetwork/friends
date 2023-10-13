@@ -1,22 +1,25 @@
 package notifications_3ds
 
 import (
-	database_3ds "github.com/PretendoNetwork/friends-secure/database/3ds"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"database/sql"
+
+	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
+	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
-func SendFavoriteUpdate(client *nex.Client, gameKey *friends_3ds.GameKey) {
-	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
+func SendFavoriteUpdate(client *nex.Client, gameKey *friends_3ds_types.GameKey) {
+	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 2
 	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("GameKey")
 	eventObject.DataHolder.SetObjectData(gameKey)
 
-	stream := nex.NewStreamOut(globals.NEXServer)
+	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -27,7 +30,10 @@ func SendFavoriteUpdate(client *nex.Client, gameKey *friends_3ds.GameKey) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendsList := database_3ds.GetUserFriends(client.PID())
+	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	if err != nil && err != sql.ErrNoRows {
+		globals.Logger.Critical(err.Error())
+	}
 
 	for i := 0; i < len(friendsList); i++ {
 
@@ -45,7 +51,7 @@ func SendFavoriteUpdate(client *nex.Client, gameKey *friends_3ds.GameKey) {
 			requestPacket.AddFlag(nex.FlagNeedsAck)
 			requestPacket.AddFlag(nex.FlagReliable)
 
-			globals.NEXServer.Send(requestPacket)
+			globals.SecureServer.Send(requestPacket)
 		}
 	}
 }

@@ -6,12 +6,12 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/globals"
 )
 
 var Postgres *sql.DB
 
-func connectPostgres() {
+func ConnectPostgres() {
 	var err error
 
 	Postgres, err = sql.Open("postgres", os.Getenv("PN_FRIENDS_CONFIG_DATABASE_URI"))

@@ -1,20 +1,25 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"database/sql"
+
+	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-// Get a users blacklist
-func GetUserBlockList(pid uint32) []*friends_wiiu.BlacklistedPrincipal {
-	blockList := make([]*friends_wiiu.BlacklistedPrincipal, 0)
+// GetUserBlockList returns a user's blacklist
+func GetUserBlockList(pid uint32) ([]*friends_wiiu_types.BlacklistedPrincipal, error) {
+	blockList := make([]*friends_wiiu_types.BlacklistedPrincipal, 0)
 
 	rows, err := database.Postgres.Query(`SELECT blocked_pid, title_id, title_version, date FROM wiiu.blocks WHERE blocker_pid=$1`, pid)
 	if err != nil {
-		globals.Logger.Critical(err.Error())
-		return blockList
+		if err == sql.ErrNoRows {
+			return blockList, database.ErrBlacklistNotFound
+		} else {
+			return blockList, err
+		}
 	}
 
 	for rows.Next() {
@@ -24,11 +29,16 @@ func GetUserBlockList(pid uint32) []*friends_wiiu.BlacklistedPrincipal {
 		var date *nex.DateTime
 		rows.Scan(&pid, &titleId, &titleVersion, &date)
 
-		blacklistPrincipal := friends_wiiu.NewBlacklistedPrincipal()
+		userInfo, err := utility.GetUserInfoByPID(pid)
+		if err != nil {
+			return nil, err
+		}
 
-		blacklistPrincipal.PrincipalBasicInfo = GetUserInfoByPID(pid)
+		blacklistPrincipal := friends_wiiu_types.NewBlacklistedPrincipal()
 
-		blacklistPrincipal.GameKey = friends_wiiu.NewGameKey()
+		blacklistPrincipal.PrincipalBasicInfo = userInfo
+
+		blacklistPrincipal.GameKey = friends_wiiu_types.NewGameKey()
 		blacklistPrincipal.GameKey.TitleID = titleId
 		blacklistPrincipal.GameKey.TitleVersion = titleVersion
 		blacklistPrincipal.BlackListedSince = date
@@ -36,5 +46,5 @@ func GetUserBlockList(pid uint32) []*friends_wiiu.BlacklistedPrincipal {
 		blockList = append(blockList, blacklistPrincipal)
 	}
 
-	return blockList
+	return blockList, nil
 }

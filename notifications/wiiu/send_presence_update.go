@@ -3,22 +3,24 @@ package notifications_wiiu
 import (
 	"fmt"
 
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
+	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
-func SendPresenceUpdate(presence *friends_wiiu.NintendoPresenceV2) {
-	eventObject := nintendo_notifications.NewNintendoNotificationEvent()
+func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
+	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 24
 	eventObject.SenderPID = presence.PID
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoPresenceV2")
 	eventObject.DataHolder.SetObjectData(presence)
 
-	stream := nex.NewStreamOut(globals.NEXServer)
+	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
@@ -29,7 +31,10 @@ func SendPresenceUpdate(presence *friends_wiiu.NintendoPresenceV2) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendList := database_wiiu.GetUserFriendList(presence.PID)
+	friendList, err := database_wiiu.GetUserFriendList(presence.PID)
+	if err != nil && err != database.ErrEmptyList {
+		globals.Logger.Critical(err.Error())
+	}
 
 	for i := 0; i < len(friendList); i++ {
 		if friendList[i] == nil || friendList[i].NNAInfo == nil || friendList[i].NNAInfo.PrincipalBasicInfo == nil {
@@ -70,7 +75,7 @@ func SendPresenceUpdate(presence *friends_wiiu.NintendoPresenceV2) {
 			requestPacket.AddFlag(nex.FlagNeedsAck)
 			requestPacket.AddFlag(nex.FlagReliable)
 
-			globals.NEXServer.Send(requestPacket)
+			globals.SecureServer.Send(requestPacket)
 		}
 	}
 }

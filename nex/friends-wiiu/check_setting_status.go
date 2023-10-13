@@ -1,13 +1,18 @@
 package nex_friends_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
-func CheckSettingStatus(err error, client *nex.Client, callID uint32) {
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+func CheckSettingStatus(err error, client *nex.Client, callID uint32) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteUInt8(0xFF)
 
@@ -30,5 +35,7 @@ func CheckSettingStatus(err error, client *nex.Client, callID uint32) {
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

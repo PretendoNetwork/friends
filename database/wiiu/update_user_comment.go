@@ -1,13 +1,12 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 )
 
-// Update a users comment
-func UpdateUserComment(pid uint32, message string) uint64 {
+// UpdateUserComment updates a user's comment
+func UpdateUserComment(pid uint32, message string) (uint64, error) {
 	changed := nex.NewDateTime(0).Now()
 
 	_, err := database.Postgres.Exec(`
@@ -19,8 +18,8 @@ func UpdateUserComment(pid uint32, message string) uint64 {
 		comment_changed = $3`, pid, message, changed)
 
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return 0, err
 	}
 
-	return changed
+	return changed, nil
 }

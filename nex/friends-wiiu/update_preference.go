@@ -1,14 +1,24 @@
 package nex_friends_wiiu
 
 import (
-	database_wiiu "github.com/PretendoNetwork/friends-secure/database/wiiu"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends/wiiu"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdatePreference(err error, client *nex.Client, callID uint32, principalPreference *friends_wiiu.PrincipalPreference) {
-	database_wiiu.UpdateUserPrincipalPreference(client.PID(), principalPreference)
+func UpdatePreference(err error, client *nex.Client, callID uint32, principalPreference *friends_wiiu_types.PrincipalPreference) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.InvalidArgument
+	}
+
+	err = database_wiiu.UpdateUserPrincipalPreference(client.PID(), principalPreference)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
 
 	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
 	rmcResponse.SetSuccess(friends_wiiu.MethodUpdatePreference, nil)
@@ -26,5 +36,7 @@ func UpdatePreference(err error, client *nex.Client, callID uint32, principalPre
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }

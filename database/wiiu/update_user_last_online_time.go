@@ -1,12 +1,12 @@
 package database_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends-secure/database"
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 )
 
-func UpdateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
+// UpdateUserLastOnlineTime updates a user's last online time
+func UpdateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) error {
 	_, err := database.Postgres.Exec(`
 		INSERT INTO wiiu.user_data (pid, last_online)
 		VALUES ($1, $2)
@@ -15,6 +15,8 @@ func UpdateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) {
 		last_online = $2`, pid, lastOnline.Value())
 
 	if err != nil {
-		globals.Logger.Critical(err.Error())
+		return err
 	}
+
+	return nil
 }

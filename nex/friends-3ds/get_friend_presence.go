@@ -1,19 +1,25 @@
 package nex_friends_3ds
 
 import (
-	"github.com/PretendoNetwork/friends-secure/globals"
+	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends/3ds"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-func GetFriendPresence(err error, client *nex.Client, callID uint32, pids []uint32) {
-	presenceList := make([]*friends_3ds.FriendPresence, 0)
+func GetFriendPresence(err error, client *nex.Client, callID uint32, pids []uint32) uint32 {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nex.Errors.FPD.Unknown
+	}
+
+	presenceList := make([]*friends_3ds_types.FriendPresence, 0)
 
 	for i := 0; i < len(pids); i++ {
 		connectedUser := globals.ConnectedUsers[pids[i]]
 
 		if connectedUser != nil && connectedUser.Presence != nil {
-			friendPresence := friends_3ds.NewFriendPresence()
+			friendPresence := friends_3ds_types.NewFriendPresence()
 			friendPresence.PID = pids[i]
 			friendPresence.Presence = globals.ConnectedUsers[pids[i]].Presence
 
@@ -21,7 +27,7 @@ func GetFriendPresence(err error, client *nex.Client, callID uint32, pids []uint
 		}
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.NEXServer)
+	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteListStructure(presenceList)
 
@@ -43,5 +49,7 @@ func GetFriendPresence(err error, client *nex.Client, callID uint32, pids []uint
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
 
-	globals.NEXServer.Send(responsePacket)
+	globals.SecureServer.Send(responsePacket)
+
+	return 0
 }
