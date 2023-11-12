@@ -3,6 +3,7 @@ package nex
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
@@ -16,30 +17,25 @@ import (
 )
 
 func StartSecureServer() {
-	globals.SecureServer = nex.NewServer()
-	globals.SecureServer.SetFragmentSize(900)
-	globals.SecureServer.SetPRUDPVersion(0)
+	globals.SecureServer = nex.NewPRUDPServer()
+	globals.SecureServer.IsSecureServer = true
+	globals.SecureServer.SetFragmentSize(962)
+	globals.SecureServer.SetDefaultLibraryVersion(nex.NewLibraryVersion(1, 1, 0))
+	globals.SecureServer.SetKerberosPassword([]byte("password"))
 	globals.SecureServer.SetKerberosKeySize(16)
-	globals.SecureServer.SetKerberosPassword(globals.KerberosPassword)
-	globals.SecureServer.SetPingTimeout(20) // Maybe too long?
 	globals.SecureServer.SetAccessKey("ridfebb9")
-	globals.SecureServer.SetDefaultNEXVersion(&nex.NEXVersion{
-		Major: 1,
-		Minor: 1,
-		Patch: 0,
-	})
 
-	globals.SecureServer.On("Data", func(packet *nex.PacketV0) {
-		request := packet.RMCRequest()
+	globals.SecureServer.OnData(func(packet nex.PacketInterface) {
+		request := packet.RMCMessage()
 
 		fmt.Println("==Friends - Secure==")
-		fmt.Printf("Protocol ID: %#v\n", request.ProtocolID())
-		fmt.Printf("Method ID: %#v\n", request.MethodID())
+		fmt.Printf("Protocol ID: %#v\n", request.ProtocolID)
+		fmt.Printf("Method ID: %#v\n", request.MethodID)
 		fmt.Println("====================")
 	})
 
-	globals.SecureServer.On("Kick", func(packet *nex.PacketV0) {
-		pid := packet.Sender().PID()
+	globals.SecureServer.OnClientRemoved(func(client *nex.PRUDPClient) {
+		pid := client.PID()
 
 		if globals.ConnectedUsers[pid] == nil {
 			return
@@ -55,28 +51,23 @@ func StartSecureServer() {
 				globals.Logger.Critical(err.Error())
 			}
 
-			notifications_wiiu.SendUserWentOfflineGlobally(packet.Sender())
+			notifications_wiiu.SendUserWentOfflineGlobally(client)
 		} else if platform == types.CTR {
 			err := database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
 			if err != nil {
 				globals.Logger.Critical(err.Error())
 			}
 
-			notifications_3ds.SendUserWentOfflineGlobally(packet.Sender())
+			notifications_3ds.SendUserWentOfflineGlobally(client)
 		}
 
 		delete(globals.ConnectedUsers, pid)
 		fmt.Println("Leaving (Kick)")
 	})
 
-	globals.SecureServer.On("Disconnect", func(packet *nex.PacketV0) {
-		fmt.Println("Leaving (Disconnect)")
-	})
-
-	globals.SecureServer.On("Connect", connect)
-
 	registerCommonSecureServerProtocols()
 	registerSecureServerProtocols()
 
-	globals.SecureServer.Listen(fmt.Sprintf(":%s", os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT")))
+	port, _ := strconv.Atoi(os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT"))
+	globals.SecureServer.Listen(port)
 }

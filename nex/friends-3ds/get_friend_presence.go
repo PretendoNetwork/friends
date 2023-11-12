@@ -7,11 +7,13 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-func GetFriendPresence(err error, client *nex.Client, callID uint32, pids []uint32) uint32 {
+func GetFriendPresence(err error, packet nex.PacketInterface, callID uint32, pids []uint32) uint32 {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nex.Errors.FPD.Unknown
 	}
+
+	client := packet.Sender().(*nex.PRUDPClient)
 
 	presenceList := make([]*friends_3ds_types.FriendPresence, 0)
 
@@ -33,21 +35,23 @@ func GetFriendPresence(err error, client *nex.Client, callID uint32, pids []uint
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodGetFriendPresence, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodGetFriendPresence
+	rmcResponse.CallID = callID
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
-	responsePacket, _ := nex.NewPacketV0(client, nil)
+	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
 
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
 	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
+	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
+	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
+	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
+	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
+	responsePacket.SetPayload(rmcResponseBytes)
 
 	globals.SecureServer.Send(responsePacket)
 

@@ -12,11 +12,13 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) uint32 {
+func DenyFriendRequest(err error, packet nex.PacketInterface, callID uint32, id uint64) uint32 {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nex.Errors.FPD.InvalidArgument
 	}
+
+	client := packet.Sender().(*nex.PRUDPClient)
 
 	err = database_wiiu.SetFriendRequestDenied(id)
 	if err != nil {
@@ -62,22 +64,23 @@ func DenyFriendRequest(err error, client *nex.Client, callID uint32, id uint64) 
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodDenyFriendRequest, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodDenyFriendRequest
+	rmcResponse.CallID = callID
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
-	responsePacket, _ := nex.NewPacketV0(client, nil)
+	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
 
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
 	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
+	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
+	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
+	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
+	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
+	responsePacket.SetPayload(rmcResponseBytes)
 
 	globals.SecureServer.Send(responsePacket)
 

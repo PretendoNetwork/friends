@@ -15,11 +15,13 @@ import (
 	account_management_types "github.com/PretendoNetwork/nex-protocols-go/account-management/types"
 )
 
-func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) uint32 {
+func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) uint32 {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nex.Errors.Core.InvalidArgument
 	}
+
+	client := packet.Sender().(*nex.PRUDPClient)
 
 	var tokenBase64 string
 
@@ -68,8 +70,6 @@ func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 
 	pidHmac := hex.EncodeToString(mac.Sum(nil))
 
-	rmcResponse := nex.NewRMCResponse(account_management.ProtocolID, callID)
-
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	rmcResponseStream.WriteUInt32LE(pid)
@@ -77,20 +77,23 @@ func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrin
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse.SetSuccess(account_management.MethodNintendoCreateAccount, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
+	rmcResponse.ProtocolID = account_management.ProtocolID
+	rmcResponse.MethodID = account_management.MethodNintendoCreateAccount
+	rmcResponse.CallID = callID
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
-	responsePacket, _ := nex.NewPacketV0(client, nil)
+	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
 
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
 	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
+	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
+	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
+	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
+	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
+	responsePacket.SetPayload(rmcResponseBytes)
 
 	globals.SecureServer.Send(responsePacket)
 

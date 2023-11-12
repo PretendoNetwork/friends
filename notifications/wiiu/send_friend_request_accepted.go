@@ -8,7 +8,7 @@ import (
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
-func SendFriendRequestAccepted(client *nex.Client, friendInfo *friends_wiiu_types.FriendInfo) {
+func SendFriendRequestAccepted(client *nex.PRUDPClient, friendInfo *friends_wiiu_types.FriendInfo) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 30
 	eventObject.SenderPID = friendInfo.NNAInfo.PrincipalBasicInfo.PID
@@ -20,23 +20,23 @@ func SendFriendRequestAccepted(client *nex.Client, friendInfo *friends_wiiu_type
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
-	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent1)
-	rmcRequest.SetParameters(eventObjectBytes)
+	rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
+	rmcRequest.CallID = 3810693103
+	rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent1
+	rmcRequest.Parameters = eventObjectBytes
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	requestPacket, _ := nex.NewPacketV0(client, nil)
+	requestPacket, _ := nex.NewPRUDPPacketV0(client, nil)
 
-	requestPacket.SetVersion(0)
-	requestPacket.SetSource(0xA1)
-	requestPacket.SetDestination(0xAF)
 	requestPacket.SetType(nex.DataPacket)
-	requestPacket.SetPayload(rmcRequestBytes)
-
 	requestPacket.AddFlag(nex.FlagNeedsAck)
 	requestPacket.AddFlag(nex.FlagReliable)
+	requestPacket.SetSourceStreamType(client.DestinationStreamType)
+	requestPacket.SetSourcePort(client.DestinationPort)
+	requestPacket.SetDestinationStreamType(client.SourceStreamType)
+	requestPacket.SetDestinationPort(client.SourcePort)
+	requestPacket.SetPayload(rmcRequestBytes)
 
 	globals.SecureServer.Send(requestPacket)
 }

@@ -8,11 +8,13 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
-func RemoveBlacklist(err error, client *nex.Client, callID uint32, blockedPID uint32) uint32 {
+func RemoveBlacklist(err error, packet nex.PacketInterface, callID uint32, blockedPID uint32) uint32 {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nex.Errors.FPD.InvalidArgument
 	}
+
+	client := packet.Sender().(*nex.PRUDPClient)
 
 	err = database_wiiu.UnsetUserBlocked(client.PID(), blockedPID)
 	if err != nil {
@@ -24,21 +26,23 @@ func RemoveBlacklist(err error, client *nex.Client, callID uint32, blockedPID ui
 		}
 	}
 
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodRemoveBlackList, nil)
+	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodRemoveBlackList
+	rmcResponse.CallID = callID
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
-	responsePacket, _ := nex.NewPacketV0(client, nil)
+	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
 
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
 	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
+	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
+	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
+	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
+	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
+	responsePacket.SetPayload(rmcResponseBytes)
 
 	globals.SecureServer.Send(responsePacket)
 

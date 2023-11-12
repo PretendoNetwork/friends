@@ -16,23 +16,23 @@ func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb
 
 	if connectedUser != nil {
 		rmcRequest := nex.NewRMCRequest()
-		rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
-		rmcRequest.SetCallID(3810693103)
-		rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent2)
-		rmcRequest.SetParameters(in.GetNotificationData())
+		rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
+		rmcRequest.CallID = 3810693103
+		rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent2
+		rmcRequest.Parameters = in.GetNotificationData()
 
 		rmcRequestBytes := rmcRequest.Bytes()
 
-		requestPacket, _ := nex.NewPacketV0(connectedUser.Client, nil)
+		requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)
 
-		requestPacket.SetVersion(0)
-		requestPacket.SetSource(0xA1)
-		requestPacket.SetDestination(0xAF)
 		requestPacket.SetType(nex.DataPacket)
-		requestPacket.SetPayload(rmcRequestBytes)
-
 		requestPacket.AddFlag(nex.FlagNeedsAck)
 		requestPacket.AddFlag(nex.FlagReliable)
+		requestPacket.SetSourceStreamType(connectedUser.Client.DestinationStreamType)
+		requestPacket.SetSourcePort(connectedUser.Client.DestinationPort)
+		requestPacket.SetDestinationStreamType(connectedUser.Client.SourceStreamType)
+		requestPacket.SetDestinationPort(connectedUser.Client.SourcePort)
+		requestPacket.SetPayload(rmcRequestBytes)
 
 		globals.SecureServer.Send(requestPacket)
 	}

@@ -11,7 +11,7 @@ import (
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
-func SendFavoriteUpdate(client *nex.Client, gameKey *friends_3ds_types.GameKey) {
+func SendFavoriteUpdate(client *nex.PRUDPClient, gameKey *friends_3ds_types.GameKey) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 2
 	eventObject.SenderPID = client.PID()
@@ -23,10 +23,10 @@ func SendFavoriteUpdate(client *nex.Client, gameKey *friends_3ds_types.GameKey) 
 	eventObjectBytes := eventObject.Bytes(stream)
 
 	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
-	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent1)
-	rmcRequest.SetParameters(eventObjectBytes)
+	rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
+	rmcRequest.CallID = 3810693103
+	rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent1
+	rmcRequest.Parameters = eventObjectBytes
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
@@ -40,16 +40,16 @@ func SendFavoriteUpdate(client *nex.Client, gameKey *friends_3ds_types.GameKey) 
 		connectedUser := globals.ConnectedUsers[friendsList[i].PID]
 
 		if connectedUser != nil {
-			requestPacket, _ := nex.NewPacketV0(connectedUser.Client, nil)
+			requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)
 
-			requestPacket.SetVersion(0)
-			requestPacket.SetSource(0xA1)
-			requestPacket.SetDestination(0xAF)
 			requestPacket.SetType(nex.DataPacket)
-			requestPacket.SetPayload(rmcRequestBytes)
-
 			requestPacket.AddFlag(nex.FlagNeedsAck)
 			requestPacket.AddFlag(nex.FlagReliable)
+			requestPacket.SetSourceStreamType(connectedUser.Client.DestinationStreamType)
+			requestPacket.SetSourcePort(connectedUser.Client.DestinationPort)
+			requestPacket.SetDestinationStreamType(connectedUser.Client.SourceStreamType)
+			requestPacket.SetDestinationPort(connectedUser.Client.SourcePort)
+			requestPacket.SetPayload(rmcRequestBytes)
 
 			globals.SecureServer.Send(requestPacket)
 		}

@@ -28,5 +28,5 @@ func registerCommonAuthenticationServerProtocols() {
 	ticketGrantingProtocol.SetBuildName(serverBuildString)
 	ticketGrantingProtocol.EnableInsecureLogin()
 
-	globals.AuthenticationServer.SetPasswordFromPIDFunction(globals.PasswordFromPID)
+	globals.AuthenticationServer.PasswordFromPID = globals.PasswordFromPID
 }

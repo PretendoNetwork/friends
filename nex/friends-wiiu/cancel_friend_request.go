@@ -9,11 +9,13 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
-func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64) uint32 {
+func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, id uint64) uint32 {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nex.Errors.FPD.InvalidArgument
 	}
+
+	client := packet.Sender().(*nex.PRUDPClient)
 
 	pid, err := database_wiiu.DeleteFriendRequestAndReturnFriendPID(id)
 	if err != nil {
@@ -31,21 +33,23 @@ func CancelFriendRequest(err error, client *nex.Client, callID uint32, id uint64
 		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, client.PID())
 	}
 
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodCancelFriendRequest, nil)
+	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodCancelFriendRequest
+	rmcResponse.CallID = callID
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
-	responsePacket, _ := nex.NewPacketV0(client, nil)
+	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
 
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
 	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
+	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
+	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
+	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
+	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
+	responsePacket.SetPayload(rmcResponseBytes)
 
 	globals.SecureServer.Send(responsePacket)
 

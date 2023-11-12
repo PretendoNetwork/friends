@@ -1,6 +1,7 @@
 package nex_secure_connection
 
 import (
+	"net"
 	"time"
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
@@ -11,18 +12,24 @@ import (
 	secure_connection "github.com/PretendoNetwork/nex-protocols-go/secure-connection"
 )
 
-func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) uint32 {
+func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) uint32 {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nex.Errors.Core.InvalidArgument
 	}
 
+	client := packet.Sender().(*nex.PRUDPClient)
+
 	retval := nex.NewResultSuccess(nex.Errors.Core.Unknown)
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	// TODO: Validate loginData
+	// TODO - Validate loginData
 	pid := client.PID()
-	user := globals.ConnectedUsers[pid]
+
+	user := types.NewConnectedUser()
+	user.PID = pid
+	user.Client = client
+
 	lastOnline := nex.NewDateTime(0)
 	lastOnline.FromTimestamp(time.Now())
 
@@ -50,17 +57,19 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	}
 
 	if retval.IsSuccess() {
+		globals.ConnectedUsers[pid] = user
+
 		localStation := stationUrls[0]
 
-		address := client.Address().IP.String()
+		address := client.Address().(*net.UDPAddr).IP.String()
 
 		localStation.SetAddress(address)
-		localStation.SetPort(uint32(client.Address().Port))
+		localStation.SetPort(uint32(client.Address().(*net.UDPAddr).Port))
 
 		localStationURL := localStation.EncodeToString()
 
 		rmcResponseStream.WriteResult(retval)
-		rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
+		rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Next())
 		rmcResponseStream.WriteString(localStationURL)
 	} else {
 		rmcResponseStream.WriteResult(retval)
@@ -71,21 +80,23 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	rmcResponseBody := rmcResponseStream.Bytes()
 
 	// Build response packet
-	rmcResponse := nex.NewRMCResponse(secure_connection.ProtocolID, callID)
-	rmcResponse.SetSuccess(secure_connection.MethodRegisterEx, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
+	rmcResponse.ProtocolID = secure_connection.ProtocolID
+	rmcResponse.MethodID = secure_connection.MethodRegisterEx
+	rmcResponse.CallID = callID
 
 	rmcResponseBytes := rmcResponse.Bytes()
 
-	responsePacket, _ := nex.NewPacketV0(client, nil)
+	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
 
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
 	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
 	responsePacket.AddFlag(nex.FlagNeedsAck)
 	responsePacket.AddFlag(nex.FlagReliable)
+	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
+	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
+	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
+	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
+	responsePacket.SetPayload(rmcResponseBytes)
 
 	globals.SecureServer.Send(responsePacket)
 
