@@ -17,7 +17,7 @@ func RemoveFriend(err error, packet nex.PacketInterface, callID uint32, pid uint
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	err = database_wiiu.RemoveFriendship(client.PID(), pid)
+	err = database_wiiu.RemoveFriendship(client.PID().LegacyValue(), pid)
 	if err != nil {
 		if err == database.ErrFriendshipNotFound {
 			return nex.Errors.FPD.NotInMyFriendList

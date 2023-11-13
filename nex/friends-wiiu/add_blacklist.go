@@ -42,7 +42,7 @@ func AddBlacklist(err error, packet nex.PacketInterface, callID uint32, blacklis
 	currentBlacklistPrincipal.PrincipalBasicInfo = userInfo
 	currentBlacklistPrincipal.BlackListedSince = date
 
-	err = database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
+	err = database_wiiu.SetUserBlocked(client.PID().LegacyValue(), senderPID, titleID, titleVersion)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown

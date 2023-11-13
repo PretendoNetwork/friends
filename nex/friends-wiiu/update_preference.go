@@ -16,7 +16,7 @@ func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, prin
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	err = database_wiiu.UpdateUserPrincipalPreference(client.PID(), principalPreference)
+	err = database_wiiu.UpdateUserPrincipalPreference(client.PID().LegacyValue(), principalPreference)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown

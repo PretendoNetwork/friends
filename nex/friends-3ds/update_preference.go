@@ -17,7 +17,7 @@ func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, show
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	err = database_3ds.UpdateUserPreferences(client.PID(), showOnline, showCurrentGame)
+	err = database_3ds.UpdateUserPreferences(client.PID().LegacyValue(), showOnline, showCurrentGame)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown

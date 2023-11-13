@@ -14,7 +14,7 @@ import (
 func SendFavoriteUpdate(client *nex.PRUDPClient, gameKey *friends_3ds_types.GameKey) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 2
-	eventObject.SenderPID = client.PID()
+	eventObject.SenderPID = client.PID().LegacyValue()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("GameKey")
 	eventObject.DataHolder.SetObjectData(gameKey)
@@ -30,7 +30,7 @@ func SendFavoriteUpdate(client *nex.PRUDPClient, gameKey *friends_3ds_types.Game
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	friendsList, err := database_3ds.GetUserFriends(client.PID().LegacyValue())
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 	}

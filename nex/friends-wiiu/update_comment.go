@@ -16,7 +16,7 @@ func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	changed, err := database_wiiu.UpdateUserComment(client.PID(), comment.Contents)
+	changed, err := database_wiiu.UpdateUserComment(client.PID().LegacyValue(), comment.Contents)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown

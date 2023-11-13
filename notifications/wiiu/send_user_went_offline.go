@@ -12,7 +12,7 @@ import (
 )
 
 func SendUserWentOfflineGlobally(client *nex.PRUDPClient) {
-	friendsList, err := database_wiiu.GetUserFriendList(client.PID())
+	friendsList, err := database_wiiu.GetUserFriendList(client.PID().LegacyValue())
 	if err != nil && err != database.ErrEmptyList {
 		globals.Logger.Critical(err.Error())
 	}
@@ -35,7 +35,7 @@ func SendUserWentOffline(client *nex.PRUDPClient, pid uint32) {
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 10
-	eventObject.SenderPID = client.PID()
+	eventObject.SenderPID = client.PID().LegacyValue()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(nintendoNotificationEventGeneral)

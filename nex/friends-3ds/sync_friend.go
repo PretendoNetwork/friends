@@ -21,7 +21,7 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	friendRelationships, err := database_3ds.GetUserFriends(client.PID())
+	friendRelationships, err := database_3ds.GetUserFriends(client.PID().LegacyValue())
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown
@@ -29,7 +29,7 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64
 
 	for i := 0; i < len(friendRelationships); i++ {
 		if !slices.Contains(pids, friendRelationships[i].PID) {
-			err := database_3ds.RemoveFriendship(client.PID(), friendRelationships[i].PID)
+			err := database_3ds.RemoveFriendship(client.PID().LegacyValue(), friendRelationships[i].PID)
 			if err != nil && err != database.ErrFriendshipNotFound {
 				globals.Logger.Critical(err.Error())
 				return nex.Errors.FPD.Unknown
@@ -39,7 +39,7 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64
 
 	for i := 0; i < len(pids); i++ {
 		if !isPIDInRelationships(friendRelationships, pids[i]) {
-			friendRelationship, err := database_3ds.SaveFriendship(client.PID(), pids[i])
+			friendRelationship, err := database_3ds.SaveFriendship(client.PID().LegacyValue(), pids[i])
 			if err != nil {
 				globals.Logger.Critical(err.Error())
 				return nex.Errors.FPD.Unknown
@@ -50,7 +50,7 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64
 			// Alert the other side, in case they weren't able to get our presence data
 			connectedUser := globals.ConnectedUsers[pids[i]]
 			if connectedUser != nil {
-				go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pids[i], client.PID())
+				go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pids[i], client.PID().LegacyValue())
 			}
 		}
 	}

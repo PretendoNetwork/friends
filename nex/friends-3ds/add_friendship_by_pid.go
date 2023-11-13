@@ -16,7 +16,7 @@ func AddFriendshipByPrincipalID(err error, packet nex.PacketInterface, callID ui
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	friendRelationship, err := database_3ds.SaveFriendship(client.PID(), pid)
+	friendRelationship, err := database_3ds.SaveFriendship(client.PID().LegacyValue(), pid)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown
@@ -24,7 +24,7 @@ func AddFriendshipByPrincipalID(err error, packet nex.PacketInterface, callID ui
 
 	connectedUser := globals.ConnectedUsers[pid]
 	if connectedUser != nil {
-		go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pid, client.PID())
+		go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pid, client.PID().LegacyValue())
 	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)

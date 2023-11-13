@@ -21,7 +21,7 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	senderPID := client.PID()
+	senderPID := client.PID().LegacyValue()
 	recipientPID := pid
 
 	senderPrincipalInfo, err := utility.GetUserInfoByPID(senderPID)

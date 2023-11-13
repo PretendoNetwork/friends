@@ -11,7 +11,7 @@ import (
 )
 
 func SendUserWentOfflineGlobally(client *nex.PRUDPClient) {
-	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	friendsList, err := database_3ds.GetUserFriends(client.PID().LegacyValue())
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 	}
@@ -26,7 +26,7 @@ func SendUserWentOffline(client *nex.PRUDPClient, pid uint32) {
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 10
-	eventObject.SenderPID = client.PID()
+	eventObject.SenderPID = client.PID().LegacyValue()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(notificationEvent)
@@ -47,15 +47,15 @@ func SendUserWentOffline(client *nex.PRUDPClient, pid uint32) {
 	if connectedUser != nil {
 		requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)
 
-			requestPacket.SetType(nex.DataPacket)
-			requestPacket.AddFlag(nex.FlagNeedsAck)
-			requestPacket.AddFlag(nex.FlagReliable)
-			requestPacket.SetSourceStreamType(connectedUser.Client.DestinationStreamType)
-			requestPacket.SetSourcePort(connectedUser.Client.DestinationPort)
-			requestPacket.SetDestinationStreamType(connectedUser.Client.SourceStreamType)
-			requestPacket.SetDestinationPort(connectedUser.Client.SourcePort)
-			requestPacket.SetPayload(rmcRequestBytes)
+		requestPacket.SetType(nex.DataPacket)
+		requestPacket.AddFlag(nex.FlagNeedsAck)
+		requestPacket.AddFlag(nex.FlagReliable)
+		requestPacket.SetSourceStreamType(connectedUser.Client.DestinationStreamType)
+		requestPacket.SetSourcePort(connectedUser.Client.DestinationPort)
+		requestPacket.SetDestinationStreamType(connectedUser.Client.SourceStreamType)
+		requestPacket.SetDestinationPort(connectedUser.Client.SourcePort)
+		requestPacket.SetPayload(rmcRequestBytes)
 
-			globals.SecureServer.Send(requestPacket)
+		globals.SecureServer.Send(requestPacket)
 	}
 }

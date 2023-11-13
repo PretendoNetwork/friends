@@ -32,7 +32,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 	connectedUser := globals.ConnectedUsers[friendPID]
 
 	if connectedUser != nil {
-		senderPID := client.PID()
+		senderPID := client.PID().LegacyValue()
 		senderConnectedUser := globals.ConnectedUsers[senderPID]
 
 		senderFriendInfo := friends_wiiu_types.NewFriendInfo()

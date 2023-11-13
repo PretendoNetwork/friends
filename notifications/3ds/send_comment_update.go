@@ -16,7 +16,7 @@ func SendCommentUpdate(client *nex.PRUDPClient, comment string) {
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 3
-	eventObject.SenderPID = client.PID()
+	eventObject.SenderPID = client.PID().LegacyValue()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(notificationEvent)
@@ -32,7 +32,7 @@ func SendCommentUpdate(client *nex.PRUDPClient, comment string) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	friendsList, err := database_3ds.GetUserFriends(client.PID().LegacyValue())
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 	}

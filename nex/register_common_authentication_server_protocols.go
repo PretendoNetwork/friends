@@ -19,7 +19,7 @@ func registerCommonAuthenticationServerProtocols() {
 	secureStationURL.SetAddress(os.Getenv("PN_FRIENDS_SECURE_SERVER_HOST"))
 	secureStationURL.SetPort(uint32(port))
 	secureStationURL.SetCID(1)
-	secureStationURL.SetPID(2)
+	secureStationURL.SetPID(nex.NewPID[uint32](2))
 	secureStationURL.SetSID(1)
 	secureStationURL.SetStream(10)
 	secureStationURL.SetType(2)

@@ -23,7 +23,7 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 	client := packet.Sender().(*nex.PRUDPClient)
 
 	// Get user information
-	pid := client.PID()
+	pid := client.PID().LegacyValue()
 
 	if globals.ConnectedUsers[pid] == nil {
 		// TODO - Figure out why this is getting removed

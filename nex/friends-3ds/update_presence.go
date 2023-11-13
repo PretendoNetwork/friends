@@ -28,7 +28,7 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 
 	go notifications_3ds.SendPresenceUpdate(client, currentPresence)
 
-	pid := client.PID()
+	pid := client.PID().LegacyValue()
 
 	if globals.ConnectedUsers[pid] == nil {
 		// TODO - Figure out why this is getting removed

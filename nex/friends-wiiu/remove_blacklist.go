@@ -16,7 +16,7 @@ func RemoveBlacklist(err error, packet nex.PacketInterface, callID uint32, block
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	err = database_wiiu.UnsetUserBlocked(client.PID(), blockedPID)
+	err = database_wiiu.UnsetUserBlocked(client.PID().LegacyValue(), blockedPID)
 	if err != nil {
 		if err == database.ErrPIDNotFound {
 			return nex.Errors.FPD.NotInMyBlacklist

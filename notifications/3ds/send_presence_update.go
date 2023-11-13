@@ -14,7 +14,7 @@ import (
 func SendPresenceUpdate(client *nex.PRUDPClient, presence *friends_3ds_types.NintendoPresence) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 1
-	eventObject.SenderPID = client.PID()
+	eventObject.SenderPID = client.PID().LegacyValue()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoPresence")
 	eventObject.DataHolder.SetObjectData(presence)
@@ -30,7 +30,7 @@ func SendPresenceUpdate(client *nex.PRUDPClient, presence *friends_3ds_types.Nin
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	friendsList, err := database_3ds.GetUserFriends(client.PID().LegacyValue())
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 	}

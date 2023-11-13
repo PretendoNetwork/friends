@@ -25,7 +25,7 @@ func GetRequestBlockSettings(err error, packet nex.PacketInterface, callID uint3
 
 		setting := friends_wiiu_types.NewPrincipalRequestBlockSetting()
 		setting.PID = requestedPID
-		isBlocked, err := database_wiiu.IsFriendRequestBlocked(client.PID(), requestedPID)
+		isBlocked, err := database_wiiu.IsFriendRequestBlocked(client.PID().LegacyValue(), requestedPID)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
 			return nex.Errors.Core.Unknown

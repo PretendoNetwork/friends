@@ -35,7 +35,7 @@ func StartSecureServer() {
 	})
 
 	globals.SecureServer.OnClientRemoved(func(client *nex.PRUDPClient) {
-		pid := client.PID()
+		pid := client.PID().LegacyValue()
 
 		if globals.ConnectedUsers[pid] == nil {
 			return

@@ -17,7 +17,7 @@ func RemoveFriendByPrincipalID(err error, packet nex.PacketInterface, callID uin
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	err = database_3ds.RemoveFriendship(client.PID(), pid)
+	err = database_3ds.RemoveFriendship(client.PID().LegacyValue(), pid)
 	if err != nil {
 		if err == database.ErrFriendshipNotFound {
 			// * Official servers don't actually check this, but

@@ -17,7 +17,7 @@ func UpdateMii(err error, packet nex.PacketInterface, callID uint32, mii *friend
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	err = database_3ds.UpdateUserMii(client.PID(), mii)
+	err = database_3ds.UpdateUserMii(client.PID().LegacyValue(), mii)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown

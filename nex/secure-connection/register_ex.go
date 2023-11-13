@@ -24,7 +24,7 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrl
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
 	// TODO - Validate loginData
-	pid := client.PID()
+	pid := client.PID().LegacyValue()
 
 	user := types.NewConnectedUser()
 	user.PID = pid

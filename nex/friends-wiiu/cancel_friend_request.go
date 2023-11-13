@@ -30,7 +30,7 @@ func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 	connectedUser := globals.ConnectedUsers[pid]
 	if connectedUser != nil {
 		// This may send the friend removed notification, but they are the same.
-		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, client.PID())
+		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, client.PID().LegacyValue())
 	}
 
 	rmcResponse := nex.NewRMCSuccess(nil)

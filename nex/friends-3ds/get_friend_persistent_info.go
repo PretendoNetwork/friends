@@ -17,7 +17,7 @@ func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint3
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	infoList, err := database_3ds.GetFriendPersistentInfos(client.PID(), pids)
+	infoList, err := database_3ds.GetFriendPersistentInfos(client.PID().LegacyValue(), pids)
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown

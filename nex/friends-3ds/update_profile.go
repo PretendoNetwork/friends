@@ -16,7 +16,7 @@ func UpdateProfile(err error, packet nex.PacketInterface, callID uint32, profile
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	err = database_3ds.UpdateUserProfile(client.PID(), profileData)
+	err = database_3ds.UpdateUserProfile(client.PID().LegacyValue(), profileData)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown

@@ -36,7 +36,7 @@ func DenyFriendRequest(err error, packet nex.PacketInterface, callID uint32, id 
 		}
 	}
 
-	err = database_wiiu.SetUserBlocked(client.PID(), senderPID, 0, 0)
+	err = database_wiiu.SetUserBlocked(client.PID().LegacyValue(), senderPID, 0, 0)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nex.Errors.FPD.Unknown

@@ -17,7 +17,7 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	pid := client.PID()
+	pid := client.PID().LegacyValue()
 
 	presence.Online = true // Force online status. I have no idea why this is always false
 	presence.PID = pid     // WHY IS THIS SET TO 0 BY DEFAULT??
