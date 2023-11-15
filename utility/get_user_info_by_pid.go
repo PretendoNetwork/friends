@@ -3,10 +3,10 @@ package utility
 import (
 	"encoding/base64"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
@@ -25,7 +25,7 @@ func GetUserInfoByPID(pid uint32) (*friends_wiiu_types.PrincipalBasicInfo, error
 
 	info := friends_wiiu_types.NewPrincipalBasicInfo()
 
-	info.PID = userData.Pid
+	info.PID = nex.NewPID(userData.Pid)
 	info.NNID = userData.Username
 	info.Mii = friends_wiiu_types.NewMiiV2()
 	info.Unknown = 2

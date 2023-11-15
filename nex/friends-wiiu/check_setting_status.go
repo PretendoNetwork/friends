@@ -6,13 +6,11 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
-func CheckSettingStatus(err error, packet nex.PacketInterface, callID uint32) uint32 {
+func CheckSettingStatus(err error, packet nex.PacketInterface, callID uint32) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
-
-	client := packet.Sender().(*nex.PRUDPClient)
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
@@ -25,20 +23,5 @@ func CheckSettingStatus(err error, packet nex.PacketInterface, callID uint32) ui
 	rmcResponse.MethodID = friends_wiiu.MethodCheckSettingStatus
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

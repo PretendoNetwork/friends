@@ -8,10 +8,10 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, principalPreference *friends_wiiu_types.PrincipalPreference) uint32 {
+func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, principalPreference *friends_wiiu_types.PrincipalPreference) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
 	client := packet.Sender().(*nex.PRUDPClient)
@@ -19,7 +19,7 @@ func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, prin
 	err = database_wiiu.UpdateUserPrincipalPreference(client.PID().LegacyValue(), principalPreference)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	rmcResponse := nex.NewRMCSuccess(nil)
@@ -27,20 +27,5 @@ func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, prin
 	rmcResponse.MethodID = friends_wiiu.MethodUpdatePreference
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

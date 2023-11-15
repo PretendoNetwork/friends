@@ -7,7 +7,7 @@ import (
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
-func SendFriendshipCompleted(client *nex.PRUDPClient, friendPID uint32, senderPID uint32) {
+func SendFriendshipCompleted(client *nex.PRUDPClient, friendPID uint32, senderPID *nex.PID) {
 	notificationEvent := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
 	notificationEvent.U32Param = 0
 	notificationEvent.U64Param1 = 0

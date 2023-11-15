@@ -16,7 +16,7 @@ func SendCommentUpdate(client *nex.PRUDPClient, comment string) {
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 3
-	eventObject.SenderPID = client.PID().LegacyValue()
+	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(notificationEvent)
@@ -39,7 +39,7 @@ func SendCommentUpdate(client *nex.PRUDPClient, comment string) {
 
 	for i := 0; i < len(friendsList); i++ {
 
-		connectedUser := globals.ConnectedUsers[friendsList[i].PID]
+		connectedUser := globals.ConnectedUsers[friendsList[i].PID.LegacyValue()]
 
 		if connectedUser != nil {
 			requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)

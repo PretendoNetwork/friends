@@ -8,5 +8,5 @@ import (
 
 func registerCommonSecureServerProtocols() {
 	secureConnectionProtocol := secureconnection.NewCommonSecureConnectionProtocol(globals.SecureServer)
-	secureConnectionProtocol.RegisterEx(nex_secure_connection.RegisterEx)
+	secureConnectionProtocol.RegisterEx = nex_secure_connection.RegisterEx
 }

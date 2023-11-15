@@ -21,12 +21,12 @@ func SendUserWentOfflineGlobally(client *nex.PRUDPClient) {
 	}
 }
 
-func SendUserWentOffline(client *nex.PRUDPClient, pid uint32) {
+func SendUserWentOffline(client *nex.PRUDPClient, pid *nex.PID) {
 	notificationEvent := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 10
-	eventObject.SenderPID = client.PID().LegacyValue()
+	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(notificationEvent)
@@ -42,7 +42,7 @@ func SendUserWentOffline(client *nex.PRUDPClient, pid uint32) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	connectedUser := globals.ConnectedUsers[pid]
+	connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
 
 	if connectedUser != nil {
 		requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)

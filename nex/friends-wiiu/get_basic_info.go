@@ -8,26 +8,24 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func GetBasicInfo(err error, packet nex.PacketInterface, callID uint32, pids []uint32) uint32 {
+func GetBasicInfo(err error, packet nex.PacketInterface, callID uint32, pids []*nex.PID) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
-
-	client := packet.Sender().(*nex.PRUDPClient)
 
 	infos := make([]*friends_wiiu_types.PrincipalBasicInfo, 0)
 
 	for i := 0; i < len(pids); i++ {
 		pid := pids[i]
 
-		info, err := utility.GetUserInfoByPID(pid)
+		info, err := utility.GetUserInfoByPID(pid.LegacyValue())
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.Errors.FPD.Unknown
 		}
 
-		if info.PID != 0 {
+		if info.PID.LegacyValue() != 0 {
 			infos = append(infos, info)
 		}
 	}
@@ -43,20 +41,5 @@ func GetBasicInfo(err error, packet nex.PacketInterface, callID uint32, pids []u
 	rmcResponse.MethodID = friends_wiiu.MethodGetBasicInfo
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

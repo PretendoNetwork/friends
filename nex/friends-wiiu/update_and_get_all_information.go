@@ -14,15 +14,15 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID uint32, nnaInfo *friends_wiiu_types.NNAInfo, presence *friends_wiiu_types.NintendoPresenceV2, birthday *nex.DateTime) uint32 {
+func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID uint32, nnaInfo *friends_wiiu_types.NNAInfo, presence *friends_wiiu_types.NintendoPresenceV2, birthday *nex.DateTime) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	// Get user information
+	// * Get user information
 	pid := client.PID().LegacyValue()
 
 	if globals.ConnectedUsers[pid] == nil {
@@ -41,53 +41,53 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 	principalPreference, err := database_wiiu.GetUserPrincipalPreference(pid)
 	if err != nil {
 		if err == database.ErrPIDNotFound {
-			return nex.Errors.FPD.InvalidPrincipalID
+			return nil, nex.Errors.FPD.InvalidPrincipalID
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.Errors.FPD.Unknown
 		}
 	}
 
 	comment, err := database_wiiu.GetUserComment(pid)
 	if err != nil {
 		if err == database.ErrPIDNotFound {
-			return nex.Errors.FPD.InvalidPrincipalID
+			return nil, nex.Errors.FPD.InvalidPrincipalID
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.Errors.FPD.Unknown
 		}
 	}
 
 	friendList, err := database_wiiu.GetUserFriendList(pid)
 	if err != nil && err != database.ErrEmptyList {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	friendRequestsOut, err := database_wiiu.GetUserFriendRequestsOut(pid)
 	if err != nil && err != database.ErrEmptyList {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	friendRequestsIn, err := database_wiiu.GetUserFriendRequestsIn(pid)
 	if err != nil && err != database.ErrEmptyList {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	blockList, err := database_wiiu.GetUserBlockList(pid)
 	if err != nil && err != database.ErrBlacklistNotFound {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	notifications := database_wiiu.GetUserNotifications(pid)
 
-	// Update user information
+	// * Update user information
 
-	presence.Online = true // Force online status. I have no idea why this is always false
-	presence.PID = pid     // WHY IS THIS SET TO 0 BY DEFAULT??
+	presence.Online = true      // * Force online status. I have no idea why this is always false
+	presence.PID = client.PID() // * WHY IS THIS SET TO 0 BY DEFAULT??
 
 	notifications_wiiu.SendPresenceUpdate(presence)
 
@@ -105,7 +105,7 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		bella.NNAInfo.Unknown1 = 0
 		bella.NNAInfo.Unknown2 = 0
 
-		bella.NNAInfo.PrincipalBasicInfo.PID = 1743126339
+		bella.NNAInfo.PrincipalBasicInfo.PID = nex.NewPID[uint32](1743126339)
 		bella.NNAInfo.PrincipalBasicInfo.NNID = "bells1998"
 		bella.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu_types.NewMiiV2()
 		bella.NNAInfo.PrincipalBasicInfo.Unknown = 0
@@ -142,7 +142,7 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		bella.Presence.GameServerID = 0
 		//bella.Presence.Unknown4 = 3
 		bella.Presence.Unknown4 = 0
-		bella.Presence.PID = 1743126339
+		bella.Presence.PID = nex.NewPID[uint32](1743126339)
 		//bella.Presence.GatheringID = 1743126339 // test fake ID
 		bella.Presence.GatheringID = 0
 		//bella.Presence.ApplicationData, _ = hex.DecodeString("0000200300000000000000001843ffe567000000")
@@ -183,7 +183,7 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		friend.NNAInfo.Unknown1 = 0
 		friend.NNAInfo.Unknown2 = 0
 
-		friend.NNAInfo.PrincipalBasicInfo.PID = pid
+		friend.NNAInfo.PrincipalBasicInfo.PID = nex.NewPID[uint32](pid)
 		friend.NNAInfo.PrincipalBasicInfo.NNID = fmt.Sprint(pid)
 		friend.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu_types.NewMiiV2()
 		friend.NNAInfo.PrincipalBasicInfo.Unknown = 0
@@ -220,7 +220,7 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		friend.Presence.GameServerID = 0
 		//bella.Presence.Unknown4 = 3
 		friend.Presence.Unknown4 = 0
-		friend.Presence.PID = pid
+		friend.Presence.PID = nex.NewPID[uint32](pid)
 		//bella.Presence.GatheringID = 1743126339 // test fake ID
 		friend.Presence.GatheringID = 0
 		//bella.Presence.ApplicationData, _ = hex.DecodeString("0000200300000000000000001843ffe567000000")
@@ -260,22 +260,5 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 	rmcResponse.MethodID = friends_wiiu.MethodUpdateAndGetAllInformation
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.SetRMCMessage(rmcResponse)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

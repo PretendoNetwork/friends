@@ -11,25 +11,25 @@ import (
 // SaveFriendship saves a friend relationship for a user
 func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.FriendRelationship, error) {
 	friendRelationship := friends_3ds_types.NewFriendRelationship()
-	friendRelationship.PID = recipientPID
+	friendRelationship.PID = nex.NewPID(recipientPID)
 	friendRelationship.LFC = 0
-	friendRelationship.RelationshipType = 0 // Incomplete
+	friendRelationship.RelationshipType = 0 // * Incomplete
 
 	nowTime := nex.NewDateTime(0)
 	nowTime.FromTimestamp(time.Now())
 
-	// Ensure that we inputted a valid user.
+	// * Ensure that we inputted a valid user.
 	var found bool
 	err := database.Postgres.QueryRow(`SELECT COUNT(*) FROM "3ds".user_data WHERE pid=$1 LIMIT 1`, recipientPID).Scan(&found)
 	if err != nil {
 		return nil, err
 	}
 	if !found {
-		friendRelationship.RelationshipType = 2 // Non-existent
+		friendRelationship.RelationshipType = 2 // * Non-existent
 		return friendRelationship, nil
 	}
 
-	// Get the other side's relationship, we need to know if we've already got one sent to us.
+	// * Get the other side's relationship, we need to know if we've already got one sent to us.
 	err = database.Postgres.QueryRow(`
 	SELECT COUNT(*) FROM "3ds".friendships WHERE user1_pid=$1 AND user2_pid=$2 AND type=0 LIMIT 1`, recipientPID, senderPID).Scan(&found)
 	if err != nil {
@@ -49,7 +49,7 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.F
 
 	acceptedTime := nex.NewDateTime(0).Now()
 
-	// We need to have two relationships for both sides as friend relationships are not one single object.
+	// * We need to have two relationships for both sides as friend relationships are not one single object.
 	_, err = database.Postgres.Exec(`
 		INSERT INTO "3ds".friendships (user1_pid, user2_pid, date, type)
 		VALUES ($1, $2, $3, 1)
@@ -72,6 +72,6 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.F
 		return nil, err
 	}
 
-	friendRelationship.RelationshipType = 1 // Complete
+	friendRelationship.RelationshipType = 1 // * Complete
 	return friendRelationship, nil
 }

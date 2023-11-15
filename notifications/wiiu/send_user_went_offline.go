@@ -1,8 +1,6 @@
 package notifications_wiiu
 
 import (
-	"time"
-
 	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
@@ -22,9 +20,8 @@ func SendUserWentOfflineGlobally(client *nex.PRUDPClient) {
 	}
 }
 
-func SendUserWentOffline(client *nex.PRUDPClient, pid uint32) {
-	lastOnline := nex.NewDateTime(0)
-	lastOnline.FromTimestamp(time.Now())
+func SendUserWentOffline(client *nex.PRUDPClient, pid *nex.PID) {
+	lastOnline := nex.NewDateTime(0).Now()
 
 	nintendoNotificationEventGeneral := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
 
@@ -35,7 +32,7 @@ func SendUserWentOffline(client *nex.PRUDPClient, pid uint32) {
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 10
-	eventObject.SenderPID = client.PID().LegacyValue()
+	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
 	eventObject.DataHolder.SetObjectData(nintendoNotificationEventGeneral)
@@ -51,7 +48,7 @@ func SendUserWentOffline(client *nex.PRUDPClient, pid uint32) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	connectedUser := globals.ConnectedUsers[pid]
+	connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
 
 	if connectedUser != nil {
 		requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)

@@ -10,10 +10,10 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, id uint64) uint32 {
+func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, id uint64) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
 	client := packet.Sender().(*nex.PRUDPClient)
@@ -21,14 +21,14 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 	friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(id)
 	if err != nil {
 		if err == database.ErrFriendRequestNotFound {
-			return nex.Errors.FPD.InvalidMessageID
+			return nil, nex.Errors.FPD.InvalidMessageID
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.Errors.FPD.Unknown
 		}
 	}
 
-	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID
+	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID.LegacyValue()
 	connectedUser := globals.ConnectedUsers[friendPID]
 
 	if connectedUser != nil {
@@ -49,7 +49,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 		}
 
 		senderFriendInfo.BecameFriend = friendInfo.BecameFriend
-		senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO: Change this
+		senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
 		senderFriendInfo.Unknown = 0
 
 		go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Client, senderFriendInfo)
@@ -66,20 +66,5 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 	rmcResponse.MethodID = friends_wiiu.MethodAcceptFriendRequest
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

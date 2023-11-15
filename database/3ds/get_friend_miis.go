@@ -32,7 +32,7 @@ func GetFriendMiis(pids []uint32) ([]*friends_3ds_types.FriendMii, error) {
 		rows.Scan(&pid, &mii.Name, &mii.MiiData)
 
 		friendMii := friends_3ds_types.NewFriendMii()
-		friendMii.PID = pid
+		friendMii.PID = nex.NewPID(pid)
 		friendMii.Mii = mii
 		friendMii.ModifiedAt = changedTime
 

@@ -28,10 +28,10 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 	acceptedTime := nex.NewDateTime(0)
 	acceptedTime.FromTimestamp(time.Now())
 
-	// Friendships are two-way relationships, not just one link between 2 entities
-	// "A" has friend "B" and "B" has friend "A", so store both relationships
+	// * Friendships are two-way relationships, not just one link between 2 entities
+	// * "A" has friend "B" and "B" has friend "A", so store both relationships
 
-	// If were friends before, just activate the status again
+	// * If were friends before, just activate the status again
 
 	_, err = database.Postgres.Exec(`
 		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active)
@@ -65,14 +65,14 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 	var lastOnline *nex.DateTime
 
 	if connectedUser != nil {
-		// Online
+		// * Online
 		friendInfo.NNAInfo = connectedUser.NNAInfo
 		friendInfo.Presence = connectedUser.PresenceV2
 
 		lastOnline = nex.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 	} else {
-		// Offline
+		// * Offline
 		userInfo, err := utility.GetUserInfoByPID(senderPID)
 		if err != nil {
 			return nil, err
@@ -96,7 +96,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		friendInfo.Presence.Unknown3 = 0
 		friendInfo.Presence.GameServerID = 0
 		friendInfo.Presence.Unknown4 = 0
-		friendInfo.Presence.PID = senderPID
+		friendInfo.Presence.PID = nex.NewPID(senderPID)
 		friendInfo.Presence.GatheringID = 0
 		friendInfo.Presence.ApplicationData = make([]byte, 0)
 		friendInfo.Presence.Unknown5 = 0
@@ -113,7 +113,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 			}
 		}
 
-		lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
+		lastOnline = nex.NewDateTime(lastOnlineTime) // TODO - Change this
 	}
 
 	status, err := GetUserComment(senderPID)
@@ -123,7 +123,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 
 	friendInfo.Status = status
 	friendInfo.BecameFriend = acceptedTime
-	friendInfo.LastOnline = lastOnline // TODO: Change this
+	friendInfo.LastOnline = lastOnline // TODO - Change this
 	friendInfo.Unknown = 0
 
 	return friendInfo, nil

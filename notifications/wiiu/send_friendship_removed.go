@@ -7,7 +7,7 @@ import (
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
 )
 
-func SendFriendshipRemoved(client *nex.PRUDPClient, senderPID uint32) {
+func SendFriendshipRemoved(client *nex.PRUDPClient, senderPID *nex.PID) {
 	nintendoNotificationEventGeneral := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()

@@ -9,18 +9,24 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
-func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint32, pids []uint32) uint32 {
+func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint32, pids []*nex.PID) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
-	infoList, err := database_3ds.GetFriendPersistentInfos(client.PID().LegacyValue(), pids)
+	friendPIDs := make([]uint32, len(pids))
+
+	for _, pid := range pids {
+		friendPIDs = append(friendPIDs, pid.LegacyValue())
+	}
+
+	infoList, err := database_3ds.GetFriendPersistentInfos(client.PID().LegacyValue(), friendPIDs)
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
@@ -34,20 +40,5 @@ func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint3
 	rmcResponse.MethodID = friends_3ds.MethodGetFriendPersistentInfo
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

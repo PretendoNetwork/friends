@@ -9,18 +9,18 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence *friends_wiiu_types.NintendoPresenceV2) uint32 {
+func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence *friends_wiiu_types.NintendoPresenceV2) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
 	client := packet.Sender().(*nex.PRUDPClient)
 
 	pid := client.PID().LegacyValue()
 
-	presence.Online = true // Force online status. I have no idea why this is always false
-	presence.PID = pid     // WHY IS THIS SET TO 0 BY DEFAULT??
+	presence.Online = true      // * Force online status. I have no idea why this is always false
+	presence.PID = client.PID() // * WHY IS THIS SET TO 0 BY DEFAULT??
 
 	if globals.ConnectedUsers[pid] == nil {
 		// TODO - Figure out why this is getting removed
@@ -42,20 +42,5 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 	rmcResponse.MethodID = friends_wiiu.MethodUpdatePresence
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

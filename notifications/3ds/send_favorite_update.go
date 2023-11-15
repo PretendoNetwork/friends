@@ -14,7 +14,7 @@ import (
 func SendFavoriteUpdate(client *nex.PRUDPClient, gameKey *friends_3ds_types.GameKey) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
 	eventObject.Type = 2
-	eventObject.SenderPID = client.PID().LegacyValue()
+	eventObject.SenderPID = client.PID()
 	eventObject.DataHolder = nex.NewDataHolder()
 	eventObject.DataHolder.SetTypeName("GameKey")
 	eventObject.DataHolder.SetObjectData(gameKey)
@@ -37,7 +37,7 @@ func SendFavoriteUpdate(client *nex.PRUDPClient, gameKey *friends_3ds_types.Game
 
 	for i := 0; i < len(friendsList); i++ {
 
-		connectedUser := globals.ConnectedUsers[friendsList[i].PID]
+		connectedUser := globals.ConnectedUsers[friendsList[i].PID.LegacyValue()]
 
 		if connectedUser != nil {
 			requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)

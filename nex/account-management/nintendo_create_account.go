@@ -15,24 +15,22 @@ import (
 	account_management_types "github.com/PretendoNetwork/nex-protocols-go/account-management/types"
 )
 
-func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) uint32 {
+func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Core.InvalidArgument
+		return nil, nex.Errors.Core.InvalidArgument
 	}
-
-	client := packet.Sender().(*nex.PRUDPClient)
 
 	var tokenBase64 string
 
 	oAuthDataType := oAuthData.TypeName()
 
 	switch oAuthDataType {
-	case "NintendoCreateAccountData": // Wii U
+	case "NintendoCreateAccountData": // * Wii U
 		nintendoCreateAccountData := oAuthData.ObjectData().(*account_management_types.NintendoCreateAccountData)
 
 		tokenBase64 = nintendoCreateAccountData.Token
-	case "AccountExtraInfo": // 3DS
+	case "AccountExtraInfo": // * 3DS
 		accountExtraInfo := oAuthData.ObjectData().(*account_management_types.AccountExtraInfo)
 
 		tokenBase64 = accountExtraInfo.NEXToken
@@ -41,19 +39,19 @@ func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32,
 		tokenBase64 = strings.Replace(tokenBase64, "*", "=", -1)
 	default:
 		globals.Logger.Errorf("Invalid oAuthData data type %s!", oAuthDataType)
-		return nex.Errors.Authentication.TokenParseError
+		return nil, nex.Errors.Authentication.TokenParseError
 	}
 
 	encryptedToken, err := base64.StdEncoding.DecodeString(tokenBase64)
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Authentication.TokenParseError
+		return nil, nex.Errors.Authentication.TokenParseError
 	}
 
 	decryptedToken, err := utility.DecryptToken(encryptedToken)
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Authentication.TokenParseError
+		return nil, nex.Errors.Authentication.TokenParseError
 	}
 
 	pid := decryptedToken.UserPID
@@ -65,7 +63,7 @@ func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32,
 	_, err = mac.Write(pidByteArray)
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Authentication.Unknown
+		return nil, nex.Errors.Authentication.Unknown
 	}
 
 	pidHmac := hex.EncodeToString(mac.Sum(nil))
@@ -82,20 +80,5 @@ func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32,
 	rmcResponse.MethodID = account_management.MethodNintendoCreateAccount
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

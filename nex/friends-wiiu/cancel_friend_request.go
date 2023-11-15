@@ -9,10 +9,10 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
 )
 
-func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, id uint64) uint32 {
+func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, id uint64) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
 	client := packet.Sender().(*nex.PRUDPClient)
@@ -20,17 +20,17 @@ func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 	pid, err := database_wiiu.DeleteFriendRequestAndReturnFriendPID(id)
 	if err != nil {
 		if err == database.ErrFriendRequestNotFound {
-			return nex.Errors.FPD.InvalidMessageID
+			return nil, nex.Errors.FPD.InvalidMessageID
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.Errors.FPD.Unknown
 		}
 	}
 
 	connectedUser := globals.ConnectedUsers[pid]
 	if connectedUser != nil {
-		// This may send the friend removed notification, but they are the same.
-		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, client.PID().LegacyValue())
+		// * This may send the friend removed notification, but they are the same.
+		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, client.PID())
 	}
 
 	rmcResponse := nex.NewRMCSuccess(nil)
@@ -38,20 +38,5 @@ func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 	rmcResponse.MethodID = friends_wiiu.MethodCancelFriendRequest
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

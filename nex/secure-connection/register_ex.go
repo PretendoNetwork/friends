@@ -12,10 +12,10 @@ import (
 	secure_connection "github.com/PretendoNetwork/nex-protocols-go/secure-connection"
 )
 
-func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) uint32 {
+func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Core.InvalidArgument
+		return nil, nex.Errors.Core.InvalidArgument
 	}
 
 	client := packet.Sender().(*nex.PRUDPClient)
@@ -36,7 +36,7 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrl
 	loginDataType := loginData.TypeName()
 	switch loginDataType {
 	case "NintendoLoginData":
-		user.Platform = types.WUP // Platform is Wii U
+		user.Platform = types.WUP // * Platform is Wii U
 
 		err = database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
 		if err != nil {
@@ -44,7 +44,7 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrl
 			retval = nex.NewResultError(nex.Errors.Authentication.Unknown)
 		}
 	case "AccountExtraInfo":
-		user.Platform = types.CTR // Platform is 3DS
+		user.Platform = types.CTR // * Platform is 3DS
 
 		err = database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
 		if err != nil {
@@ -79,26 +79,10 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrl
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
 	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
 	rmcResponse.ProtocolID = secure_connection.ProtocolID
 	rmcResponse.MethodID = secure_connection.MethodRegisterEx
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

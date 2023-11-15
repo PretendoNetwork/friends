@@ -31,7 +31,7 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendList, err := database_wiiu.GetUserFriendList(presence.PID)
+	friendList, err := database_wiiu.GetUserFriendList(presence.PID.LegacyValue())
 	if err != nil && err != database.ErrEmptyList {
 		globals.Logger.Critical(err.Error())
 	}
@@ -44,7 +44,7 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 
 			if friendList[i] != nil && friendList[i].Presence != nil {
 				// TODO: Better track the bad users PID
-				friendPID = friendList[i].Presence.PID
+				friendPID = friendList[i].Presence.PID.LegacyValue()
 			}
 
 			globals.Logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
@@ -61,7 +61,7 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 		}
 
 		friendPID := friendList[i].NNAInfo.PrincipalBasicInfo.PID
-		connectedUser := globals.ConnectedUsers[friendPID]
+		connectedUser := globals.ConnectedUsers[friendPID.LegacyValue()]
 
 		if connectedUser != nil {
 			requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)

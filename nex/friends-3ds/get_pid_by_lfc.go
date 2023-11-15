@@ -6,7 +6,7 @@ import (
 	// friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
-func GetPrincipalIDByLocalFriendCode(err error, packet nex.PacketInterface, callID uint32, lfc uint64, lfcList []uint64) uint32 {
+func GetPrincipalIDByLocalFriendCode(err error, packet nex.PacketInterface, callID uint32, lfc uint64, lfcList []uint64) (*nex.RMCMessage, uint32) {
 	// Respond with unimplemented, waiting for gRPC to retrieve PID from account server
 
 	// rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
@@ -27,5 +27,5 @@ func GetPrincipalIDByLocalFriendCode(err error, packet nex.PacketInterface, call
 
 	// globals.SecureServer.Send(responsePacket)
 
-	return nex.Errors.Core.NotImplemented
+	return nil, nex.Errors.Core.NotImplemented
 }

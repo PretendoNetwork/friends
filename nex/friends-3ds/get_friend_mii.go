@@ -9,18 +9,16 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
-func GetFriendMii(err error, packet nex.PacketInterface, callID uint32, pids []uint32) uint32 {
+func GetFriendMii(err error, packet nex.PacketInterface, callID uint32, pids []uint32) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
-
-	client := packet.Sender().(*nex.PRUDPClient)
 
 	miiList, err := database_3ds.GetFriendMiis(pids)
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
@@ -34,20 +32,5 @@ func GetFriendMii(err error, packet nex.PacketInterface, callID uint32, pids []u
 	rmcResponse.MethodID = friends_3ds.MethodGetFriendMii
 	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPRUDPPacketV0(client, nil)
-
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-	responsePacket.SetSourceStreamType(packet.(nex.PRUDPPacketInterface).DestinationStreamType())
-	responsePacket.SetSourcePort(packet.(nex.PRUDPPacketInterface).DestinationPort())
-	responsePacket.SetDestinationStreamType(packet.(nex.PRUDPPacketInterface).SourceStreamType())
-	responsePacket.SetDestinationPort(packet.(nex.PRUDPPacketInterface).SourcePort())
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }
