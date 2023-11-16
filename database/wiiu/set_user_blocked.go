@@ -5,7 +5,7 @@ import (
 	"github.com/PretendoNetwork/nex-go"
 )
 
-// SetUserBlocked marks a blocked PID as blocked on a bloker PID block list
+// SetUserBlocked marks a blocked PID as blocked on a blocker PID block list
 func SetUserBlocked(blockerPID uint32, blockedPID uint32, titleId uint64, titleVersion uint16) error {
 	date := nex.NewDateTime(0).Now()
 
