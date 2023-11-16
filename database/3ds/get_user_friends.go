@@ -4,6 +4,7 @@ import (
 	"database/sql"
 
 	"github.com/PretendoNetwork/friends/database"
+	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
@@ -14,7 +15,7 @@ func GetUserFriends(pid uint32) ([]*friends_3ds_types.FriendRelationship, error)
 	rows, err := database.Postgres.Query(`
 	SELECT user2_pid, type FROM "3ds".friendships WHERE user1_pid=$1 AND type=1 LIMIT 100`, pid)
 	if err != nil {
-		if err ==  sql.ErrNoRows {
+		if err == sql.ErrNoRows {
 			return friendRelationships, database.ErrEmptyList
 		} else {
 			return friendRelationships, err
@@ -22,9 +23,14 @@ func GetUserFriends(pid uint32) ([]*friends_3ds_types.FriendRelationship, error)
 	}
 
 	for rows.Next() {
+		var pid uint32
+
 		relationship := friends_3ds_types.NewFriendRelationship()
 		relationship.LFC = 0
-		rows.Scan(&relationship.PID, &relationship.RelationshipType)
+
+		rows.Scan(&pid, &relationship.RelationshipType)
+
+		relationship.PID = nex.NewPID(pid)
 
 		friendRelationships = append(friendRelationships, relationship)
 	}

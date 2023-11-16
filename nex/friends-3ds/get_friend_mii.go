@@ -7,12 +7,19 @@ import (
 	"github.com/PretendoNetwork/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-func GetFriendMii(err error, packet nex.PacketInterface, callID uint32, pids []uint32) (*nex.RMCMessage, uint32) {
+func GetFriendMii(err error, packet nex.PacketInterface, callID uint32, friends []*friends_3ds_types.FriendInfo) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.Errors.FPD.InvalidArgument
+	}
+
+	pids := make([]uint32, 0, len(friends))
+
+	for _, friend := range friends {
+		pids = append(pids, friend.PID.LegacyValue())
 	}
 
 	miiList, err := database_3ds.GetFriendMiis(pids)
