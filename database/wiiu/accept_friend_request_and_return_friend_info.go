@@ -2,7 +2,6 @@ package database_wiiu
 
 import (
 	"database/sql"
-	"time"
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
@@ -25,8 +24,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		}
 	}
 
-	acceptedTime := nex.NewDateTime(0)
-	acceptedTime.FromTimestamp(time.Now())
+	acceptedTime := nex.NewDateTime(0).Now()
 
 	// * Friendships are two-way relationships, not just one link between 2 entities
 	// * "A" has friend "B" and "B" has friend "A", so store both relationships
@@ -69,8 +67,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		friendInfo.NNAInfo = connectedUser.NNAInfo
 		friendInfo.Presence = connectedUser.PresenceV2
 
-		lastOnline = nex.NewDateTime(0)
-		lastOnline.FromTimestamp(time.Now())
+		lastOnline = nex.NewDateTime(0).Now()
 	} else {
 		// * Offline
 		userInfo, err := utility.GetUserInfoByPID(senderPID)

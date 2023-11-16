@@ -1,8 +1,6 @@
 package database_3ds
 
 import (
-	"time"
-
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
@@ -14,9 +12,6 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.F
 	friendRelationship.PID = nex.NewPID(recipientPID)
 	friendRelationship.LFC = 0
 	friendRelationship.RelationshipType = 0 // * Incomplete
-
-	nowTime := nex.NewDateTime(0)
-	nowTime.FromTimestamp(time.Now())
 
 	// * Ensure that we inputted a valid user.
 	var found bool
@@ -47,7 +42,7 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.F
 		return friendRelationship, nil
 	}
 
-	acceptedTime := nex.NewDateTime(0).Now()
+	acceptedTime := nex.NewDateTime(0).Now().Value()
 
 	// * We need to have two relationships for both sides as friend relationships are not one single object.
 	_, err = database.Postgres.Exec(`

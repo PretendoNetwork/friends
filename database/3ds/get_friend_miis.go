@@ -1,8 +1,6 @@
 package database_3ds
 
 import (
-	"time"
-
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
@@ -19,8 +17,7 @@ func GetFriendMiis(pids []uint32) ([]*friends_3ds_types.FriendMii, error) {
 		return friendMiis, err
 	}
 
-	changedTime := nex.NewDateTime(0)
-	changedTime.FromTimestamp(time.Now())
+	changedTime := nex.NewDateTime(0).Now()
 
 	for rows.Next() {
 		var pid uint32

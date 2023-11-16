@@ -3,7 +3,6 @@ package database_wiiu
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
@@ -51,8 +50,7 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 				continue
 			}
 
-			lastOnline = nex.NewDateTime(0)
-			lastOnline.FromTimestamp(time.Now())
+			lastOnline = nex.NewDateTime(0).Now()
 		} else {
 			// * Offline
 
