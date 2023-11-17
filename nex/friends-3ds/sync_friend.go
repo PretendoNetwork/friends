@@ -10,7 +10,6 @@ import (
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
-	"golang.org/x/exp/slices"
 )
 
 func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64, pids []*nex.PID, lfcList []uint64) (*nex.RMCMessage, uint32) {
@@ -28,7 +27,15 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64
 	}
 
 	for i := 0; i < len(friendRelationships); i++ {
-		if !slices.Contains(pids, friendRelationships[i].PID) {
+		var hasPID bool
+		for _, pidInput := range pids {
+			if pidInput.Equals(friendRelationships[i].PID) {
+				hasPID = true
+				break
+			}
+		}
+
+		if !hasPID {
 			err := database_3ds.RemoveFriendship(client.PID().LegacyValue(), friendRelationships[i].PID.LegacyValue())
 			if err != nil && err != database.ErrFriendshipNotFound {
 				globals.Logger.Critical(err.Error())
