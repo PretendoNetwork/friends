@@ -32,7 +32,7 @@ func GetBasicInfo(err error, packet nex.PacketInterface, callID uint32, pids []*
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(infos)
+	nex.StreamWriteListStructure(rmcResponseStream, infos)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

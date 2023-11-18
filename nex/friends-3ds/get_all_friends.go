@@ -25,7 +25,7 @@ func GetAllFriends(err error, packet nex.PacketInterface, callID uint32) (*nex.R
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(friendRelationships)
+	nex.StreamWriteListStructure(rmcResponseStream, friendRelationships)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

@@ -245,12 +245,12 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 
 	rmcResponseStream.WriteStructure(principalPreference)
 	rmcResponseStream.WriteStructure(comment)
-	rmcResponseStream.WriteListStructure(friendList)
-	rmcResponseStream.WriteListStructure(friendRequestsOut)
-	rmcResponseStream.WriteListStructure(friendRequestsIn)
-	rmcResponseStream.WriteListStructure(blockList)
+	nex.StreamWriteListStructure(rmcResponseStream, friendList)
+	nex.StreamWriteListStructure(rmcResponseStream, friendRequestsOut)
+	nex.StreamWriteListStructure(rmcResponseStream, friendRequestsIn)
+	nex.StreamWriteListStructure(rmcResponseStream, blockList)
 	rmcResponseStream.WriteBool(false) // * Unknown
-	rmcResponseStream.WriteListStructure(notifications)
+	nex.StreamWriteListStructure(rmcResponseStream, notifications)
 	rmcResponseStream.WriteBool(false) // * Unknown
 
 	rmcResponseBody := rmcResponseStream.Bytes()

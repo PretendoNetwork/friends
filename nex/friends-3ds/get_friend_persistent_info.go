@@ -31,7 +31,7 @@ func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint3
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(infoList)
+	nex.StreamWriteListStructure(rmcResponseStream, infoList)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

@@ -38,7 +38,7 @@ func GetRequestBlockSettings(err error, packet nex.PacketInterface, callID uint3
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(settings)
+	nex.StreamWriteListStructure(rmcResponseStream, settings)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

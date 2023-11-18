@@ -64,7 +64,7 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(friendRelationships)
+	nex.StreamWriteListStructure(rmcResponseStream, friendRelationships)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

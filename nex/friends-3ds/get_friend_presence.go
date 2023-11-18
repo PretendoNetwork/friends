@@ -29,7 +29,7 @@ func GetFriendPresence(err error, packet nex.PacketInterface, callID uint32, pid
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(presenceList)
+	nex.StreamWriteListStructure(rmcResponseStream, presenceList)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

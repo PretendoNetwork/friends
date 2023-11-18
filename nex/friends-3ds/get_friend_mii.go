@@ -30,7 +30,7 @@ func GetFriendMii(err error, packet nex.PacketInterface, callID uint32, friends 
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(miiList)
+	nex.StreamWriteListStructure(rmcResponseStream, miiList)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
