@@ -15,14 +15,14 @@ func registerCommonAuthenticationServerProtocols() {
 	port, _ := strconv.Atoi(os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT"))
 
 	secureStationURL := nex.NewStationURL("")
-	secureStationURL.SetScheme("prudps")
-	secureStationURL.SetAddress(os.Getenv("PN_FRIENDS_SECURE_SERVER_HOST"))
-	secureStationURL.SetPort(uint32(port))
-	secureStationURL.SetCID(1)
-	secureStationURL.SetPID(nex.NewPID[uint32](2))
-	secureStationURL.SetSID(1)
-	secureStationURL.SetStream(10)
-	secureStationURL.SetType(2)
+	secureStationURL.Scheme = "prudps"
+	secureStationURL.Fields.Set("address", os.Getenv("PN_FRIENDS_SECURE_SERVER_HOST"))
+	secureStationURL.Fields.Set("port", strconv.Itoa(port))
+	secureStationURL.Fields.Set("CID", "1")
+	secureStationURL.Fields.Set("PID", "2")
+	secureStationURL.Fields.Set("sid", "1")
+	secureStationURL.Fields.Set("stream", "10")
+	secureStationURL.Fields.Set("type", "2")
 
 	ticketGrantingProtocol.SetSecureStationURL(secureStationURL)
 	ticketGrantingProtocol.SetBuildName(serverBuildString)

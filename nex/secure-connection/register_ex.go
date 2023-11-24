@@ -2,6 +2,7 @@ package nex_secure_connection
 
 import (
 	"net"
+	"strconv"
 	"time"
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
@@ -61,10 +62,10 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrl
 
 		localStation := stationUrls[0]
 
-		address := client.Address().(*net.UDPAddr).IP.String()
+		address := client.Address().(*net.UDPAddr)
 
-		localStation.SetAddress(address)
-		localStation.SetPort(uint32(client.Address().(*net.UDPAddr).Port))
+		localStation.Fields.Set("address", address.IP.String())
+		localStation.Fields.Set("port", strconv.Itoa(address.Port))
 
 		localStationURL := localStation.EncodeToString()
 
