@@ -18,7 +18,7 @@ import (
 
 func StartSecureServer() {
 	globals.SecureServer = nex.NewPRUDPServer()
-	globals.SecureServer.IsSecureServer = true
+	globals.SecureServer.SecureVirtualServerPorts = []uint8{1}
 	globals.SecureServer.SetFragmentSize(962)
 	globals.SecureServer.SetDefaultLibraryVersion(nex.NewLibraryVersion(1, 1, 0))
 	globals.SecureServer.SetKerberosPassword([]byte("password"))
