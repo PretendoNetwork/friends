@@ -9,7 +9,7 @@ import (
 
 func registerCommonSecureServerProtocols() {
 	secureConnectionProtocol := secure_connection.NewProtocol(globals.SecureServer)
-	common_secure_connection.NewCommonSecureConnectionProtocol(secureConnectionProtocol)
+	common_secure_connection.NewCommonProtocol(secureConnectionProtocol)
 
 	secureConnectionProtocol.RegisterEx = nex_secure_connection.RegisterEx
 }

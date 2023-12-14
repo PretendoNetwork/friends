@@ -12,7 +12,7 @@ import (
 
 func registerCommonAuthenticationServerProtocols() {
 	ticketGrantingProtocol := ticket_granting.NewProtocol(globals.AuthenticationServer)
-	commonTicketGrantingProtocol := common_ticket_granting.NewCommonTicketGrantingProtocol(ticketGrantingProtocol)
+	commonTicketGrantingProtocol := common_ticket_granting.NewCommonProtocol(ticketGrantingProtocol)
 
 	port, _ := strconv.Atoi(os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT"))
 

@@ -21,7 +21,7 @@ func StartSecureServer() {
 	globals.SecureServer.SecureVirtualServerPorts = []uint8{1}
 	globals.SecureServer.SetFragmentSize(962)
 	globals.SecureServer.SetDefaultLibraryVersion(nex.NewLibraryVersion(1, 1, 0))
-	globals.SecureServer.SetKerberosPassword([]byte("password"))
+	globals.SecureServer.SetKerberosPassword([]byte(globals.KerberosPassword))
 	globals.SecureServer.SetKerberosKeySize(16)
 	globals.SecureServer.SetAccessKey("ridfebb9")
 
