@@ -31,7 +31,7 @@ func RemoveFriendByPrincipalID(err error, packet nex.PacketInterface, callID uin
 
 	go notifications_3ds.SendUserWentOffline(client, pid)
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID
 	rmcResponse.MethodID = friends_3ds.MethodRemoveFriendByPrincipalID
 	rmcResponse.CallID = callID

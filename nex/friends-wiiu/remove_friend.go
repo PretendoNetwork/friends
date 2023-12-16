@@ -32,7 +32,7 @@ func RemoveFriend(err error, packet nex.PacketInterface, callID uint32, pid *nex
 		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, pid)
 	}
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodRemoveFriend
 	rmcResponse.CallID = callID

@@ -25,7 +25,7 @@ func UpdateFavoriteGameKey(err error, packet nex.PacketInterface, callID uint32,
 
 	go notifications_3ds.SendFavoriteUpdate(client, gameKey)
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID
 	rmcResponse.MethodID = friends_3ds.MethodUpdateFavoriteGameKey
 	rmcResponse.CallID = callID

@@ -33,7 +33,7 @@ func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Client, client.PID())
 	}
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodCancelFriendRequest
 	rmcResponse.CallID = callID

@@ -143,7 +143,7 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodAddFriendRequest
 	rmcResponse.CallID = callID

@@ -26,7 +26,7 @@ func RemoveBlacklist(err error, packet nex.PacketInterface, callID uint32, block
 		}
 	}
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodRemoveBlackList
 	rmcResponse.CallID = callID

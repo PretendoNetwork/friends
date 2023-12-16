@@ -20,7 +20,7 @@ func SendFriendshipRemoved(client *nex.PRUDPClient, senderPID *nex.PID) {
 	stream := nex.NewStreamOut(globals.SecureServer)
 	stream.WriteStructure(eventObject)
 
-	rmcRequest := nex.NewRMCRequest()
+	rmcRequest := nex.NewRMCRequest(globals.SecureServer)
 	rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
 	rmcRequest.CallID = 3810693103
 	rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent1

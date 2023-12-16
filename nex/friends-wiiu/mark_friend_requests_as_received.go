@@ -22,7 +22,7 @@ func MarkFriendRequestsAsReceived(err error, packet nex.PacketInterface, callID 
 		}
 	}
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodMarkFriendRequestsAsReceived
 	rmcResponse.CallID = callID

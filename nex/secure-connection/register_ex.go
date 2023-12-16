@@ -80,7 +80,7 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrl
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
 	rmcResponse.ProtocolID = secure_connection.ProtocolID
 	rmcResponse.MethodID = secure_connection.MethodRegisterEx
 	rmcResponse.CallID = callID

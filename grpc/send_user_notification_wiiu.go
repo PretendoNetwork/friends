@@ -15,7 +15,7 @@ func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb
 	connectedUser := globals.ConnectedUsers[in.GetPid()]
 
 	if connectedUser != nil {
-		rmcRequest := nex.NewRMCRequest()
+		rmcRequest := nex.NewRMCRequest(globals.SecureServer)
 		rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
 		rmcRequest.CallID = 3810693103
 		rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent2

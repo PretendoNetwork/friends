@@ -25,7 +25,7 @@ func UpdateMii(err error, packet nex.PacketInterface, callID uint32, mii *friend
 
 	go notifications_3ds.SendMiiUpdateNotification(client)
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID
 	rmcResponse.MethodID = friends_3ds.MethodUpdateMii
 	rmcResponse.CallID = callID

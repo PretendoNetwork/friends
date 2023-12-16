@@ -15,7 +15,7 @@ func DeletePersistentNotification(err error, packet nex.PacketInterface, callID 
 
 	// TODO - Do something here
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodDeletePersistentNotification
 	rmcResponse.CallID = callID

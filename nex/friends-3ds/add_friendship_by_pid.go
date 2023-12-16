@@ -33,7 +33,7 @@ func AddFriendshipByPrincipalID(err error, packet nex.PacketInterface, callID ui
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID
 	rmcResponse.MethodID = friends_3ds.MethodAddFriendByPrincipalID
 	rmcResponse.CallID = callID

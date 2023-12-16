@@ -34,7 +34,7 @@ func SendUserWentOffline(client *nex.PRUDPClient, pid *nex.PID) {
 	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
-	rmcRequest := nex.NewRMCRequest()
+	rmcRequest := nex.NewRMCRequest(globals.SecureServer)
 	rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
 	rmcRequest.CallID = 3810693103
 	rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent1

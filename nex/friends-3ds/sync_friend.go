@@ -68,7 +68,7 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCSuccess(rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID
 	rmcResponse.MethodID = friends_3ds.MethodSyncFriend
 	rmcResponse.CallID = callID

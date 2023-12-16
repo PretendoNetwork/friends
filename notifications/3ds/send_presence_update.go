@@ -22,7 +22,7 @@ func SendPresenceUpdate(client *nex.PRUDPClient, presence *friends_3ds_types.Nin
 	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
-	rmcRequest := nex.NewRMCRequest()
+	rmcRequest := nex.NewRMCRequest(globals.SecureServer)
 	rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
 	rmcRequest.CallID = 3810693103
 	rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent1

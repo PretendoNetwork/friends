@@ -24,7 +24,7 @@ func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment
 
 	go notifications_3ds.SendCommentUpdate(client, comment)
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID
 	rmcResponse.MethodID = friends_3ds.MethodUpdateComment
 	rmcResponse.CallID = callID

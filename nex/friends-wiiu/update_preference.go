@@ -22,7 +22,7 @@ func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, prin
 		return nil, nex.Errors.FPD.Unknown
 	}
 
-	rmcResponse := nex.NewRMCSuccess(nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodUpdatePreference
 	rmcResponse.CallID = callID
