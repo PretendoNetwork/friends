@@ -1,6 +1,8 @@
 package nex_secure_connection
 
 import (
+	"net"
+	"strconv"
 	"time"
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
@@ -11,25 +13,31 @@ import (
 	secure_connection "github.com/PretendoNetwork/nex-protocols-go/secure-connection"
 )
 
-func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) uint32 {
+func RegisterEx(err error, packet nex.PacketInterface, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Core.InvalidArgument
+		return nil, nex.Errors.Core.InvalidArgument
 	}
+
+	client := packet.Sender().(*nex.PRUDPClient)
 
 	retval := nex.NewResultSuccess(nex.Errors.Core.Unknown)
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	// TODO: Validate loginData
-	pid := client.PID()
-	user := globals.ConnectedUsers[pid]
+	// TODO - Validate loginData
+	pid := client.PID().LegacyValue()
+
+	user := types.NewConnectedUser()
+	user.PID = pid
+	user.Client = client
+
 	lastOnline := nex.NewDateTime(0)
 	lastOnline.FromTimestamp(time.Now())
 
 	loginDataType := loginData.TypeName()
 	switch loginDataType {
 	case "NintendoLoginData":
-		user.Platform = types.WUP // Platform is Wii U
+		user.Platform = types.WUP // * Platform is Wii U
 
 		err = database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
 		if err != nil {
@@ -37,7 +45,7 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 			retval = nex.NewResultError(nex.Errors.Authentication.Unknown)
 		}
 	case "AccountExtraInfo":
-		user.Platform = types.CTR // Platform is 3DS
+		user.Platform = types.CTR // * Platform is 3DS
 
 		err = database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
 		if err != nil {
@@ -50,17 +58,19 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 	}
 
 	if retval.IsSuccess() {
+		globals.ConnectedUsers[pid] = user
+
 		localStation := stationUrls[0]
 
-		address := client.Address().IP.String()
+		address := client.Address().(*net.UDPAddr)
 
-		localStation.SetAddress(address)
-		localStation.SetPort(uint32(client.Address().Port))
+		localStation.Fields.Set("address", address.IP.String())
+		localStation.Fields.Set("port", strconv.Itoa(address.Port))
 
 		localStationURL := localStation.EncodeToString()
 
 		rmcResponseStream.WriteResult(retval)
-		rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
+		rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Next())
 		rmcResponseStream.WriteString(localStationURL)
 	} else {
 		rmcResponseStream.WriteResult(retval)
@@ -70,24 +80,10 @@ func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(secure_connection.ProtocolID, callID)
-	rmcResponse.SetSuccess(secure_connection.MethodRegisterEx, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
+	rmcResponse.ProtocolID = secure_connection.ProtocolID
+	rmcResponse.MethodID = secure_connection.MethodRegisterEx
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

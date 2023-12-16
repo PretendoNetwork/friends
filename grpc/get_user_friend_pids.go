@@ -40,7 +40,7 @@ func (s *gRPCFriendsServer) GetUserFriendPIDs(ctx context.Context, in *pb.GetUse
 	for _, relationship := range relationships {
 		// * Only add complete relationships to the list
 		if relationship.RelationshipType == 1 {
-			pids = append(pids, relationship.PID)
+			pids = append(pids, relationship.PID.LegacyValue())
 		}
 	}
 

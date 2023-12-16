@@ -10,81 +10,78 @@ import (
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
-	"golang.org/x/exp/slices"
 )
 
-func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids []uint32, lfcList []uint64) uint32 {
+func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc uint64, pids []*nex.PID, lfcList []uint64) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
-	friendRelationships, err := database_3ds.GetUserFriends(client.PID())
+	client := packet.Sender().(*nex.PRUDPClient)
+
+	friendRelationships, err := database_3ds.GetUserFriends(client.PID().LegacyValue())
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	for i := 0; i < len(friendRelationships); i++ {
-		if !slices.Contains(pids, friendRelationships[i].PID) {
-			err := database_3ds.RemoveFriendship(client.PID(), friendRelationships[i].PID)
+		var hasPID bool
+		for _, pidInput := range pids {
+			if pidInput.Equals(friendRelationships[i].PID) {
+				hasPID = true
+				break
+			}
+		}
+
+		if !hasPID {
+			err := database_3ds.RemoveFriendship(client.PID().LegacyValue(), friendRelationships[i].PID.LegacyValue())
 			if err != nil && err != database.ErrFriendshipNotFound {
 				globals.Logger.Critical(err.Error())
-				return nex.Errors.FPD.Unknown
+				return nil, nex.Errors.FPD.Unknown
 			}
 		}
 	}
 
 	for i := 0; i < len(pids); i++ {
-		if !isPIDInRelationships(friendRelationships, pids[i]) {
-			friendRelationship, err := database_3ds.SaveFriendship(client.PID(), pids[i])
+		if !isPIDInRelationships(friendRelationships, pids[i].LegacyValue()) {
+			friendRelationship, err := database_3ds.SaveFriendship(client.PID().LegacyValue(), pids[i].LegacyValue())
 			if err != nil {
 				globals.Logger.Critical(err.Error())
-				return nex.Errors.FPD.Unknown
+				return nil, nex.Errors.FPD.Unknown
 			}
 
 			friendRelationships = append(friendRelationships, friendRelationship)
 
 			// Alert the other side, in case they weren't able to get our presence data
-			connectedUser := globals.ConnectedUsers[pids[i]]
+			connectedUser := globals.ConnectedUsers[pids[i].LegacyValue()]
 			if connectedUser != nil {
-				go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pids[i], client.PID())
+				go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pids[i].LegacyValue(), client.PID())
 			}
 		}
 	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(friendRelationships)
+	nex.StreamWriteListStructure(rmcResponseStream, friendRelationships)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodSyncFriend, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodSyncFriend
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }
 
 func isPIDInRelationships(relationships []*friends_3ds_types.FriendRelationship, pid uint32) bool {
 	for i := range relationships {
-		if relationships[i].PID == pid {
+		if relationships[i].PID.LegacyValue() == pid {
 			return true
 		}
 	}
+
 	return false
 }

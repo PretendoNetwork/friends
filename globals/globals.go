@@ -11,8 +11,8 @@ import (
 
 var Logger *plogger.Logger
 var KerberosPassword = "password" // * Default password
-var AuthenticationServer *nex.Server
-var SecureServer *nex.Server
+var AuthenticationServer *nex.PRUDPServer
+var SecureServer *nex.PRUDPServer
 var ConnectedUsers map[uint32]*types.ConnectedUser
 var AESKey []byte
 var GRPCAccountClientConnection *grpc.ClientConn

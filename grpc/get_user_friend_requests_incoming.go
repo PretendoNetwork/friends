@@ -25,7 +25,7 @@ func (s *gRPCFriendsServer) GetUserFriendRequestsIncoming(ctx context.Context, i
 	for i := 0; i < len(friendRequestsIn); i++ {
 		friendRequest := &pb.FriendRequest{
 			Id:        friendRequestsIn[i].Message.FriendRequestID,
-			Sender:    friendRequestsIn[i].PrincipalInfo.PID,
+			Sender:    friendRequestsIn[i].PrincipalInfo.PID.LegacyValue(),
 			Recipient: in.GetPid(),
 			Sent:      uint64(friendRequestsIn[i].SentOn.Standard().Unix()),
 			Expires:   uint64(friendRequestsIn[i].Message.ExpiresOn.Standard().Unix()),

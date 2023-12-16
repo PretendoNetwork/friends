@@ -8,21 +8,23 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
-func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lfc uint64, pid uint32) uint32 {
+func AddFriendshipByPrincipalID(err error, packet nex.PacketInterface, callID uint32, lfc uint64, pid *nex.PID) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
-	friendRelationship, err := database_3ds.SaveFriendship(client.PID(), pid)
+	client := packet.Sender().(*nex.PRUDPClient)
+
+	friendRelationship, err := database_3ds.SaveFriendship(client.PID().LegacyValue(), pid.LegacyValue())
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
-	connectedUser := globals.ConnectedUsers[pid]
+	connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
 	if connectedUser != nil {
-		go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pid, client.PID())
+		go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pid.LegacyValue(), client.PID())
 	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
@@ -31,23 +33,10 @@ func AddFriendshipByPrincipalID(err error, client *nex.Client, callID uint32, lf
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodAddFriendByPrincipalID, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodAddFriendByPrincipalID
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

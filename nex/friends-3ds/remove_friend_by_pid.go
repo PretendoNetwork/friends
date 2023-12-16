@@ -9,43 +9,32 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
 )
 
-func RemoveFriendByPrincipalID(err error, client *nex.Client, callID uint32, pid uint32) uint32 {
+func RemoveFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32, pid *nex.PID) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
-	err = database_3ds.RemoveFriendship(client.PID(), pid)
+	client := packet.Sender().(*nex.PRUDPClient)
+
+	err = database_3ds.RemoveFriendship(client.PID().LegacyValue(), pid.LegacyValue())
 	if err != nil {
 		if err == database.ErrFriendshipNotFound {
 			// * Official servers don't actually check this, but
 			// * we'll do it ourselves
-			return nex.Errors.FPD.NotFriend
+			return nil, nex.Errors.FPD.NotFriend
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.Errors.FPD.Unknown
 		}
 	}
 
 	go notifications_3ds.SendUserWentOffline(client, pid)
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodRemoveFriendByPrincipalID, nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodRemoveFriendByPrincipalID
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

@@ -9,16 +9,18 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdatePresence(err error, client *nex.Client, callID uint32, presence *friends_wiiu_types.NintendoPresenceV2) uint32 {
+func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence *friends_wiiu_types.NintendoPresenceV2) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
-	pid := client.PID()
+	client := packet.Sender().(*nex.PRUDPClient)
 
-	presence.Online = true // Force online status. I have no idea why this is always false
-	presence.PID = pid     // WHY IS THIS SET TO 0 BY DEFAULT??
+	pid := client.PID().LegacyValue()
+
+	presence.Online = true      // * Force online status. I have no idea why this is always false
+	presence.PID = client.PID() // * WHY IS THIS SET TO 0 BY DEFAULT??
 
 	if globals.ConnectedUsers[pid] == nil {
 		// TODO - Figure out why this is getting removed
@@ -35,23 +37,10 @@ func UpdatePresence(err error, client *nex.Client, callID uint32, presence *frie
 
 	notifications_wiiu.SendPresenceUpdate(presence)
 
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodUpdatePresence, nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodUpdatePresence
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

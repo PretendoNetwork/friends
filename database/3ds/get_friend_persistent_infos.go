@@ -22,14 +22,16 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) ([]*friends_3ds_t
 
 		gameKey := friends_3ds_types.NewGameKey()
 
+		var pid uint32
 		var lastOnlineTime uint64
 		var msgUpdateTime uint64
 		var miiModifiedAtTime uint64
 
 		rows.Scan(
-			&persistentInfo.PID, &persistentInfo.Region, &persistentInfo.Area, &persistentInfo.Language,
+			&pid, &persistentInfo.Region, &persistentInfo.Area, &persistentInfo.Language,
 			&gameKey.TitleID, &gameKey.TitleVersion, &persistentInfo.Message, &msgUpdateTime, &lastOnlineTime, &miiModifiedAtTime)
 
+		persistentInfo.PID = nex.NewPID(pid)
 		persistentInfo.MessageUpdatedAt = nex.NewDateTime(msgUpdateTime)
 		persistentInfo.MiiModifiedAt = nex.NewDateTime(miiModifiedAtTime)
 		persistentInfo.LastOnline = nex.NewDateTime(lastOnlineTime)

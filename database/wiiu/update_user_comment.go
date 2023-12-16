@@ -7,7 +7,7 @@ import (
 
 // UpdateUserComment updates a user's comment
 func UpdateUserComment(pid uint32, message string) (uint64, error) {
-	changed := nex.NewDateTime(0).Now()
+	changed := nex.NewDateTime(0).Now().Value()
 
 	_, err := database.Postgres.Exec(`
 		INSERT INTO wiiu.user_data (pid, comment, comment_changed)

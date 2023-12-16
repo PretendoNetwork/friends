@@ -9,11 +9,13 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
 )
 
-func UpdatePresence(err error, client *nex.Client, callID uint32, presence *friends_3ds_types.NintendoPresence, showGame bool) uint32 {
+func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence *friends_3ds_types.NintendoPresence, showGame bool) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
+
+	client := packet.Sender().(*nex.PRUDPClient)
 
 	currentPresence := presence
 
@@ -26,7 +28,7 @@ func UpdatePresence(err error, client *nex.Client, callID uint32, presence *frie
 
 	go notifications_3ds.SendPresenceUpdate(client, currentPresence)
 
-	pid := client.PID()
+	pid := client.PID().LegacyValue()
 
 	if globals.ConnectedUsers[pid] == nil {
 		// TODO - Figure out why this is getting removed
@@ -40,23 +42,10 @@ func UpdatePresence(err error, client *nex.Client, callID uint32, presence *frie
 
 	globals.ConnectedUsers[pid].Presence = currentPresence
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodUpdatePresence, nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodUpdatePresence
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

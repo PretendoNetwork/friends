@@ -7,7 +7,7 @@ import (
 
 // UpdateUserComment updates a user's comment
 func UpdateUserComment(pid uint32, message string) error {
-	changed := nex.NewDateTime(0).Now()
+	changed := nex.NewDateTime(0).Now().Value()
 
 	_, err := database.Postgres.Exec(`
 		INSERT INTO "3ds".user_data (pid, comment, comment_changed)

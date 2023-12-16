@@ -3,7 +3,6 @@ package database_wiiu
 import (
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
@@ -35,7 +34,7 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 		var lastOnline *nex.DateTime
 
 		if connectedUser != nil {
-			// Online
+			// * Online
 			friendInfo.NNAInfo = connectedUser.NNAInfo
 			friendInfo.Presence = connectedUser.PresenceV2
 
@@ -51,10 +50,9 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 				continue
 			}
 
-			lastOnline = nex.NewDateTime(0)
-			lastOnline.FromTimestamp(time.Now())
+			lastOnline = nex.NewDateTime(0).Now()
 		} else {
-			// Offline
+			// * Offline
 
 			userInfo, err := utility.GetUserInfoByPID(friendPID)
 			if err != nil {
@@ -79,7 +77,7 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 			friendInfo.Presence.Unknown3 = 0
 			friendInfo.Presence.GameServerID = 0
 			friendInfo.Presence.Unknown4 = 0
-			friendInfo.Presence.PID = 0
+			friendInfo.Presence.PID = nex.NewPID[uint32](0)
 			friendInfo.Presence.GatheringID = 0
 			friendInfo.Presence.ApplicationData = []byte{0x00}
 			friendInfo.Presence.Unknown5 = 0
@@ -92,7 +90,7 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 				return nil, err
 			}
 
-			lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
+			lastOnline = nex.NewDateTime(lastOnlineTime) // TODO - Change this
 		}
 
 		status, err := GetUserComment(friendPID)

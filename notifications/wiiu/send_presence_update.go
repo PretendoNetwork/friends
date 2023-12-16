@@ -23,15 +23,15 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 	stream := nex.NewStreamOut(globals.SecureServer)
 	eventObjectBytes := eventObject.Bytes(stream)
 
-	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
-	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent2)
-	rmcRequest.SetParameters(eventObjectBytes)
+	rmcRequest := nex.NewRMCRequest(globals.SecureServer)
+	rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
+	rmcRequest.CallID = 3810693103
+	rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent2
+	rmcRequest.Parameters = eventObjectBytes
 
 	rmcRequestBytes := rmcRequest.Bytes()
 
-	friendList, err := database_wiiu.GetUserFriendList(presence.PID)
+	friendList, err := database_wiiu.GetUserFriendList(presence.PID.LegacyValue())
 	if err != nil && err != database.ErrEmptyList {
 		globals.Logger.Critical(err.Error())
 	}
@@ -44,7 +44,7 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 
 			if friendList[i] != nil && friendList[i].Presence != nil {
 				// TODO: Better track the bad users PID
-				friendPID = friendList[i].Presence.PID
+				friendPID = friendList[i].Presence.PID.LegacyValue()
 			}
 
 			globals.Logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
@@ -61,19 +61,19 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 		}
 
 		friendPID := friendList[i].NNAInfo.PrincipalBasicInfo.PID
-		connectedUser := globals.ConnectedUsers[friendPID]
+		connectedUser := globals.ConnectedUsers[friendPID.LegacyValue()]
 
 		if connectedUser != nil {
-			requestPacket, _ := nex.NewPacketV0(connectedUser.Client, nil)
+			requestPacket, _ := nex.NewPRUDPPacketV0(connectedUser.Client, nil)
 
-			requestPacket.SetVersion(0)
-			requestPacket.SetSource(0xA1)
-			requestPacket.SetDestination(0xAF)
 			requestPacket.SetType(nex.DataPacket)
-			requestPacket.SetPayload(rmcRequestBytes)
-
 			requestPacket.AddFlag(nex.FlagNeedsAck)
 			requestPacket.AddFlag(nex.FlagReliable)
+			requestPacket.SetSourceStreamType(connectedUser.Client.DestinationStreamType)
+			requestPacket.SetSourcePort(connectedUser.Client.DestinationPort)
+			requestPacket.SetDestinationStreamType(connectedUser.Client.SourceStreamType)
+			requestPacket.SetDestinationPort(connectedUser.Client.SourcePort)
+			requestPacket.SetPayload(rmcRequestBytes)
 
 			globals.SecureServer.Send(requestPacket)
 		}

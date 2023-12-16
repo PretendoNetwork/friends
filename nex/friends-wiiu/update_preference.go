@@ -8,35 +8,24 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func UpdatePreference(err error, client *nex.Client, callID uint32, principalPreference *friends_wiiu_types.PrincipalPreference) uint32 {
+func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, principalPreference *friends_wiiu_types.PrincipalPreference) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
-	err = database_wiiu.UpdateUserPrincipalPreference(client.PID(), principalPreference)
+	client := packet.Sender().(*nex.PRUDPClient)
+
+	err = database_wiiu.UpdateUserPrincipalPreference(client.PID().LegacyValue(), principalPreference)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodUpdatePreference, nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodUpdatePreference
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

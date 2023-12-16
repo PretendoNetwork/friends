@@ -13,29 +13,31 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *friends_wiiu_types.GameKey, unknown6 *nex.DateTime) uint32 {
+func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid *nex.PID, unknown2 uint8, message string, unknown4 uint8, unknown5 string, gameKey *friends_wiiu_types.GameKey, unknown6 *nex.DateTime) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
 
-	senderPID := client.PID()
-	recipientPID := pid
+	client := packet.Sender().(*nex.PRUDPClient)
+
+	senderPID := client.PID().LegacyValue()
+	recipientPID := pid.LegacyValue()
 
 	senderPrincipalInfo, err := utility.GetUserInfoByPID(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	recipientPrincipalInfo, err := utility.GetUserInfoByPID(recipientPID)
 	if err != nil {
 		if err == database.ErrPIDNotFound {
 			globals.Logger.Errorf("User %d has sent friend request to invalid PID %d", senderPID, pid)
-			return nex.Errors.FPD.InvalidPrincipalID // TODO: Not sure if this is the correct error.
+			return nil, nex.Errors.FPD.InvalidPrincipalID // TODO - Not sure if this is the correct error.
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.Errors.FPD.Unknown
 		}
 	}
 
@@ -51,7 +53,7 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendRequestID, err := database_wiiu.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.Errors.FPD.Unknown
 	}
 
 	friendRequest := friends_wiiu_types.NewFriendRequest()
@@ -61,21 +63,21 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendRequest.Message = friends_wiiu_types.NewFriendRequestMessage()
 	friendRequest.Message.FriendRequestID = friendRequestID
 	friendRequest.Message.Received = false
-	friendRequest.Message.Unknown2 = 1 // replaying from real
+	friendRequest.Message.Unknown2 = 1 // * Replaying from official server
 	friendRequest.Message.Message = message
-	friendRequest.Message.Unknown3 = 0           // replaying from real server
-	friendRequest.Message.Unknown4 = ""          // replaying from real server
-	friendRequest.Message.GameKey = gameKey      // maybe this is reused?
-	friendRequest.Message.Unknown5 = unknown6    // maybe this is reused?
-	friendRequest.Message.ExpiresOn = expireTime // no idea why this is set as the sent time
+	friendRequest.Message.Unknown3 = 0           // * Replaying from official server
+	friendRequest.Message.Unknown4 = ""          // * Replaying from official server
+	friendRequest.Message.GameKey = gameKey      // * Maybe this is reused?
+	friendRequest.Message.Unknown5 = unknown6    // * Maybe this is reused?
+	friendRequest.Message.ExpiresOn = expireTime // * No idea why this is set as the sent time
 	friendRequest.SentOn = sentTime
 
-	// Why does this exist?? Always empty??
+	// * Why does this exist?? Always empty??
 	friendInfo := friends_wiiu_types.NewFriendInfo()
 
 	friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
 	friendInfo.NNAInfo.PrincipalBasicInfo = friends_wiiu_types.NewPrincipalBasicInfo()
-	friendInfo.NNAInfo.PrincipalBasicInfo.PID = 0
+	friendInfo.NNAInfo.PrincipalBasicInfo.PID = nex.NewPID[uint32](0)
 	friendInfo.NNAInfo.PrincipalBasicInfo.NNID = ""
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu_types.NewMiiV2()
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = ""
@@ -90,14 +92,14 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendInfo.Presence = friends_wiiu_types.NewNintendoPresenceV2()
 	friendInfo.Presence.ChangedFlags = 0
 	friendInfo.Presence.Online = false
-	friendInfo.Presence.GameKey = gameKey // maybe this is reused?
+	friendInfo.Presence.GameKey = gameKey // * Maybe this is reused?
 	friendInfo.Presence.Unknown1 = 0
 	friendInfo.Presence.Message = ""
 	friendInfo.Presence.Unknown2 = 0
 	friendInfo.Presence.Unknown3 = 0
 	friendInfo.Presence.GameServerID = 0
 	friendInfo.Presence.Unknown4 = 0
-	friendInfo.Presence.PID = 0
+	friendInfo.Presence.PID = nex.NewPID[uint32](0)
 	friendInfo.Presence.GatheringID = 0
 	friendInfo.Presence.ApplicationData = []byte{0x00}
 	friendInfo.Presence.Unknown5 = 0
@@ -113,27 +115,25 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 	friendInfo.LastOnline = nex.NewDateTime(0)
 	friendInfo.Unknown = 0
 
-	recipientClient := client.Server().FindClientFromPID(recipientPID)
+	recipientClient := globals.ConnectedUsers[recipientPID]
 
 	if recipientClient != nil {
-
 		friendRequestNotificationData := friends_wiiu_types.NewFriendRequest()
 
 		friendRequestNotificationData.PrincipalInfo = senderPrincipalInfo
-
 		friendRequestNotificationData.Message = friends_wiiu_types.NewFriendRequestMessage()
 		friendRequestNotificationData.Message.FriendRequestID = friendRequestID
 		friendRequestNotificationData.Message.Received = false
-		friendRequestNotificationData.Message.Unknown2 = 1 // replaying from real
+		friendRequestNotificationData.Message.Unknown2 = 1 // * Replaying from official server
 		friendRequestNotificationData.Message.Message = message
-		friendRequestNotificationData.Message.Unknown3 = 0           // replaying from real server
-		friendRequestNotificationData.Message.Unknown4 = ""          // replaying from real server
-		friendRequestNotificationData.Message.GameKey = gameKey      // maybe this is reused?
-		friendRequestNotificationData.Message.Unknown5 = unknown6    // maybe this is reused?
-		friendRequestNotificationData.Message.ExpiresOn = expireTime // no idea why this is set as the sent time
+		friendRequestNotificationData.Message.Unknown3 = 0           // * Replaying from server server
+		friendRequestNotificationData.Message.Unknown4 = ""          // * Replaying from server server
+		friendRequestNotificationData.Message.GameKey = gameKey      // * Maybe this is reused?
+		friendRequestNotificationData.Message.Unknown5 = unknown6    // * Maybe this is reused?
+		friendRequestNotificationData.Message.ExpiresOn = expireTime // * No idea why this is set as the sent time
 		friendRequestNotificationData.SentOn = sentTime
 
-		go notifications_wiiu.SendFriendRequest(recipientClient, friendRequestNotificationData)
+		go notifications_wiiu.SendFriendRequest(recipientClient.Client, friendRequestNotificationData)
 	}
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
@@ -143,24 +143,10 @@ func AddFriendRequest(err error, client *nex.Client, callID uint32, pid uint32, 
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodAddFriendRequest, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodAddFriendRequest
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }

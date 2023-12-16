@@ -8,11 +8,13 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 )
 
-func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids []uint32) uint32 {
+func GetRequestBlockSettings(err error, packet nex.PacketInterface, callID uint32, pids []uint32) (*nex.RMCMessage, uint32) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.Errors.FPD.InvalidArgument
 	}
+
+	client := packet.Sender().(*nex.PRUDPClient)
 
 	settings := make([]*friends_wiiu_types.PrincipalRequestBlockSetting, 0)
 
@@ -23,10 +25,10 @@ func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 
 		setting := friends_wiiu_types.NewPrincipalRequestBlockSetting()
 		setting.PID = requestedPID
-		isBlocked, err := database_wiiu.IsFriendRequestBlocked(client.PID(), requestedPID)
+		isBlocked, err := database_wiiu.IsFriendRequestBlocked(client.PID().LegacyValue(), requestedPID)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.Core.Unknown
+			return nil, nex.Errors.Core.Unknown
 		}
 
 		setting.IsBlocked = isBlocked
@@ -36,28 +38,14 @@ func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids 
 
 	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
 
-	rmcResponseStream.WriteListStructure(settings)
+	nex.StreamWriteListStructure(rmcResponseStream, settings)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodGetRequestBlockSettings, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodGetRequestBlockSettings
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, 0
 }
