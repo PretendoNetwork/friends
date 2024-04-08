@@ -34,7 +34,9 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 		var msgUpdateTime uint64
 		var miiModifiedAtTime uint64
 
-		err := rows.Scan(
+		// * This is allowed to error for now.
+		// * Some of these fields are optional, and the DB doesn't have defaults
+		rows.Scan(
 			&pid,
 			&region,
 			&area,
@@ -46,9 +48,6 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 			&lastOnlineTime,
 			&miiModifiedAtTime,
 		)
-		if err != nil {
-			return persistentInfos, err
-		}
 
 		gameKey.TitleID = types.NewPrimitiveU64(titleID)
 		gameKey.TitleVersion = types.NewPrimitiveU16(titleVersion)
