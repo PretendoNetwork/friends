@@ -22,7 +22,11 @@ func GetUserFriendPIDs(pid uint32) ([]uint32, error) {
 
 	for rows.Next() {
 		var pid uint32
-		rows.Scan(&pid)
+
+		err := rows.Scan(&pid)
+		if err != nil {
+			return pids, err
+		}
 
 		pids = append(pids, pid)
 	}

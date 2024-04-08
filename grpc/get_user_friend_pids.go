@@ -11,6 +11,7 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
 func (s *gRPCFriendsServer) GetUserFriendPIDs(ctx context.Context, in *pb.GetUserFriendPIDsRequest) (*pb.GetUserFriendPIDsResponse, error) {
@@ -37,11 +38,15 @@ func (s *gRPCFriendsServer) GetUserFriendPIDs(ctx context.Context, in *pb.GetUse
 		return nil, status.Errorf(codes.Internal, "internal server error")
 	}
 
-	for _, relationship := range relationships {
-		// * Only add complete relationships to the list
-		if relationship.RelationshipType == 1 {
-			pids = append(pids, relationship.PID.LegacyValue())
-		}
+	if relationships != nil {
+		relationships.Each(func(i int, relationship *friends_3ds_types.FriendRelationship) bool {
+			// * Only add complete relationships to the list
+			if relationship.RelationshipType.Value == 1 {
+				pids = append(pids, relationship.PID.LegacyValue())
+			}
+
+			return false
+		})
 	}
 
 	return &pb.GetUserFriendPIDsResponse{

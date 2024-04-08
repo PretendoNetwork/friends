@@ -2,7 +2,7 @@ package database_3ds
 
 import (
 	"github.com/PretendoNetwork/friends/database"
-	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
 // UpdateUserProfile updates a user's profile
@@ -14,7 +14,7 @@ func UpdateUserProfile(pid uint32, profileData *friends_3ds_types.MyProfile) err
 		DO UPDATE SET 
 		region = $2,
 		area = $3,
-		language = $4`, pid, profileData.Region, profileData.Area, profileData.Language)
+		language = $4`, pid, profileData.Region.Value, profileData.Area.Value, profileData.Language.Value)
 
 	if err != nil {
 		return err

@@ -10,8 +10,8 @@ import (
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/friends/types"
-	"github.com/PretendoNetwork/plogger-go"
 	pb "github.com/PretendoNetwork/grpc-go/account"
+	"github.com/PretendoNetwork/plogger-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -31,7 +31,8 @@ func init() {
 	}
 
 	postgresURI := os.Getenv("PN_FRIENDS_CONFIG_DATABASE_URI")
-	kerberosPassword := os.Getenv("PN_FRIENDS_CONFIG_KERBEROS_PASSWORD")
+	authenticationServerPassword := os.Getenv("PN_FRIENDS_CONFIG_AUTHENTICATION_PASSWORD")
+	secureServerPassword := os.Getenv("PN_FRIENDS_CONFIG_SECURE_PASSWORD")
 	aesKey := os.Getenv("PN_FRIENDS_CONFIG_AES_KEY")
 	grpcAPIKey := os.Getenv("PN_FRIENDS_CONFIG_GRPC_API_KEY")
 	grpcServerPort := os.Getenv("PN_FRIENDS_GRPC_SERVER_PORT")
@@ -47,10 +48,14 @@ func init() {
 		os.Exit(0)
 	}
 
-	if strings.TrimSpace(kerberosPassword) == "" {
-		globals.Logger.Warningf("PN_FRIENDS_CONFIG_KERBEROS_PASSWORD environment variable not set. Using default password: %q", globals.KerberosPassword)
-	} else {
-		globals.KerberosPassword = kerberosPassword
+	if strings.TrimSpace(authenticationServerPassword) == "" {
+		globals.Logger.Error("PN_FRIENDS_CONFIG_AUTHENTICATION_PASSWORD environment variable not set")
+		os.Exit(0)
+	}
+
+	if strings.TrimSpace(secureServerPassword) == "" {
+		globals.Logger.Error("PN_FRIENDS_CONFIG_SECURE_PASSWORD environment variable not set")
+		os.Exit(0)
 	}
 
 	if strings.TrimSpace(aesKey) == "" {

@@ -84,16 +84,17 @@ All configuration options are handled via environment variables
 
 `.env` files are supported
 
-| Name                                    | Description                                                                                                            | Required                                      |
-|-----------------------------------------|------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
-| `PN_FRIENDS_CONFIG_DATABASE_URI`        | Fully qualified URI to your Postgres server (Example `postgres://username:password@localhost/friends?sslmode=disable`) | Yes                                           |
-| `PN_FRIENDS_CONFIG_KERBEROS_PASSWORD`   | Password used as part of the internal server data in Kerberos tickets                                                  | No (Default password `password` will be used) |
-| `PN_FRIENDS_CONFIG_AES_KEY`             | AES key used in tokens provided by the account server                                                                  | Yes                                           |
-| `PN_FRIENDS_CONFIG_GRPC_API_KEY`        | API key for your GRPC server                                                                                           | No (Assumed to be an open gRPC API)           |
-| `PN_FRIENDS_GRPC_SERVER_PORT`           | Port for the GRPC server                                                                                               | Yes                                           |
-| `PN_FRIENDS_AUTHENTICATION_SERVER_PORT` | Port for the authentication server                                                                                     | Yes                                           |
-| `PN_FRIENDS_SECURE_SERVER_HOST`         | Host name for the secure server (should point to the same address as the authentication server)                        | Yes                                           |
-| `PN_FRIENDS_SECURE_SERVER_PORT`         | Port for the secure server                                                                                             | Yes                                           |
-| `PN_FRIENDS_ACCOUNT_GRPC_HOST`          | Host name for your account server gRPC service                                                                         | Yes                                           |
-| `PN_FRIENDS_ACCOUNT_GRPC_PORT`          | Port for your account server gRPC service                                                                              | Yes                                           |
-| `PN_FRIENDS_ACCOUNT_GRPC_API_KEY`       | API key for your account server gRPC service                                                                           | No (Assumed to be an open gRPC API)           |
+| Name                                        | Description                                                                                                            | Required                            |
+|---------------------------------------------|------------------------------------------------------------------------------------------------------------------------|-------------------------------------|
+| `PN_FRIENDS_CONFIG_DATABASE_URI`            | Fully qualified URI to your Postgres server (Example `postgres://username:password@localhost/friends?sslmode=disable`) | Yes                                 |
+| `PN_FRIENDS_CONFIG_AUTHENTICATION_PASSWORD` | The password of the authentication server user account.                                                                | Yes                                 |
+| `PN_FRIENDS_CONFIG_SECURE_PASSWORD`         | The password of the secure server user account. Used as part of the internal server data in Kerberos tickets           | Yes                                 |
+| `PN_FRIENDS_CONFIG_AES_KEY`                 | AES key used in tokens provided by the account server                                                                  | Yes                                 |
+| `PN_FRIENDS_CONFIG_GRPC_API_KEY`            | API key for your GRPC server                                                                                           | No (Assumed to be an open gRPC API) |
+| `PN_FRIENDS_GRPC_SERVER_PORT`               | Port for the GRPC server                                                                                               | Yes                                 |
+| `PN_FRIENDS_AUTHENTICATION_SERVER_PORT`     | Port for the authentication server                                                                                     | Yes                                 |
+| `PN_FRIENDS_SECURE_SERVER_HOST`             | Host name for the secure server (should point to the same address as the authentication server)                        | Yes                                 |
+| `PN_FRIENDS_SECURE_SERVER_PORT`             | Port for the secure server                                                                                             | Yes                                 |
+| `PN_FRIENDS_ACCOUNT_GRPC_HOST`              | Host name for your account server gRPC service                                                                         | Yes                                 |
+| `PN_FRIENDS_ACCOUNT_GRPC_PORT`              | Port for your account server gRPC service                                                                              | Yes                                 |
+| `PN_FRIENDS_ACCOUNT_GRPC_API_KEY`           | API key for your account server gRPC service                                                                           | No (Assumed to be an open gRPC API) |

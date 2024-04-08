@@ -2,12 +2,12 @@ package database_wiiu
 
 import (
 	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/nex-go"
+	"github.com/PretendoNetwork/nex-go/v2/types"
 )
 
 // UpdateUserComment updates a user's comment
 func UpdateUserComment(pid uint32, message string) (uint64, error) {
-	changed := nex.NewDateTime(0).Now().Value()
+	changed := types.NewDateTime(0).Now().Value()
 
 	_, err := database.Postgres.Exec(`
 		INSERT INTO wiiu.user_data (pid, comment, comment_changed)

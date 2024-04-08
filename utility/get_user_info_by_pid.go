@@ -3,8 +3,8 @@ package utility
 import (
 	"encoding/base64"
 
-	"github.com/PretendoNetwork/nex-go"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -25,10 +25,10 @@ func GetUserInfoByPID(pid uint32) (*friends_wiiu_types.PrincipalBasicInfo, error
 
 	info := friends_wiiu_types.NewPrincipalBasicInfo()
 
-	info.PID = nex.NewPID(userData.Pid)
-	info.NNID = userData.Username
+	info.PID = types.NewPID(uint64(userData.Pid))
+	info.NNID = types.NewString(userData.Username)
 	info.Mii = friends_wiiu_types.NewMiiV2()
-	info.Unknown = 2
+	info.Unknown = types.NewPrimitiveU8(2)
 
 	encodedMiiData := userData.Mii.Data
 	decodedMiiData, err := base64.StdEncoding.DecodeString(encodedMiiData)
@@ -36,11 +36,11 @@ func GetUserInfoByPID(pid uint32) (*friends_wiiu_types.PrincipalBasicInfo, error
 		return nil, err
 	}
 
-	info.Mii.Name = userData.Mii.Name
-	info.Mii.Unknown1 = 0
-	info.Mii.Unknown2 = 0
-	info.Mii.MiiData = decodedMiiData
-	info.Mii.Datetime = nex.NewDateTime(0)
+	info.Mii.Name = types.NewString(userData.Mii.Name)
+	info.Mii.Unknown1 = types.NewPrimitiveU8(0)
+	info.Mii.Unknown2 = types.NewPrimitiveU8(0)
+	info.Mii.MiiData = types.NewBuffer(decodedMiiData)
+	info.Mii.Datetime = types.NewDateTime(0)
 
 	return info, nil
 }

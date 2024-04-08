@@ -2,7 +2,7 @@ package database_wiiu
 
 import (
 	"github.com/PretendoNetwork/friends/database"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
 // UpdateUserPrincipalPreference updates the user preferences
@@ -14,7 +14,7 @@ func UpdateUserPrincipalPreference(pid uint32, principalPreference *friends_wiiu
 		DO UPDATE SET 
 		show_online = $2,
 		show_current_game = $3,
-		block_friend_requests = $4`, pid, principalPreference.ShowOnlinePresence, principalPreference.ShowCurrentTitle, principalPreference.BlockFriendRequests)
+		block_friend_requests = $4`, pid, principalPreference.ShowOnlinePresence.Value, principalPreference.ShowCurrentTitle.Value, principalPreference.BlockFriendRequests.Value)
 
 	if err != nil {
 		return err

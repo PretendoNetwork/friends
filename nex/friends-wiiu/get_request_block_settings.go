@@ -3,49 +3,53 @@ package nex_friends_wiiu
 import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func GetRequestBlockSettings(err error, packet nex.PacketInterface, callID uint32, pids []uint32) (*nex.RMCMessage, uint32) {
+func GetRequestBlockSettings(err error, packet nex.PacketInterface, callID uint32, pids *types.List[*types.PrimitiveU32]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nil, nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	client := packet.Sender().(*nex.PRUDPClient)
+	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	settings := make([]*friends_wiiu_types.PrincipalRequestBlockSetting, 0)
+	settings := types.NewList[*friends_wiiu_types.PrincipalRequestBlockSetting]()
+	settings.Type = friends_wiiu_types.NewPrincipalRequestBlockSetting()
 
-	// TODO:
-	// Improve this. Use less database_wiiu.reads
-	for i := 0; i < len(pids); i++ {
-		requestedPID := pids[i]
-
+	// TODO - Improve this. Use less database_wiiu reads
+	if pids.Each(func(i int, pid *types.PrimitiveU32) bool {
 		setting := friends_wiiu_types.NewPrincipalRequestBlockSetting()
-		setting.PID = requestedPID
-		isBlocked, err := database_wiiu.IsFriendRequestBlocked(client.PID().LegacyValue(), requestedPID)
+		setting.PID = pid
+
+		isBlocked, err := database_wiiu.IsFriendRequestBlocked(connection.PID().LegacyValue(), pid.Value)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			return nil, nex.Errors.Core.Unknown
+			return true
 		}
 
-		setting.IsBlocked = isBlocked
+		setting.IsBlocked = types.NewPrimitiveBool(isBlocked)
 
-		settings = append(settings, setting)
+		settings.Append(setting)
+
+		return false
+	}) {
+		return nil, nex.NewError(nex.ResultCodes.Core.Unknown, "") // TODO - Add error message
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	nex.StreamWriteListStructure(rmcResponseStream, settings)
+	settings.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodGetRequestBlockSettings
 	rmcResponse.CallID = callID
 
-	return rmcResponse, 0
+	return rmcResponse, nil
 }

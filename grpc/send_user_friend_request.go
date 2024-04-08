@@ -10,7 +10,7 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
-	nex "github.com/PretendoNetwork/nex-go"
+	"github.com/PretendoNetwork/nex-go/v2/types"
 )
 
 func (s *gRPCFriendsServer) SendUserFriendRequest(ctx context.Context, in *pb.SendUserFriendRequestRequest) (*pb.SendUserFriendRequestResponse, error) {
@@ -20,8 +20,8 @@ func (s *gRPCFriendsServer) SendUserFriendRequest(ctx context.Context, in *pb.Se
 	currentTimestamp := time.Now()
 	expireTimestamp := currentTimestamp.Add(time.Hour * 24 * 29)
 
-	sentTime := nex.NewDateTime(0)
-	expireTime := nex.NewDateTime(0)
+	sentTime := types.NewDateTime(0)
+	expireTime := types.NewDateTime(0)
 
 	sentTime.FromTimestamp(currentTimestamp)
 	expireTime.FromTimestamp(expireTimestamp)

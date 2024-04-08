@@ -4,11 +4,11 @@ import (
 	"database/sql"
 
 	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/nex-go"
+	"github.com/PretendoNetwork/nex-go/v2/types"
 )
 
 // UpdateUserLastOnlineTime updates a user's last online time
-func UpdateUserLastOnlineTime(pid uint32, lastOnline *nex.DateTime) error {
+func UpdateUserLastOnlineTime(pid uint32, lastOnline *types.DateTime) error {
 	var showOnline bool
 
 	err := database.Postgres.QueryRow(`SELECT show_online FROM "3ds".user_data WHERE pid=$1`, pid).Scan(&showOnline)

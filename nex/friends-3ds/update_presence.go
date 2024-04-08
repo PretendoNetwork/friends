@@ -3,49 +3,50 @@ package nex_friends_3ds
 import (
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
-	"github.com/PretendoNetwork/friends/types"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
-	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
+	friends_types "github.com/PretendoNetwork/friends/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence *friends_3ds_types.NintendoPresence, showGame bool) (*nex.RMCMessage, uint32) {
+func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence *friends_3ds_types.NintendoPresence, showGame *types.PrimitiveBool) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nil, nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	client := packet.Sender().(*nex.PRUDPClient)
+	connection := packet.Sender().(*nex.PRUDPConnection)
 
 	currentPresence := presence
 
 	// Send an entirely empty status, with every flag set to update
-	if !showGame {
+	if !showGame.Value {
 		currentPresence = friends_3ds_types.NewNintendoPresence()
 		currentPresence.GameKey = friends_3ds_types.NewGameKey()
-		currentPresence.ChangedFlags = 0xFFFFFFFF // All flags
+		currentPresence.ChangedFlags = types.NewPrimitiveU32(0xFFFFFFFF) // * All flags
 	}
 
-	go notifications_3ds.SendPresenceUpdate(client, currentPresence)
+	go notifications_3ds.SendPresenceUpdate(connection, currentPresence)
 
-	pid := client.PID().LegacyValue()
+	pid := connection.PID().LegacyValue()
 
 	if globals.ConnectedUsers[pid] == nil {
 		// TODO - Figure out why this is getting removed
-		connectedUser := types.NewConnectedUser()
+		connectedUser := friends_types.NewConnectedUser()
 		connectedUser.PID = pid
-		connectedUser.Platform = types.CTR
-		connectedUser.Client = client
+		connectedUser.Platform = friends_types.CTR
+		connectedUser.Connection = connection
 
 		globals.ConnectedUsers[pid] = connectedUser
 	}
 
 	globals.ConnectedUsers[pid].Presence = currentPresence
 
-	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, nil)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID
 	rmcResponse.MethodID = friends_3ds.MethodUpdatePresence
 	rmcResponse.CallID = callID
 
-	return rmcResponse, 0
+	return rmcResponse, nil
 }

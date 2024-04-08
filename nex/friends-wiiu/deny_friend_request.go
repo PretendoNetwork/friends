@@ -7,67 +7,68 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/friends/utility"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func DenyFriendRequest(err error, packet nex.PacketInterface, callID uint32, id uint64) (*nex.RMCMessage, uint32) {
+func DenyFriendRequest(err error, packet nex.PacketInterface, callID uint32, id *types.PrimitiveU64) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nil, nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	client := packet.Sender().(*nex.PRUDPClient)
+	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_wiiu.SetFriendRequestDenied(id)
+	err = database_wiiu.SetFriendRequestDenied(id.Value)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nil, nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	senderPID, _, err := database_wiiu.GetPIDsByFriendRequestID(id)
+	senderPID, _, err := database_wiiu.GetPIDsByFriendRequestID(id.Value)
 	if err != nil {
 		if err == database.ErrFriendRequestNotFound {
-			return nil, nex.Errors.FPD.InvalidMessageID
+			return nil, nex.NewError(nex.ResultCodes.FPD.InvalidMessageID, "") // TODO - Add error message
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nil, nex.Errors.FPD.Unknown
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 		}
 	}
 
-	err = database_wiiu.SetUserBlocked(client.PID().LegacyValue(), senderPID, 0, 0)
+	err = database_wiiu.SetUserBlocked(connection.PID().LegacyValue(), senderPID, 0, 0)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nil, nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
 	info, err := utility.GetUserInfoByPID(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nil, nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	date := nex.NewDateTime(0)
+	date := types.NewDateTime(0)
 	date.FromTimestamp(time.Now())
 
-	// Create a new blacklist principal for the client, as unlike AddBlacklist they don't send one to us.
+	// Create a new blacklist principal for the connection, as unlike AddBlacklist they don't send one to us.
 	blacklistPrincipal := friends_wiiu_types.NewBlacklistedPrincipal()
 
 	blacklistPrincipal.PrincipalBasicInfo = info
 	blacklistPrincipal.GameKey = friends_wiiu_types.NewGameKey()
 	blacklistPrincipal.BlackListedSince = date
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream.WriteStructure(blacklistPrincipal)
+	blacklistPrincipal.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
 	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
 	rmcResponse.MethodID = friends_wiiu.MethodDenyFriendRequest
 	rmcResponse.CallID = callID
 
-	return rmcResponse, 0
+	return rmcResponse, nil
 }

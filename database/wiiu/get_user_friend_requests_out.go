@@ -5,20 +5,21 @@ import (
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/utility"
-	"github.com/PretendoNetwork/nex-go"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
 // GetUserFriendRequestsOut returns the friend requests sent by a user
-func GetUserFriendRequestsOut(pid uint32) ([]*friends_wiiu_types.FriendRequest, error) {
-	friendRequestsOut := make([]*friends_wiiu_types.FriendRequest, 0)
+func GetUserFriendRequestsOut(pid uint32) (*types.List[*friends_wiiu_types.FriendRequest], error) {
+	friendRequests := types.NewList[*friends_wiiu_types.FriendRequest]()
+	friendRequests.Type = friends_wiiu_types.NewFriendRequest()
 
 	rows, err := database.Postgres.Query(`SELECT id, recipient_pid, sent_on, expires_on, message, received FROM wiiu.friend_requests WHERE sender_pid=$1 AND accepted=false`, pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return friendRequestsOut, database.ErrEmptyList
+			return friendRequests, database.ErrEmptyList
 		} else {
-			return friendRequestsOut, err
+			return friendRequests, err
 		}
 	}
 
@@ -29,7 +30,11 @@ func GetUserFriendRequestsOut(pid uint32) ([]*friends_wiiu_types.FriendRequest, 
 		var expiresOn uint64
 		var message string
 		var received bool
-		rows.Scan(&id, &recipientPID, &sentOn, &expiresOn, &message, &received)
+
+		err := rows.Scan(&id, &recipientPID, &sentOn, &expiresOn, &message, &received)
+		if err != nil {
+			return friendRequests, err
+		}
 
 		userInfo, err := utility.GetUserInfoByPID(recipientPID)
 		if err != nil {
@@ -40,21 +45,21 @@ func GetUserFriendRequestsOut(pid uint32) ([]*friends_wiiu_types.FriendRequest, 
 
 		friendRequest.PrincipalInfo = userInfo
 		friendRequest.Message = friends_wiiu_types.NewFriendRequestMessage()
-		friendRequest.Message.FriendRequestID = id
-		friendRequest.Message.Received = received
-		friendRequest.Message.Unknown2 = 1
-		friendRequest.Message.Message = message
-		friendRequest.Message.Unknown3 = 0
-		friendRequest.Message.Unknown4 = ""
+		friendRequest.Message.FriendRequestID = types.NewPrimitiveU64(id)
+		friendRequest.Message.Received = types.NewPrimitiveBool(received)
+		friendRequest.Message.Unknown2 = types.NewPrimitiveU8(1)
+		friendRequest.Message.Message = types.NewString(message)
+		friendRequest.Message.Unknown3 = types.NewPrimitiveU8(0)
+		friendRequest.Message.Unknown4 = types.NewString("")
 		friendRequest.Message.GameKey = friends_wiiu_types.NewGameKey()
-		friendRequest.Message.GameKey.TitleID = 0
-		friendRequest.Message.GameKey.TitleVersion = 0
-		friendRequest.Message.Unknown5 = nex.NewDateTime(134222053376) // idk what this value means but its always this
-		friendRequest.Message.ExpiresOn = nex.NewDateTime(expiresOn)
-		friendRequest.SentOn = nex.NewDateTime(sentOn)
+		friendRequest.Message.GameKey.TitleID = types.NewPrimitiveU64(0)
+		friendRequest.Message.GameKey.TitleVersion = types.NewPrimitiveU16(0)
+		friendRequest.Message.Unknown5 = types.NewDateTime(134222053376) // * idk what this value means but its always this
+		friendRequest.Message.ExpiresOn = types.NewDateTime(expiresOn)
+		friendRequest.SentOn = types.NewDateTime(sentOn)
 
-		friendRequestsOut = append(friendRequestsOut, friendRequest)
+		friendRequests.Append(friendRequest)
 	}
 
-	return friendRequestsOut, nil
+	return friendRequests, nil
 }

@@ -2,45 +2,48 @@ package notifications_3ds
 
 import (
 	"github.com/PretendoNetwork/friends/globals"
-	nex "github.com/PretendoNetwork/nex-go"
-	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
-	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/constants"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
-func SendFriendshipCompleted(client *nex.PRUDPClient, friendPID uint32, senderPID *nex.PID) {
+func SendFriendshipCompleted(connection *nex.PRUDPConnection, friendPID uint32, senderPID *types.PID) {
 	notificationEvent := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
-	notificationEvent.U32Param = 0
-	notificationEvent.U64Param1 = 0
-	notificationEvent.U64Param2 = uint64(friendPID)
+	notificationEvent.U32Param = types.NewPrimitiveU32(0)
+	notificationEvent.U64Param1 = types.NewPrimitiveU64(0)
+	notificationEvent.U64Param2 = types.NewPrimitiveU64(uint64(friendPID))
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = 7
-	eventObject.SenderPID = senderPID
-	eventObject.DataHolder = nex.NewDataHolder()
-	eventObject.DataHolder.SetTypeName("NintendoNotificationEventGeneral")
-	eventObject.DataHolder.SetObjectData(notificationEvent)
+	eventObject.Type = types.NewPrimitiveU32(7)
+	eventObject.SenderPID = connection.PID()
+	eventObject.DataHolder = types.NewAnyDataHolder()
+	eventObject.DataHolder.TypeName = types.NewString("NintendoNotificationEventGeneral")
+	eventObject.DataHolder.ObjectData = notificationEvent.Copy()
 
-	stream := nex.NewStreamOut(globals.SecureServer)
-	eventObjectBytes := eventObject.Bytes(stream)
+	stream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcRequest := nex.NewRMCRequest(globals.SecureServer)
-	rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
-	rmcRequest.CallID = 3810693103
-	rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent1
-	rmcRequest.Parameters = eventObjectBytes
+	eventObject.WriteTo(stream)
 
-	rmcRequestBytes := rmcRequest.Bytes()
+	notificationRequest := nex.NewRMCRequest(globals.SecureEndpoint)
+	notificationRequest.ProtocolID = nintendo_notifications.ProtocolID
+	notificationRequest.CallID = 3810693103
+	notificationRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent1
+	notificationRequest.Parameters = stream.Bytes()
 
-	requestPacket, _ := nex.NewPRUDPPacketV0(client, nil)
+	notificationRequestBytes := notificationRequest.Bytes()
 
-	requestPacket.SetType(nex.DataPacket)
-	requestPacket.AddFlag(nex.FlagNeedsAck)
-	requestPacket.AddFlag(nex.FlagReliable)
-	requestPacket.SetSourceStreamType(client.DestinationStreamType)
-	requestPacket.SetSourcePort(client.DestinationPort)
-	requestPacket.SetDestinationStreamType(client.SourceStreamType)
-	requestPacket.SetDestinationPort(client.SourcePort)
-	requestPacket.SetPayload(rmcRequestBytes)
+	requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connection, nil)
+
+	requestPacket.SetType(constants.DataPacket)
+	requestPacket.AddFlag(constants.PacketFlagNeedsAck)
+	requestPacket.AddFlag(constants.PacketFlagReliable)
+	requestPacket.SetSourceVirtualPortStreamType(connection.StreamType)
+	requestPacket.SetSourceVirtualPortStreamID(globals.SecureEndpoint.StreamID)
+	requestPacket.SetDestinationVirtualPortStreamType(connection.StreamType)
+	requestPacket.SetDestinationVirtualPortStreamID(connection.StreamID)
+	requestPacket.SetPayload(notificationRequestBytes)
 
 	globals.SecureServer.Send(requestPacket)
 }

@@ -4,39 +4,40 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
 )
 
-func AddFriendshipByPrincipalID(err error, packet nex.PacketInterface, callID uint32, lfc uint64, pid *nex.PID) (*nex.RMCMessage, uint32) {
+func AddFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32, lfc *types.PrimitiveU64, pid *types.PID) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nil, nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	client := packet.Sender().(*nex.PRUDPClient)
+	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	friendRelationship, err := database_3ds.SaveFriendship(client.PID().LegacyValue(), pid.LegacyValue())
+	friendRelationship, err := database_3ds.SaveFriendship(connection.PID().LegacyValue(), pid.LegacyValue())
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nil, nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
 	connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
 	if connectedUser != nil {
-		go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pid.LegacyValue(), client.PID())
+		go notifications_3ds.SendFriendshipCompleted(connectedUser.Connection, pid.LegacyValue(), connection.PID())
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream.WriteStructure(friendRelationship)
+	friendRelationship.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCSuccess(globals.SecureServer, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID
 	rmcResponse.MethodID = friends_3ds.MethodAddFriendByPrincipalID
 	rmcResponse.CallID = callID
 
-	return rmcResponse, 0
+	return rmcResponse, nil
 }

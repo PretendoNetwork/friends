@@ -5,15 +5,15 @@ import (
 	nex_account_management "github.com/PretendoNetwork/friends/nex/account-management"
 	nex_friends_3ds "github.com/PretendoNetwork/friends/nex/friends-3ds"
 	nex_friends_wiiu "github.com/PretendoNetwork/friends/nex/friends-wiiu"
-	account_management "github.com/PretendoNetwork/nex-protocols-go/account-management"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	account_management "github.com/PretendoNetwork/nex-protocols-go/v2/account-management"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
 )
 
 func registerSecureServerProtocols() {
-	accountManagementProtocol := account_management.NewProtocol(globals.SecureServer)
-	friendsWiiUProtocol := friends_wiiu.NewProtocol(globals.SecureServer)
-	friends3DSProtocol := friends_3ds.NewProtocol(globals.SecureServer)
+	accountManagementProtocol := account_management.NewProtocol()
+	friendsWiiUProtocol := friends_wiiu.NewProtocol()
+	friends3DSProtocol := friends_3ds.NewProtocol()
 
 	// * Account Management protocol handles
 	accountManagementProtocol.NintendoCreateAccount = nex_account_management.NintendoCreateAccount
@@ -27,8 +27,8 @@ func registerSecureServerProtocols() {
 	friendsWiiUProtocol.DeleteFriendRequest = nex_friends_wiiu.DeleteFriendRequest
 	friendsWiiUProtocol.DenyFriendRequest = nex_friends_wiiu.DenyFriendRequest
 	friendsWiiUProtocol.MarkFriendRequestsAsReceived = nex_friends_wiiu.MarkFriendRequestsAsReceived
-	friendsWiiUProtocol.AddBlackList = nex_friends_wiiu.AddBlacklist
-	friendsWiiUProtocol.RemoveBlackList = nex_friends_wiiu.RemoveBlacklist
+	friendsWiiUProtocol.AddBlackList = nex_friends_wiiu.AddBlackList
+	friendsWiiUProtocol.RemoveBlackList = nex_friends_wiiu.RemoveBlackList
 	friendsWiiUProtocol.UpdatePresence = nex_friends_wiiu.UpdatePresence
 	friendsWiiUProtocol.UpdateComment = nex_friends_wiiu.UpdateComment
 	friendsWiiUProtocol.UpdatePreference = nex_friends_wiiu.UpdatePreference
@@ -45,7 +45,7 @@ func registerSecureServerProtocols() {
 	friends3DSProtocol.UpdatePresence = nex_friends_3ds.UpdatePresence
 	friends3DSProtocol.UpdateFavoriteGameKey = nex_friends_3ds.UpdateFavoriteGameKey
 	friends3DSProtocol.UpdateComment = nex_friends_3ds.UpdateComment
-	friends3DSProtocol.AddFriendByPrincipalID = nex_friends_3ds.AddFriendshipByPrincipalID
+	friends3DSProtocol.AddFriendByPrincipalID = nex_friends_3ds.AddFriendByPrincipalID
 	friends3DSProtocol.GetFriendPersistentInfo = nex_friends_3ds.GetFriendPersistentInfo
 	friends3DSProtocol.GetFriendMii = nex_friends_3ds.GetFriendMii
 	friends3DSProtocol.GetFriendPresence = nex_friends_3ds.GetFriendPresence
@@ -53,4 +53,8 @@ func registerSecureServerProtocols() {
 	friends3DSProtocol.RemoveFriendByLocalFriendCode = nex_friends_3ds.RemoveFriendByLocalFriendCode
 	friends3DSProtocol.GetPrincipalIDByLocalFriendCode = nex_friends_3ds.GetPrincipalIDByLocalFriendCode
 	friends3DSProtocol.GetAllFriends = nex_friends_3ds.GetAllFriends
+
+	globals.SecureEndpoint.RegisterServiceProtocol(accountManagementProtocol)
+	globals.SecureEndpoint.RegisterServiceProtocol(friendsWiiUProtocol)
+	globals.SecureEndpoint.RegisterServiceProtocol(friends3DSProtocol)
 }
