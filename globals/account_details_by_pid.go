@@ -19,6 +19,10 @@ func AccountDetailsByPID(pid *types.PID) (*nex.Account, *nex.Error) {
 		return SecureEndpoint.ServerAccount, nil
 	}
 
+	if pid.Equals(GuestAccount.PID) {
+		return GuestAccount, nil
+	}
+
 	ctx := metadata.NewOutgoingContext(context.Background(), GRPCAccountCommonMetadata)
 
 	response, err := GRPCAccountClient.GetNEXPassword(ctx, &pb.GetNEXPasswordRequest{Pid: pid.LegacyValue()})

@@ -20,6 +20,10 @@ func AccountDetailsByUsername(username string) (*nex.Account, *nex.Error) {
 		return SecureEndpoint.ServerAccount, nil
 	}
 
+	if username == GuestAccount.Username {
+		return GuestAccount, nil
+	}
+
 	// TODO - This is fine for our needs, but not for servers which use non-PID usernames?
 	pid, err := strconv.Atoi(username)
 	if err != nil {

@@ -10,6 +10,7 @@ import (
 )
 
 var Logger *plogger.Logger
+var GuestAccount *nex.Account
 var KerberosPassword = "password" // * Default password
 var AuthenticationServer *nex.PRUDPServer
 var AuthenticationEndpoint *nex.PRUDPEndPoint
