@@ -1,7 +1,6 @@
 package nex
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 	"time"
@@ -26,15 +25,6 @@ func StartSecureServer() {
 	globals.SecureEndpoint.AccountDetailsByPID = globals.AccountDetailsByPID
 	globals.SecureEndpoint.AccountDetailsByUsername = globals.AccountDetailsByUsername
 	globals.SecureEndpoint.ServerAccount = nex.NewAccount(types.NewPID(2), "Quazal Rendez-Vous", os.Getenv("PN_FRIENDS_CONFIG_SECURE_PASSWORD"))
-
-	globals.SecureEndpoint.OnData(func(packet nex.PacketInterface) {
-		request := packet.RMCMessage()
-
-		fmt.Println("==Friends - Secure==")
-		fmt.Printf("Protocol ID: %#v\n", request.ProtocolID)
-		fmt.Printf("Method ID: %#v\n", request.MethodID)
-		fmt.Println("====================")
-	})
 
 	globals.SecureEndpoint.OnConnectionEnded(func(connection *nex.PRUDPConnection) {
 		pid := connection.PID().LegacyValue()
@@ -64,7 +54,6 @@ func StartSecureServer() {
 		}
 
 		delete(globals.ConnectedUsers, pid)
-		fmt.Println("Leaving (Kick)")
 	})
 
 	registerCommonSecureServerProtocols()

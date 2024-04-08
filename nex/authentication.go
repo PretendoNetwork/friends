@@ -1,7 +1,6 @@
 package nex
 
 import (
-	"fmt"
 	"os"
 	"strconv"
 
@@ -21,15 +20,6 @@ func StartAuthenticationServer() {
 	globals.AuthenticationEndpoint.AccountDetailsByPID = globals.AccountDetailsByPID
 	globals.AuthenticationEndpoint.AccountDetailsByUsername = globals.AccountDetailsByUsername
 	globals.AuthenticationEndpoint.ServerAccount = nex.NewAccount(types.NewPID(1), "Quazal Authentication", os.Getenv("PN_FRIENDS_CONFIG_AUTHENTICATION_PASSWORD"))
-
-	globals.AuthenticationEndpoint.OnData(func(packet nex.PacketInterface) {
-		request := packet.RMCMessage()
-
-		fmt.Println("==Friends - Auth==")
-		fmt.Printf("Protocol ID: %#v\n", request.ProtocolID)
-		fmt.Printf("Method ID: %#v\n", request.MethodID)
-		fmt.Println("===============")
-	})
 
 	registerCommonAuthenticationServerProtocols()
 
