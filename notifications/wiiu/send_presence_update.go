@@ -39,6 +39,10 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 		globals.Logger.Critical(err.Error())
 	}
 
+	if friendList == nil {
+		return
+	}
+
 	// * Lazy
 	friends := friendList.Slice()
 
