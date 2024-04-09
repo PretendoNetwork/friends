@@ -27,7 +27,7 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 
 	if !ok || connectedUser == nil {
 		// TODO - Figure out why this is getting removed
-		connectedUser := friends_types.NewConnectedUser()
+		connectedUser = friends_types.NewConnectedUser()
 		connectedUser.PID = pid
 		connectedUser.Platform = friends_types.WUP
 		connectedUser.Connection = connection
