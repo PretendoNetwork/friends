@@ -21,6 +21,7 @@ func GetUserFriends(pid uint32) (*types.List[*friends_3ds_types.FriendRelationsh
 			return friendRelationships, err
 		}
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var pid uint32

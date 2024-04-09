@@ -24,6 +24,7 @@ func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo],
 			return friendList, err
 		}
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var friendPID uint32

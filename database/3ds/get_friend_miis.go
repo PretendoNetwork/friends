@@ -17,6 +17,7 @@ func GetFriendMiis(pids []uint32) (*types.List[*friends_3ds_types.FriendMii], er
 	if err != nil {
 		return friendMiis, err
 	}
+	defer rows.Close()
 
 	changedTime := types.NewDateTime(0).Now()
 

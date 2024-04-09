@@ -17,6 +17,7 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 	if err != nil {
 		return persistentInfos, err
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		persistentInfo := friends_3ds_types.NewFriendPersistentInfo()

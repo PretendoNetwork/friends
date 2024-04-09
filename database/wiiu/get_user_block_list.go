@@ -22,6 +22,7 @@ func GetUserBlockList(pid uint32) (*types.List[*friends_wiiu_types.BlacklistedPr
 			return blockList, err
 		}
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var pid uint32

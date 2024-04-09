@@ -23,6 +23,7 @@ func GetUserFriendRequestsIn(pid uint32) (*types.List[*friends_wiiu_types.Friend
 			return friendRequests, err
 		}
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var id uint64
