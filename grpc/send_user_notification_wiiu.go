@@ -13,9 +13,9 @@ import (
 
 // SendUserNotificationWiiU implements helloworld.SendUserNotificationWiiU
 func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb.SendUserNotificationWiiURequest) (*empty.Empty, error) {
-	connectedUser := globals.ConnectedUsers[in.GetPid()]
+	connectedUser, ok := globals.ConnectedUsers.Get(in.GetPid())
 
-	if connectedUser != nil {
+	if ok && connectedUser != nil {
 		rmcRequest := nex.NewRMCRequest(globals.SecureEndpoint)
 		rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
 		rmcRequest.CallID = 3810693103

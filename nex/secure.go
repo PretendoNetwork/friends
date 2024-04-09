@@ -30,12 +30,13 @@ func StartSecureServer() {
 
 	globals.SecureEndpoint.OnConnectionEnded(func(connection *nex.PRUDPConnection) {
 		pid := connection.PID().LegacyValue()
+		user, ok := globals.ConnectedUsers.Get(pid)
 
-		if globals.ConnectedUsers[pid] == nil {
+		if !ok || user == nil {
 			return
 		}
 
-		platform := globals.ConnectedUsers[pid].Platform
+		platform := user.Platform
 		lastOnline := types.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 
@@ -55,7 +56,7 @@ func StartSecureServer() {
 			notifications_3ds.SendUserWentOfflineGlobally(connection)
 		}
 
-		delete(globals.ConnectedUsers, pid)
+		globals.ConnectedUsers.Delete(pid)
 	})
 
 	registerCommonSecureServerProtocols()

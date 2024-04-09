@@ -11,6 +11,7 @@ import (
 	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/friends/types"
 	pb "github.com/PretendoNetwork/grpc-go/account"
+	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/plogger-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -21,8 +22,9 @@ import (
 
 func init() {
 	globals.Logger = plogger.NewLogger()
-	globals.ConnectedUsers = make(map[uint32]*types.ConnectedUser)
-	// Setup RSA private key for token parsing
+	globals.ConnectedUsers = nex.NewMutexMap[uint32, *types.ConnectedUser]()
+
+	// * Setup RSA private key for token parsing
 	var err error
 
 	err = godotenv.Load()

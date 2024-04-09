@@ -69,9 +69,9 @@ func SendPresenceUpdate(presence *friends_wiiu_types.NintendoPresenceV2) {
 		}
 
 		friendPID := friend.NNAInfo.PrincipalBasicInfo.PID
-		connectedUser := globals.ConnectedUsers[friendPID.LegacyValue()]
+		connectedUser, ok := globals.ConnectedUsers.Get(friendPID.LegacyValue())
 
-		if connectedUser != nil {
+		if ok && connectedUser != nil {
 			requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connectedUser.Connection, nil)
 
 			requestPacket.SetType(constants.DataPacket)

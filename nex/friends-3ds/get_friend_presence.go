@@ -18,12 +18,12 @@ func GetFriendPresence(err error, packet nex.PacketInterface, callID uint32, pid
 	presenceList.Type = friends_3ds_types.NewFriendPresence()
 
 	pidList.Each(func(i int, pid *types.PID) bool {
-		connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
+		connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
 
-		if connectedUser != nil && connectedUser.Presence != nil {
+		if ok && connectedUser != nil && connectedUser.Presence != nil {
 			friendPresence := friends_3ds_types.NewFriendPresence()
 			friendPresence.PID = pid.Copy().(*types.PID)
-			friendPresence.Presence = globals.ConnectedUsers[pid.LegacyValue()].Presence
+			friendPresence.Presence = connectedUser.Presence
 
 			presenceList.Append(friendPresence)
 		}

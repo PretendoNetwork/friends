@@ -28,8 +28,8 @@ func RemoveFriend(err error, packet nex.PacketInterface, callID uint32, pid *typ
 		}
 	}
 
-	connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
-	if connectedUser != nil {
+	connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
+	if ok && connectedUser != nil {
 		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Connection, pid)
 	}
 

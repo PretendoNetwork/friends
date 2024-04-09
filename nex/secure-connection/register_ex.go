@@ -58,7 +58,7 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs 
 	urlPublic := types.NewString("")
 
 	if retval.IsSuccess() {
-		globals.ConnectedUsers[pid] = user
+		globals.ConnectedUsers.Set(pid, user)
 
 		localStation, _ := vecMyURLs.Get(0)
 

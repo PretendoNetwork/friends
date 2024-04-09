@@ -30,18 +30,19 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 	go notifications_3ds.SendPresenceUpdate(connection, currentPresence)
 
 	pid := connection.PID().LegacyValue()
+	connectedUser, ok := globals.ConnectedUsers.Get(pid)
 
-	if globals.ConnectedUsers[pid] == nil {
+	if !ok || connectedUser == nil {
 		// TODO - Figure out why this is getting removed
-		connectedUser := friends_types.NewConnectedUser()
+		connectedUser = friends_types.NewConnectedUser()
 		connectedUser.PID = pid
 		connectedUser.Platform = friends_types.CTR
 		connectedUser.Connection = connection
 
-		globals.ConnectedUsers[pid] = connectedUser
+		globals.ConnectedUsers.Set(pid, connectedUser)
 	}
 
-	globals.ConnectedUsers[pid].Presence = currentPresence
+	connectedUser.Presence = currentPresence
 
 	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, nil)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID

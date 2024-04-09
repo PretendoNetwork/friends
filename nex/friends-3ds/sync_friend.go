@@ -64,8 +64,8 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc *types
 			relationships = append(relationships, relationship)
 
 			// * Alert the other side, in case they weren't able to get our presence data
-			connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
-			if connectedUser != nil {
+			connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
+			if ok && connectedUser != nil {
 				go notifications_3ds.SendFriendshipCompleted(connectedUser.Connection, pid.LegacyValue(), connection.PID())
 			}
 		}

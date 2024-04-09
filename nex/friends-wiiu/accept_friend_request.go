@@ -30,30 +30,32 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 	}
 
 	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID.LegacyValue()
-	connectedUser := globals.ConnectedUsers[friendPID]
+	connectedUser, ok := globals.ConnectedUsers.Get(friendPID)
 
-	if connectedUser != nil {
+	if ok && connectedUser != nil {
 		senderPID := connection.PID().LegacyValue()
-		senderConnectedUser := globals.ConnectedUsers[senderPID]
+		senderConnectedUser, ok := globals.ConnectedUsers.Get(senderPID)
 
-		senderFriendInfo := friends_wiiu_types.NewFriendInfo()
+		if ok && senderConnectedUser != nil {
+			senderFriendInfo := friends_wiiu_types.NewFriendInfo()
 
-		senderFriendInfo.NNAInfo = senderConnectedUser.NNAInfo
-		senderFriendInfo.Presence = senderConnectedUser.PresenceV2
-		status, err := database_wiiu.GetUserComment(senderPID)
-		if err != nil {
-			globals.Logger.Critical(err.Error())
-			senderFriendInfo.Status = friends_wiiu_types.NewComment()
-			senderFriendInfo.Status.LastChanged = types.NewDateTime(0)
-		} else {
-			senderFriendInfo.Status = status
+			senderFriendInfo.NNAInfo = senderConnectedUser.NNAInfo
+			senderFriendInfo.Presence = senderConnectedUser.PresenceV2
+			status, err := database_wiiu.GetUserComment(senderPID)
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+				senderFriendInfo.Status = friends_wiiu_types.NewComment()
+				senderFriendInfo.Status.LastChanged = types.NewDateTime(0)
+			} else {
+				senderFriendInfo.Status = status
+			}
+
+			senderFriendInfo.BecameFriend = friendInfo.BecameFriend
+			senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
+			senderFriendInfo.Unknown = types.NewPrimitiveU64(0)
+
+			go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Connection, senderFriendInfo)
 		}
-
-		senderFriendInfo.BecameFriend = friendInfo.BecameFriend
-		senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
-		senderFriendInfo.Unknown = types.NewPrimitiveU64(0)
-
-		go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Connection, senderFriendInfo)
 	}
 
 	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())

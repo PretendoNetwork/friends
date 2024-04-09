@@ -46,9 +46,9 @@ func SendCommentUpdate(connection *nex.PRUDPConnection, comment string) {
 	}
 
 	friendsList.Each(func(i int, friend *friends_3ds_types.FriendRelationship) bool {
-		connectedUser := globals.ConnectedUsers[friend.PID.LegacyValue()]
+		connectedUser, ok := globals.ConnectedUsers.Get(friend.PID.LegacyValue())
 
-		if connectedUser != nil {
+		if ok && connectedUser != nil {
 			requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connection, nil)
 
 			requestPacket.SetType(constants.DataPacket)

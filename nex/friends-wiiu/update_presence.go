@@ -23,7 +23,9 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 	presence.Online = types.NewPrimitiveBool(true) // * Force online status. I have no idea why this is always false
 	presence.PID = connection.PID()                // * WHY IS THIS SET TO 0 BY DEFAULT??
 
-	if globals.ConnectedUsers[pid] == nil {
+	connectedUser, ok := globals.ConnectedUsers.Get(pid)
+
+	if !ok || connectedUser == nil {
 		// TODO - Figure out why this is getting removed
 		connectedUser := friends_types.NewConnectedUser()
 		connectedUser.PID = pid
@@ -31,10 +33,10 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 		connectedUser.Connection = connection
 		// TODO - Find a clean way to create a NNAInfo?
 
-		globals.ConnectedUsers[pid] = connectedUser
+		globals.ConnectedUsers.Set(pid, connectedUser)
 	}
 
-	globals.ConnectedUsers[pid].PresenceV2 = presence
+	connectedUser.PresenceV2 = presence
 
 	notifications_wiiu.SendPresenceUpdate(presence)
 

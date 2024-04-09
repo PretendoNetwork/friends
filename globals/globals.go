@@ -16,7 +16,7 @@ var AuthenticationServer *nex.PRUDPServer
 var AuthenticationEndpoint *nex.PRUDPEndPoint
 var SecureServer *nex.PRUDPServer
 var SecureEndpoint *nex.PRUDPEndPoint
-var ConnectedUsers map[uint32]*types.ConnectedUser
+var ConnectedUsers *nex.MutexMap[uint32, *types.ConnectedUser]
 var AESKey []byte
 var GRPCAccountClientConnection *grpc.ClientConn
 var GRPCAccountClient pb.AccountClient

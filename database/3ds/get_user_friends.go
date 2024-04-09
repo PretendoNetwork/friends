@@ -13,8 +13,7 @@ func GetUserFriends(pid uint32) (*types.List[*friends_3ds_types.FriendRelationsh
 	friendRelationships := types.NewList[*friends_3ds_types.FriendRelationship]()
 	friendRelationships.Type = friends_3ds_types.NewFriendRelationship()
 
-	rows, err := database.Postgres.Query(`
-	SELECT user2_pid, type FROM "3ds".friendships WHERE user1_pid=$1 AND type=1 LIMIT 100`, pid)
+	rows, err := database.Postgres.Query("SELECT user2_pid, type FROM \"3ds\".friendships WHERE user1_pid=$1 AND type=1 LIMIT 100", pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return friendRelationships, database.ErrEmptyList

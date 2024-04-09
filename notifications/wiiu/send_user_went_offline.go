@@ -57,9 +57,9 @@ func SendUserWentOffline(connection *nex.PRUDPConnection, pid *types.PID) {
 
 	notificationRequestBytes := notificationRequest.Bytes()
 
-	connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
+	connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
 
-	if connectedUser != nil {
+	if ok && connectedUser != nil {
 		requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connectedUser.Connection, nil)
 
 		requestPacket.SetType(constants.DataPacket)

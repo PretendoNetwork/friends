@@ -35,10 +35,10 @@ func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo],
 		}
 
 		friendInfo := friends_wiiu_types.NewFriendInfo()
-		connectedUser := globals.ConnectedUsers[friendPID]
+		connectedUser, ok := globals.ConnectedUsers.Get(friendPID)
 		var lastOnline *types.DateTime
 
-		if connectedUser != nil {
+		if ok && connectedUser != nil {
 			// * Online
 			friendInfo.NNAInfo = connectedUser.NNAInfo
 			friendInfo.Presence = connectedUser.PresenceV2

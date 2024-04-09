@@ -117,9 +117,9 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 	friendInfo.LastOnline = types.NewDateTime(0)
 	friendInfo.Unknown = types.NewPrimitiveU64(0)
 
-	recipientClient := globals.ConnectedUsers[recipientPID]
+	recipientClient, ok := globals.ConnectedUsers.Get(recipientPID)
 
-	if recipientClient != nil {
+	if ok && recipientClient != nil {
 		friendRequestNotificationData := friends_wiiu_types.NewFriendRequest()
 
 		friendRequestNotificationData.PrincipalInfo = senderPrincipalInfo

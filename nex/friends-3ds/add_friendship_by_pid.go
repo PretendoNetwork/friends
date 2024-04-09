@@ -23,8 +23,8 @@ func AddFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	connectedUser := globals.ConnectedUsers[pid.LegacyValue()]
-	if connectedUser != nil {
+	connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
+	if ok && connectedUser != nil {
 		go notifications_3ds.SendFriendshipCompleted(connectedUser.Connection, pid.LegacyValue(), connection.PID())
 	}
 
