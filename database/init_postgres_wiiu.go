@@ -20,7 +20,7 @@ func initPostgresWiiU() {
 		block_friend_requests boolean DEFAULT false,
 		comment text DEFAULT '',
 		comment_changed bigint DEFAULT 0,
-		last_online bigint
+		last_online bigint DEFAULT 0
 	)`)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
