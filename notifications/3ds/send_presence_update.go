@@ -46,15 +46,15 @@ func SendPresenceUpdate(connection *nex.PRUDPConnection, presence *friends_3ds_t
 		connectedUser, ok := globals.ConnectedUsers.Get(friend.PID.LegacyValue())
 
 		if ok && connectedUser != nil {
-			requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connection, nil)
+			requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connectedUser.Connection, nil)
 
 			requestPacket.SetType(constants.DataPacket)
 			requestPacket.AddFlag(constants.PacketFlagNeedsAck)
 			requestPacket.AddFlag(constants.PacketFlagReliable)
-			requestPacket.SetSourceVirtualPortStreamType(connection.StreamType)
+			requestPacket.SetSourceVirtualPortStreamType(connectedUser.Connection.StreamType)
 			requestPacket.SetSourceVirtualPortStreamID(globals.SecureEndpoint.StreamID)
-			requestPacket.SetDestinationVirtualPortStreamType(connection.StreamType)
-			requestPacket.SetDestinationVirtualPortStreamID(connection.StreamID)
+			requestPacket.SetDestinationVirtualPortStreamType(connectedUser.Connection.StreamType)
+			requestPacket.SetDestinationVirtualPortStreamID(connectedUser.Connection.StreamID)
 			requestPacket.SetPayload(notificationRequestBytes)
 
 			globals.SecureServer.Send(requestPacket)
