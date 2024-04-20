@@ -36,8 +36,6 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 		var msgUpdateTime uint64
 		var miiModifiedAtTime uint64
 
-		// * This is allowed to error for now.
-		// * Some of these fields are optional, and the DB doesn't have defaults
 		err := rows.Scan(
 			&pid,
 			&region,
