@@ -13,7 +13,7 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 	persistentInfos.Type = friends_3ds_types.NewFriendPersistentInfo()
 
 	rows, err := database.Postgres.Query(`
-	SELECT pid, region, area, language, favorite_title, favorite_title_version, comment, comment_changed, last_online, mii_changed FROM "3ds".user_data WHERE pid=ANY($1::int[])`, pq.Array(pids))
+	SELECT pid, region, area, language, country, favorite_title, favorite_title_version, comment, comment_changed, last_online, mii_changed FROM "3ds".user_data WHERE pid=ANY($1::int[])`, pq.Array(pids))
 	if err != nil {
 		return persistentInfos, err
 	}
@@ -28,6 +28,7 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 		var region uint8
 		var area uint8
 		var language uint8
+		var country uint8
 		var titleID uint64
 		var titleVersion uint16
 		var message string
@@ -35,13 +36,12 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 		var msgUpdateTime uint64
 		var miiModifiedAtTime uint64
 
-		// * This is allowed to error for now.
-		// * Some of these fields are optional, and the DB doesn't have defaults
-		rows.Scan(
+		err := rows.Scan(
 			&pid,
 			&region,
 			&area,
 			&language,
+			&country,
 			&titleID,
 			&titleVersion,
 			&message,
@@ -49,13 +49,16 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 			&lastOnlineTime,
 			&miiModifiedAtTime,
 		)
+		if err != nil {
+			return persistentInfos, err
+		}
 
 		gameKey.TitleID = types.NewPrimitiveU64(titleID)
 		gameKey.TitleVersion = types.NewPrimitiveU16(titleVersion)
 
 		persistentInfo.PID = types.NewPID(uint64(pid))
 		persistentInfo.Region = types.NewPrimitiveU8(region)
-		persistentInfo.Country = types.NewPrimitiveU8(0) // TODO - What is this?
+		persistentInfo.Country = types.NewPrimitiveU8(country)
 		persistentInfo.Area = types.NewPrimitiveU8(area)
 		persistentInfo.Language = types.NewPrimitiveU8(language)
 		persistentInfo.Platform = types.NewPrimitiveU8(2) // * Always 3DS

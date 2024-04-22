@@ -17,17 +17,18 @@ func initPostgres3DS() {
 		pid integer PRIMARY KEY,
 		show_online boolean DEFAULT true,
 		show_current_game boolean DEFAULT true,
-		comment text,
-		comment_changed bigint,
-		last_online bigint,
-		favorite_title bigint,
-		favorite_title_version integer,
-		mii_name text,
-		mii_data bytea,
-		mii_changed bigint,
-		region integer,
-		area integer,
-		language integer
+		comment text DEFAULT '',
+		comment_changed bigint DEFAULT 0,
+		last_online bigint DEFAULT 0,
+		favorite_title bigint DEFAULT 0,
+		favorite_title_version integer DEFAULT 0,
+		mii_name text DEFAULT '',
+		mii_data bytea DEFAULT '',
+		mii_changed bigint DEFAULT 0,
+		region integer DEFAULT 0,
+		area integer DEFAULT 0,
+		language integer DEFAULT 0,
+		country integer DEFAULT 0
 	)`)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
