@@ -15,13 +15,18 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 	var senderPID uint32
 	var recipientPID uint32
 
-	err := database.Postgres.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID).Scan(&senderPID, &recipientPID)
+	row, err := database.Manager.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, database.ErrFriendRequestNotFound
 		} else {
 			return nil, err
 		}
+	}
+
+	err = row.Scan(&senderPID, &recipientPID)
+	if err != nil {
+		return nil, err
 	}
 
 	acceptedTime := types.NewDateTime(0).Now()
@@ -31,7 +36,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 
 	// * If were friends before, just activate the status again
 
-	_, err = database.Postgres.Exec(`
+	_, err = database.Manager.Exec(`
 		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active)
 		VALUES ($1, $2, $3, true)
 		ON CONFLICT (user1_pid, user2_pid)
@@ -42,7 +47,7 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		return nil, err
 	}
 
-	_, err = database.Postgres.Exec(`
+	_, err = database.Manager.Exec(`
 		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active)
 		VALUES ($1, $2, $3, true)
 		ON CONFLICT (user1_pid, user2_pid)
@@ -101,13 +106,18 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		friendInfo.Presence.Unknown7 = types.NewPrimitiveU8(0)
 
 		var lastOnlineTime uint64
-		err = database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID).Scan(&lastOnlineTime)
+		row, err = database.Manager.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID)
 		if err != nil {
 			if err == sql.ErrNoRows {
 				return nil, database.ErrPIDNotFound
 			} else {
 				return nil, err
 			}
+		}
+
+		err = row.Scan(&senderPID, &recipientPID)
+		if err != nil {
+			return nil, err
 		}
 
 		lastOnline = types.NewDateTime(lastOnlineTime) // TODO - Change this

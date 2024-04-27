@@ -16,13 +16,18 @@ func GetUserComment(pid uint32) (*friends_wiiu_types.Comment, error) {
 	var contents string
 	var changed uint64 = 0
 
-	err := database.Postgres.QueryRow(`SELECT comment, comment_changed FROM wiiu.user_data WHERE pid=$1`, pid).Scan(&contents, &changed)
+	row, err := database.Manager.QueryRow(`SELECT comment, comment_changed FROM wiiu.user_data WHERE pid=$1`, pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, database.ErrPIDNotFound
 		} else {
 			return nil, err
 		}
+	}
+
+	err = row.Scan(&contents, &changed)
+	if err != nil {
+		return nil, err
 	}
 
 	comment.Contents = types.NewString(contents)

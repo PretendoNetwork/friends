@@ -12,7 +12,7 @@ func GetFriendMiis(pids []uint32) (*types.List[*friends_3ds_types.FriendMii], er
 	friendMiis := types.NewList[*friends_3ds_types.FriendMii]()
 	friendMiis.Type = friends_3ds_types.NewFriendMii()
 
-	rows, err := database.Postgres.Query(`
+	rows, err := database.Manager.Query(`
 	SELECT pid, mii_name, mii_data FROM "3ds".user_data WHERE pid=ANY($1::int[])`, pq.Array(pids))
 	if err != nil {
 		return friendMiis, err

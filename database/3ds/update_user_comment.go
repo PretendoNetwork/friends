@@ -9,7 +9,7 @@ import (
 func UpdateUserComment(pid uint32, message string) error {
 	changed := types.NewDateTime(0).Now().Value()
 
-	_, err := database.Postgres.Exec(`
+	_, err := database.Manager.Exec(`
 		INSERT INTO "3ds".user_data (pid, comment, comment_changed)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (pid)

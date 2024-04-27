@@ -7,7 +7,7 @@ import (
 
 // UpdateUserPrincipalPreference updates the user preferences
 func UpdateUserPrincipalPreference(pid uint32, principalPreference *friends_wiiu_types.PrincipalPreference) error {
-	_, err := database.Postgres.Exec(`
+	_, err := database.Manager.Exec(`
 		INSERT INTO wiiu.user_data (pid, show_online, show_current_game, block_friend_requests)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (pid)

@@ -12,7 +12,7 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 	persistentInfos := types.NewList[*friends_3ds_types.FriendPersistentInfo]()
 	persistentInfos.Type = friends_3ds_types.NewFriendPersistentInfo()
 
-	rows, err := database.Postgres.Query(`
+	rows, err := database.Manager.Query(`
 	SELECT pid, region, area, language, country, favorite_title, favorite_title_version, comment, comment_changed, last_online, mii_changed FROM "3ds".user_data WHERE pid=ANY($1::int[])`, pq.Array(pids))
 	if err != nil {
 		return persistentInfos, err

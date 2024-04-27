@@ -7,7 +7,7 @@ import (
 
 // UpdateUserProfile updates a user's profile
 func UpdateUserProfile(pid uint32, profileData *friends_3ds_types.MyProfile) error {
-	_, err := database.Postgres.Exec(`
+	_, err := database.Manager.Exec(`
 		INSERT INTO "3ds".user_data (pid, region, area, language, country)
 		VALUES ($1, $2, $3, $4, $5)
 		ON CONFLICT (pid)

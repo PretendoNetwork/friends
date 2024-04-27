@@ -14,7 +14,7 @@ func GetUserBlockList(pid uint32) (*types.List[*friends_wiiu_types.BlacklistedPr
 	blockList := types.NewList[*friends_wiiu_types.BlacklistedPrincipal]()
 	blockList.Type = friends_wiiu_types.NewBlacklistedPrincipal()
 
-	rows, err := database.Postgres.Query(`SELECT blocked_pid, title_id, title_version, date FROM wiiu.blocks WHERE blocker_pid=$1`, pid)
+	rows, err := database.Manager.Query(`SELECT blocked_pid, title_id, title_version, date FROM wiiu.blocks WHERE blocker_pid=$1`, pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return blockList, database.ErrBlacklistNotFound

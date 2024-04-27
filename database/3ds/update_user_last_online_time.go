@@ -11,15 +11,21 @@ import (
 func UpdateUserLastOnlineTime(pid uint32, lastOnline *types.DateTime) error {
 	var showOnline bool
 
-	err := database.Postgres.QueryRow(`SELECT show_online FROM "3ds".user_data WHERE pid=$1`, pid).Scan(&showOnline)
+	row, err := database.Manager.QueryRow(`SELECT show_online FROM "3ds".user_data WHERE pid=$1`, pid)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
+
+	err = row.Scan(&showOnline)
+	if err != nil {
+		return err
+	}
+
 	if !showOnline {
 		return nil
 	}
 
-	_, err = database.Postgres.Exec(`
+	_, err = database.Manager.Exec(`
 		INSERT INTO "3ds".user_data (pid, last_online)
 		VALUES ($1, $2)
 		ON CONFLICT (pid)

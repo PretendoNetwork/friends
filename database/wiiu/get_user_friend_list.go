@@ -16,7 +16,7 @@ func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo],
 	friendList := types.NewList[*friends_wiiu_types.FriendInfo]()
 	friendList.Type = friends_wiiu_types.NewFriendInfo()
 
-	rows, err := database.Postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1 AND active=true LIMIT 100`, pid)
+	rows, err := database.Manager.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1 AND active=true LIMIT 100`, pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return friendList, database.ErrEmptyList
@@ -91,7 +91,12 @@ func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo],
 			friendInfo.Presence.Unknown7 = types.NewPrimitiveU8(0)
 
 			var lastOnlineTime uint64
-			err = database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID).Scan(&lastOnlineTime)
+			row, err := database.Manager.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID)
+			if err != nil {
+				return nil, err
+			}
+
+			err = row.Scan(&lastOnlineTime)
 			if err != nil {
 				return nil, err
 			}

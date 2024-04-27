@@ -21,3 +21,4 @@ var AESKey []byte
 var GRPCAccountClientConnection *grpc.ClientConn
 var GRPCAccountClient pb.AccountClient
 var GRPCAccountCommonMetadata metadata.MD
+var DatabaseMaxConnections int

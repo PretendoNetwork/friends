@@ -10,7 +10,7 @@ import (
 func GetUserFriendPIDs(pid uint32) ([]uint32, error) {
 	pids := make([]uint32, 0)
 
-	rows, err := database.Postgres.Query(`SELECT user2_pid FROM wiiu.friendships WHERE user1_pid=$1 AND active=true LIMIT 100`, pid)
+	rows, err := database.Manager.Query(`SELECT user2_pid FROM wiiu.friendships WHERE user1_pid=$1 AND active=true LIMIT 100`, pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return pids, database.ErrEmptyList

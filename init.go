@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -33,6 +34,7 @@ func init() {
 	}
 
 	postgresURI := os.Getenv("PN_FRIENDS_CONFIG_DATABASE_URI")
+	databaseMaxConnectionsStr := cmp.Or(os.Getenv("PN_FRIENDS_CONFIG_DATABASE_MAX_CONNECTIONS"), "100")
 	authenticationServerPassword := os.Getenv("PN_FRIENDS_CONFIG_AUTHENTICATION_PASSWORD")
 	secureServerPassword := os.Getenv("PN_FRIENDS_CONFIG_SECURE_PASSWORD")
 	aesKey := os.Getenv("PN_FRIENDS_CONFIG_AES_KEY")
@@ -48,6 +50,15 @@ func init() {
 	if strings.TrimSpace(postgresURI) == "" {
 		globals.Logger.Error("PN_FRIENDS_CONFIG_DATABASE_URI environment variable not set")
 		os.Exit(0)
+	}
+
+	databaseMaxConnections, err := strconv.Atoi(databaseMaxConnectionsStr)
+
+	if err != nil {
+		globals.Logger.Errorf("PN_FRIENDS_CONFIG_DATABASE_MAX_CONNECTIONS is not a valid number. Got %s", databaseMaxConnectionsStr)
+		os.Exit(0)
+	} else {
+		globals.DatabaseMaxConnections = databaseMaxConnections
 	}
 
 	if strings.TrimSpace(authenticationServerPassword) == "" {

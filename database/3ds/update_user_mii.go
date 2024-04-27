@@ -8,7 +8,7 @@ import (
 
 // UpdateUserMii updates a user's mii
 func UpdateUserMii(pid uint32, mii *friends_3ds_types.Mii) error {
-	_, err := database.Postgres.Exec(`
+	_, err := database.Manager.Exec(`
 		INSERT INTO "3ds".user_data (pid, mii_name, mii_data, mii_changed)
 		VALUES ($1, $2, $3, $4)
 		ON CONFLICT (pid)

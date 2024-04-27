@@ -7,7 +7,7 @@ import (
 
 // UpdateUserLastOnlineTime updates a user's last online time
 func UpdateUserLastOnlineTime(pid uint32, lastOnline *types.DateTime) error {
-	_, err := database.Postgres.Exec(`
+	_, err := database.Manager.Exec(`
 		INSERT INTO wiiu.user_data (pid, last_online)
 		VALUES ($1, $2)
 		ON CONFLICT (pid)

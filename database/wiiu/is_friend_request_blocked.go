@@ -8,7 +8,12 @@ import (
 func IsFriendRequestBlocked(requesterPID uint32, requestedPID uint32) (bool, error) {
 	var found bool
 
-	err := database.Postgres.QueryRow(`SELECT COUNT(*) FROM wiiu.blocks WHERE blocker_pid=$1 AND blocked_pid=$2 LIMIT 1`, requesterPID, requestedPID).Scan(&found)
+	row, err := database.Manager.QueryRow(`SELECT COUNT(*) FROM wiiu.blocks WHERE blocker_pid=$1 AND blocked_pid=$2 LIMIT 1`, requesterPID, requestedPID)
+	if err != nil {
+		return false, err
+	}
+
+	err = row.Scan(&found)
 	if err != nil {
 		return false, err
 	}

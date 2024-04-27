@@ -14,7 +14,7 @@ func GetUserFriendRequestsOut(pid uint32) (*types.List[*friends_wiiu_types.Frien
 	friendRequests := types.NewList[*friends_wiiu_types.FriendRequest]()
 	friendRequests.Type = friends_wiiu_types.NewFriendRequest()
 
-	rows, err := database.Postgres.Query(`SELECT id, recipient_pid, sent_on, expires_on, message, received FROM wiiu.friend_requests WHERE sender_pid=$1 AND accepted=false`, pid)
+	rows, err := database.Manager.Query(`SELECT id, recipient_pid, sent_on, expires_on, message, received FROM wiiu.friend_requests WHERE sender_pid=$1 AND accepted=false`, pid)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return friendRequests, database.ErrEmptyList

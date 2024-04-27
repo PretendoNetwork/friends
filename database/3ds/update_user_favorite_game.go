@@ -7,7 +7,7 @@ import (
 
 // UpdateUserFavoriteGame updates a user's favorite game
 func UpdateUserFavoriteGame(pid uint32, gameKey *friends_3ds_types.GameKey) error {
-	_, err := database.Postgres.Exec(`
+	_, err := database.Manager.Exec(`
 		INSERT INTO "3ds".user_data (pid, favorite_title, favorite_title_version)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (pid)

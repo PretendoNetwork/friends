@@ -15,23 +15,34 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.F
 
 	// * Ensure that we inputted a valid user.
 	var found bool
-	err := database.Postgres.QueryRow(`SELECT COUNT(*) FROM "3ds".user_data WHERE pid=$1 LIMIT 1`, recipientPID).Scan(&found)
+	row, err := database.Manager.QueryRow(`SELECT COUNT(*) FROM "3ds".user_data WHERE pid=$1 LIMIT 1`, recipientPID)
 	if err != nil {
 		return nil, err
 	}
+
+	err = row.Scan(&found)
+	if err != nil {
+		return nil, err
+	}
+
 	if !found {
 		friendRelationship.RelationshipType = types.NewPrimitiveU8(2) // * Non-existent
 		return friendRelationship, nil
 	}
 
 	// * Get the other side's relationship, we need to know if we've already got one sent to us.
-	err = database.Postgres.QueryRow(`
-	SELECT COUNT(*) FROM "3ds".friendships WHERE user1_pid=$1 AND user2_pid=$2 AND type=0 LIMIT 1`, recipientPID, senderPID).Scan(&found)
+	row, err = database.Manager.QueryRow(`SELECT COUNT(*) FROM "3ds".friendships WHERE user1_pid=$1 AND user2_pid=$2 AND type=0 LIMIT 1`, recipientPID, senderPID)
 	if err != nil {
 		return nil, err
 	}
+
+	err = row.Scan(&found)
+	if err != nil {
+		return nil, err
+	}
+
 	if !found {
-		_, err = database.Postgres.Exec(`
+		_, err = database.Manager.Exec(`
 		INSERT INTO "3ds".friendships (user1_pid, user2_pid, type)
 		VALUES ($1, $2, 0)
 		ON CONFLICT (user1_pid, user2_pid)
@@ -45,7 +56,7 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.F
 	acceptedTime := types.NewDateTime(0).Now().Value()
 
 	// * We need to have two relationships for both sides as friend relationships are not one single object.
-	_, err = database.Postgres.Exec(`
+	_, err = database.Manager.Exec(`
 		INSERT INTO "3ds".friendships (user1_pid, user2_pid, date, type)
 		VALUES ($1, $2, $3, 1)
 		ON CONFLICT (user1_pid, user2_pid)
@@ -56,7 +67,7 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (*friends_3ds_types.F
 		return nil, err
 	}
 
-	_, err = database.Postgres.Exec(`
+	_, err = database.Manager.Exec(`
 		INSERT INTO "3ds".friendships (user1_pid, user2_pid, date, type)
 		VALUES ($1, $2, $3, 1)
 		ON CONFLICT (user1_pid, user2_pid)
