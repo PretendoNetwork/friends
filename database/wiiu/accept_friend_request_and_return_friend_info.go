@@ -5,7 +5,6 @@ import (
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
@@ -65,46 +64,13 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 
 	friendInfo := friends_wiiu_types.NewFriendInfo()
 	connectedUser, ok := globals.ConnectedUsers.Get(senderPID)
-	var lastOnline *types.DateTime
+	lastOnline := types.NewDateTime(0).Now()
 
 	if ok && connectedUser != nil {
 		// * Online
-		friendInfo.NNAInfo = connectedUser.NNAInfo
 		friendInfo.Presence = connectedUser.PresenceV2
-
-		lastOnline = types.NewDateTime(0).Now()
 	} else {
 		// * Offline
-		userInfo, err := utility.GetUserInfoByPID(senderPID)
-		if err != nil {
-			return nil, err
-		}
-
-		friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
-
-		friendInfo.NNAInfo.PrincipalBasicInfo = userInfo
-		friendInfo.NNAInfo.Unknown1 = types.NewPrimitiveU8(0)
-		friendInfo.NNAInfo.Unknown2 = types.NewPrimitiveU8(0)
-
-		friendInfo.Presence = friends_wiiu_types.NewNintendoPresenceV2()
-		friendInfo.Presence.ChangedFlags = types.NewPrimitiveU32(0)
-		friendInfo.Presence.Online = types.NewPrimitiveBool(false)
-		friendInfo.Presence.GameKey = friends_wiiu_types.NewGameKey()
-		friendInfo.Presence.GameKey.TitleID = types.NewPrimitiveU64(0)
-		friendInfo.Presence.GameKey.TitleVersion = types.NewPrimitiveU16(0)
-		friendInfo.Presence.Unknown1 = types.NewPrimitiveU8(0)
-		friendInfo.Presence.Message = types.NewString("")
-		friendInfo.Presence.Unknown2 = types.NewPrimitiveU32(0)
-		friendInfo.Presence.Unknown3 = types.NewPrimitiveU8(0)
-		friendInfo.Presence.GameServerID = types.NewPrimitiveU32(0)
-		friendInfo.Presence.Unknown4 = types.NewPrimitiveU32(0)
-		friendInfo.Presence.PID = types.NewPID(uint64(senderPID))
-		friendInfo.Presence.GatheringID = types.NewPrimitiveU32(0)
-		friendInfo.Presence.ApplicationData = types.NewBuffer([]byte{})
-		friendInfo.Presence.Unknown5 = types.NewPrimitiveU8(0)
-		friendInfo.Presence.Unknown6 = types.NewPrimitiveU8(0)
-		friendInfo.Presence.Unknown7 = types.NewPrimitiveU8(0)
-
 		var lastOnlineTime uint64
 		row, err = database.Manager.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID)
 		if err != nil {

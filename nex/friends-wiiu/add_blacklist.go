@@ -4,7 +4,6 @@ import (
 	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/utility"
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
@@ -25,7 +24,7 @@ func AddBlackList(err error, packet nex.PacketInterface, callID uint32, blacklis
 	titleID := currentBlacklistPrincipal.GameKey.TitleID
 	titleVersion := currentBlacklistPrincipal.GameKey.TitleVersion
 
-	userInfo, err := utility.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID.LegacyValue())
+	userInfo, err := database_wiiu.GetUserPrincipalBasicInfo(currentBlacklistPrincipal.PrincipalBasicInfo.PID.LegacyValue())
 	if err != nil {
 		if err == database.ErrPIDNotFound {
 			// TODO - Not sure if this is the correct error.

@@ -37,10 +37,18 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 		senderConnectedUser, ok := globals.ConnectedUsers.Get(senderPID)
 
 		if ok && senderConnectedUser != nil {
+			var err error
+
 			senderFriendInfo := friends_wiiu_types.NewFriendInfo()
 
-			senderFriendInfo.NNAInfo = senderConnectedUser.NNAInfo
+			senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(senderPID)
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+			}
+
 			senderFriendInfo.Presence = senderConnectedUser.PresenceV2
+
 			status, err := database_wiiu.GetUserComment(senderPID)
 			if err != nil {
 				globals.Logger.Critical(err.Error())

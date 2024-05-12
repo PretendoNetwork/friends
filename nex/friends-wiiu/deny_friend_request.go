@@ -6,7 +6,6 @@ import (
 	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/utility"
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
@@ -43,7 +42,7 @@ func DenyFriendRequest(err error, packet nex.PacketInterface, callID uint32, id 
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	info, err := utility.GetUserInfoByPID(senderPID)
+	info, err := database_wiiu.GetUserPrincipalBasicInfo(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message

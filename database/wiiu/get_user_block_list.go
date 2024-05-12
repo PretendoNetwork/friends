@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
@@ -35,7 +34,7 @@ func GetUserBlockList(pid uint32) (*types.List[*friends_wiiu_types.BlacklistedPr
 			return nil, err
 		}
 
-		userInfo, err := utility.GetUserInfoByPID(pid)
+		userInfo, err := GetUserPrincipalBasicInfo(pid)
 		if err != nil {
 			return nil, err
 		}

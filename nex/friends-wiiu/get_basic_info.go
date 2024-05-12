@@ -1,8 +1,8 @@
 package nex_friends_wiiu
 
 import (
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/utility"
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
@@ -19,7 +19,7 @@ func GetBasicInfo(err error, packet nex.PacketInterface, callID uint32, pids *ty
 	infos.Type = friends_wiiu_types.NewPrincipalBasicInfo()
 
 	if pids.Each(func(i int, pid *types.PID) bool {
-		info, err := utility.GetUserInfoByPID(pid.LegacyValue())
+		info, err := database_wiiu.GetUserPrincipalBasicInfo(pid.LegacyValue())
 		if err != nil {
 			globals.Logger.Critical(err.Error())
 			return true

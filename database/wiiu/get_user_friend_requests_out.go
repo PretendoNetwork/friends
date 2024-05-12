@@ -4,7 +4,6 @@ import (
 	"database/sql"
 
 	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/friends/utility"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
@@ -37,7 +36,7 @@ func GetUserFriendRequestsOut(pid uint32) (*types.List[*friends_wiiu_types.Frien
 			return friendRequests, err
 		}
 
-		userInfo, err := utility.GetUserInfoByPID(recipientPID)
+		userInfo, err := GetUserPrincipalBasicInfo(recipientPID)
 		if err != nil {
 			return nil, err
 		}

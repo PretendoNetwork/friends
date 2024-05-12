@@ -7,7 +7,6 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
-	"github.com/PretendoNetwork/friends/utility"
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
@@ -25,13 +24,13 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 	senderPID := connection.PID().LegacyValue()
 	recipientPID := pid.LegacyValue()
 
-	senderPrincipalInfo, err := utility.GetUserInfoByPID(senderPID)
+	senderPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfo(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	recipientPrincipalInfo, err := utility.GetUserInfoByPID(recipientPID)
+	recipientPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfo(recipientPID)
 	if err != nil {
 		if err == database.ErrPIDNotFound {
 			// TODO - Not sure if this is the correct error.

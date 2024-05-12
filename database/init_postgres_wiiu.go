@@ -27,6 +27,40 @@ func initPostgresWiiU() {
 		return
 	}
 
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.network_account_info (
+		pid integer PRIMARY KEY,
+		unknown1 integer,
+		unknown2 integer,
+		birthday bigint
+	)`)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return
+	}
+
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.principal_basic_info (
+		pid integer PRIMARY KEY,
+		username text,
+		unknown integer
+	)`)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return
+	}
+
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.mii (
+		pid integer PRIMARY KEY,
+		name text,
+		unknown1 integer,
+		unknown2 integer,
+		data bytea,
+		unknown_datetime bigint
+	)`)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return
+	}
+
 	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.friendships (
 		id bigserial PRIMARY KEY,
 		user1_pid integer,

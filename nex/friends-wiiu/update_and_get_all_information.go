@@ -27,18 +27,18 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 	connectedUser, ok := globals.ConnectedUsers.Get(pid)
 
 	if !ok || connectedUser == nil {
-		// TODO - Figure out why this is getting removed
+		// * Failsafe
 		connectedUser = friends_types.NewConnectedUser()
 		connectedUser.PID = pid
 		connectedUser.Platform = friends_types.WUP
 		connectedUser.Connection = connection
-		// TODO - Find a clean way to create a NNAInfo?
 
 		globals.ConnectedUsers.Set(pid, connectedUser)
 	}
 
-	connectedUser.NNAInfo = nnaInfo
 	connectedUser.PresenceV2 = presence
+
+	database_wiiu.UpdateNetworkAccountInfo(pid, nnaInfo, birthday)
 
 	principalPreference, err := database_wiiu.GetUserPrincipalPreference(pid)
 	if err != nil {
