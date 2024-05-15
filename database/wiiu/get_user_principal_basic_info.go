@@ -17,16 +17,16 @@ func GetUserPrincipalBasicInfo(pid uint32) (*friends_wiiu_types.PrincipalBasicIn
 
 	row, err := database.Manager.QueryRow(`SELECT username, unknown FROM wiiu.principal_basic_info WHERE pid=$1`, pid)
 	if err != nil {
+		return nil, err
+	}
+
+	err = row.Scan(&nnid, &unknown)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, database.ErrPIDNotFound
 		} else {
 			return nil, err
 		}
-	}
-
-	err = row.Scan(&nnid, &unknown)
-	if err != nil {
-		return nil, err
 	}
 
 	principalBasicInfo.PID = types.NewPID(uint64(pid))

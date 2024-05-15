@@ -12,12 +12,12 @@ func UpdateUserLastOnlineTime(pid uint32, lastOnline *types.DateTime) error {
 	var showOnline bool
 
 	row, err := database.Manager.QueryRow(`SELECT show_online FROM "3ds".user_data WHERE pid=$1`, pid)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return err
 	}
 
 	err = row.Scan(&showOnline)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 

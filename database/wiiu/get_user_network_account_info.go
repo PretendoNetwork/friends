@@ -17,16 +17,16 @@ func GetUserNetworkAccountInfo(pid uint32) (*friends_wiiu_types.NNAInfo, error) 
 
 	row, err := database.Manager.QueryRow(`SELECT unknown1, unknown2 FROM wiiu.network_account_info WHERE pid=$1`, pid)
 	if err != nil {
+		return nil, err
+	}
+
+	err = row.Scan(&unknown1, &unknown2)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, database.ErrPIDNotFound
 		} else {
 			return nil, err
 		}
-	}
-
-	err = row.Scan(&unknown1, &unknown2)
-	if err != nil {
-		return nil, err
 	}
 
 	nnaInfo.Unknown1 = types.NewPrimitiveU8(unknown1)

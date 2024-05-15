@@ -20,16 +20,16 @@ func GetUserMii(pid uint32) (*friends_wiiu_types.MiiV2, error) {
 
 	row, err := database.Manager.QueryRow(`SELECT name, unknown1, unknown2, data, unknown_datetime FROM wiiu.mii WHERE pid=$1`, pid)
 	if err != nil {
+		return nil, err
+	}
+
+	err = row.Scan(&name, &unknown1, &unknown2, &data, &datetime)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, database.ErrPIDNotFound
 		} else {
 			return nil, err
 		}
-	}
-
-	err = row.Scan(&name, &unknown1, &unknown2, &data, &datetime)
-	if err != nil {
-		return nil, err
 	}
 
 	mii.Name = types.NewString(name)

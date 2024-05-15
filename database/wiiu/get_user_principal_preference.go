@@ -18,16 +18,16 @@ func GetUserPrincipalPreference(pid uint32) (*friends_wiiu_types.PrincipalPrefer
 
 	row, err := database.Manager.QueryRow(`SELECT show_online, show_current_game, block_friend_requests FROM wiiu.user_data WHERE pid=$1`, pid)
 	if err != nil {
+		return nil, err
+	}
+
+	err = row.Scan(&showOnlinePresence, &showCurrentTitle, &blockFriendRequests)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, database.ErrPIDNotFound
 		} else {
 			return nil, err
 		}
-	}
-
-	err = row.Scan(&showOnlinePresence, &showCurrentTitle, &blockFriendRequests)
-	if err != nil {
-		return nil, err
 	}
 
 	preference.ShowOnlinePresence = types.NewPrimitiveBool(showOnlinePresence)
