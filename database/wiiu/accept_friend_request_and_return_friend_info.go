@@ -16,16 +16,16 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 
 	row, err := database.Manager.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID)
 	if err != nil {
+		return nil, err
+	}
+
+	err = row.Scan(&senderPID, &recipientPID)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, database.ErrFriendRequestNotFound
 		} else {
 			return nil, err
 		}
-	}
-
-	err = row.Scan(&senderPID, &recipientPID)
-	if err != nil {
-		return nil, err
 	}
 
 	acceptedTime := types.NewDateTime(0).Now()
@@ -74,16 +74,16 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		var lastOnlineTime uint64
 		row, err = database.Manager.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID)
 		if err != nil {
+			return nil, err
+		}
+
+		err = row.Scan(&lastOnlineTime)
+		if err != nil {
 			if err == sql.ErrNoRows {
 				return nil, database.ErrPIDNotFound
 			} else {
 				return nil, err
 			}
-		}
-
-		err = row.Scan(&senderPID, &recipientPID)
-		if err != nil {
-			return nil, err
 		}
 
 		lastOnline = types.NewDateTime(lastOnlineTime) // TODO - Change this

@@ -17,12 +17,12 @@ func SaveFriendRequest(senderPID uint32, recipientPID uint32, sentTime uint64, e
 
 	// Make sure we don't already have that friend request! If we do, give them the one we already have.
 	row, err := database.Manager.QueryRow(`SELECT id FROM wiiu.friend_requests WHERE sender_pid=$1 AND recipient_pid=$2`, senderPID, recipientPID)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return 0, err
 	}
 
 	err = row.Scan(&id)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return 0, err
 	} else if id != 0 {
 		// If they aren't blocked, we want to unset the denied status on the previous request we have so that it appears again.

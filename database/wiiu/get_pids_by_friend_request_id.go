@@ -13,16 +13,16 @@ func GetPIDsByFriendRequestID(friendRequestID uint64) (uint32, uint32, error) {
 
 	row, err := database.Manager.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID)
 	if err != nil {
+		return 0, 0, err
+	}
+
+	err = row.Scan(&senderPID, &recipientPID)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, 0, database.ErrFriendRequestNotFound
 		} else {
 			return 0, 0, err
 		}
-	}
-
-	err = row.Scan(&senderPID, &recipientPID)
-	if err != nil {
-		return 0, 0, err
 	}
 
 	return senderPID, recipientPID, nil

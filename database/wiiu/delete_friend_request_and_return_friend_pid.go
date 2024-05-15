@@ -12,16 +12,16 @@ func DeleteFriendRequestAndReturnFriendPID(friendRequestID uint64) (uint32, erro
 
 	row, err := database.Manager.QueryRow(`SELECT recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID)
 	if err != nil {
+		return 0, err
+	}
+
+	err = row.Scan(&recipientPID)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, database.ErrFriendRequestNotFound
 		} else {
 			return 0, err
 		}
-	}
-
-	err = row.Scan(&recipientPID)
-	if err != nil {
-		return 0, err
 	}
 
 	result, err := database.Manager.Exec(`
