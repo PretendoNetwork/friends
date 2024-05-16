@@ -10,7 +10,6 @@ type ConnectedUser struct {
 	PID        uint32
 	Platform   Platform
 	Connection *nex.PRUDPConnection
-	NNAInfo    *friends_wiiu_types.NNAInfo
 	Presence   *friends_3ds_types.NintendoPresence
 	PresenceV2 *friends_wiiu_types.NintendoPresenceV2
 }

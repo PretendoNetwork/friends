@@ -36,7 +36,7 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		globals.ConnectedUsers.Set(pid, connectedUser)
 	}
 
-	connectedUser.PresenceV2 = presence
+	connectedUser.PresenceV2 = presence.Copy().(*friends_wiiu_types.NintendoPresenceV2)
 
 	database_wiiu.UpdateNetworkAccountInfo(pid, nnaInfo, birthday)
 

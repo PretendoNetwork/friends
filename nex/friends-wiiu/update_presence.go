@@ -36,7 +36,7 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 		globals.ConnectedUsers.Set(pid, connectedUser)
 	}
 
-	connectedUser.PresenceV2 = presence
+	connectedUser.PresenceV2 = presence.Copy().(*friends_wiiu_types.NintendoPresenceV2)
 
 	notifications_wiiu.SendPresenceUpdate(presence)
 

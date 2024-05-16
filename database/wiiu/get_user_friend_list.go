@@ -44,7 +44,7 @@ func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo],
 
 		if ok && connectedUser != nil {
 			// * Online
-			friendInfo.Presence = connectedUser.PresenceV2
+			friendInfo.Presence = connectedUser.PresenceV2.Copy().(*friends_wiiu_types.NintendoPresenceV2)
 		} else {
 			// * Offline
 			var lastOnlineTime uint64

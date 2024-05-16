@@ -23,7 +23,7 @@ func GetFriendPresence(err error, packet nex.PacketInterface, callID uint32, pid
 		if ok && connectedUser != nil && connectedUser.Presence != nil {
 			friendPresence := friends_3ds_types.NewFriendPresence()
 			friendPresence.PID = pid.Copy().(*types.PID)
-			friendPresence.Presence = connectedUser.Presence
+			friendPresence.Presence = connectedUser.Presence.Copy().(*friends_3ds_types.NintendoPresence)
 
 			presenceList.Append(friendPresence)
 		}

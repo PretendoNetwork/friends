@@ -47,7 +47,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 			}
 
-			senderFriendInfo.Presence = senderConnectedUser.PresenceV2
+			senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(*friends_wiiu_types.NintendoPresenceV2)
 
 			status, err := database_wiiu.GetUserComment(senderPID)
 			if err != nil {

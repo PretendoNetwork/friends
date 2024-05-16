@@ -18,7 +18,7 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	currentPresence := presence
+	currentPresence := presence.Copy().(*friends_3ds_types.NintendoPresence)
 
 	// Send an entirely empty status, with every flag set to update
 	if !showGame.Value {
