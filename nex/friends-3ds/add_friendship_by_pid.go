@@ -25,7 +25,7 @@ func AddFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32
 
 	connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
 	if ok && connectedUser != nil {
-		go notifications_3ds.SendFriendshipCompleted(connectedUser.Connection, pid.LegacyValue(), connection.PID())
+		go notifications_3ds.SendFriendshipCompleted(connectedUser.Connection, connection.PID())
 	}
 
 	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
