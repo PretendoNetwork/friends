@@ -15,5 +15,8 @@ type ConnectedUser struct {
 }
 
 func NewConnectedUser() *ConnectedUser {
-	return &ConnectedUser{}
+	return &ConnectedUser{
+		Presence:   friends_3ds_types.NewNintendoPresence(),
+		PresenceV2: friends_wiiu_types.NewNintendoPresenceV2(),
+	}
 }
