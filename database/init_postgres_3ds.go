@@ -23,6 +23,8 @@ func initPostgres3DS() {
 		favorite_title bigint DEFAULT 0,
 		favorite_title_version integer DEFAULT 0,
 		mii_name text DEFAULT '',
+		mii_profanity boolean DEFAULT false,
+		mii_character_set smallint DEFAULT 0,
 		mii_data bytea DEFAULT '',
 		mii_changed bigint DEFAULT 0,
 		region integer DEFAULT 0,

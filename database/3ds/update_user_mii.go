@@ -14,8 +14,10 @@ func UpdateUserMii(pid uint32, mii *friends_3ds_types.Mii) error {
 		ON CONFLICT (pid)
 		DO UPDATE SET 
 		mii_name = $2,
-		mii_data = $3,
-		mii_changed = $4`, pid, mii.Name.Value, mii.MiiData.Value, types.NewDateTime(0).Now().Value())
+		mii_profanity = $3,
+		mii_character_set = $4,
+		mii_data = $5,
+		mii_changed = $6`, pid, mii.Name.Value, mii.ProfanityFlag.Value, mii.CharacterSet.Value, mii.MiiData.Value, types.NewDateTime(0).Now().Value())
 
 	if err != nil {
 		return err
