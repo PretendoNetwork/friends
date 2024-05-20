@@ -13,7 +13,7 @@ import (
 	friends_types "github.com/PretendoNetwork/friends/types"
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
-	_ "github.com/PretendoNetwork/nex-protocols-go"
+	_ "github.com/PretendoNetwork/nex-protocols-go/v2"
 )
 
 func StartSecureServer() {
