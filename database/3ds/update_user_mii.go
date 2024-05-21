@@ -9,8 +9,8 @@ import (
 // UpdateUserMii updates a user's mii
 func UpdateUserMii(pid uint32, mii *friends_3ds_types.Mii) error {
 	_, err := database.Manager.Exec(`
-		INSERT INTO "3ds".user_data (pid, mii_name, mii_data, mii_changed)
-		VALUES ($1, $2, $3, $4)
+		INSERT INTO "3ds".user_data (pid, mii_name, mii_profanity, mii_character_set, mii_data, mii_changed)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		ON CONFLICT (pid)
 		DO UPDATE SET 
 		mii_name = $2,
