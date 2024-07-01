@@ -27,8 +27,7 @@ WORKDIR ${app_dir}
 
 RUN addgroup go && adduser -D -G go go
 
-RUN mkdir -p ${app_dir}/log
-RUN chown go:go ${app_dir}/log
+RUN mkdir -p ${app_dir}/log && chown go:go ${app_dir}/log
 
 USER go
 
