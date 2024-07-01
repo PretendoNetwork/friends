@@ -5,7 +5,8 @@ ARG app_dir="/home/go/app"
 
 # * Building the application
 FROM golang:1.22-alpine3.20 AS build
-ARG app_dir build_string=pretendo.friends.docker
+ARG app_dir
+ARG build_string=pretendo.friends.docker
 
 WORKDIR ${app_dir}
 
