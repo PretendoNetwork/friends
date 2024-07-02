@@ -4,7 +4,7 @@ go 1.22.1
 
 require (
 	github.com/PretendoNetwork/grpc-go v1.0.2
-	github.com/PretendoNetwork/nex-go/v2 v2.0.2
+	github.com/PretendoNetwork/nex-go/v2 v2.0.3
 	github.com/PretendoNetwork/nex-protocols-common-go/v2 v2.0.5
 	github.com/PretendoNetwork/nex-protocols-go/v2 v2.0.3
 	github.com/PretendoNetwork/plogger-go v1.0.4
@@ -14,6 +14,8 @@ require (
 	github.com/lib/pq v1.10.9
 	google.golang.org/grpc v1.64.0
 )
+
+replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20240520151616-dc85e6b867a5
 
 require (
 	github.com/dolthub/maphash v0.1.0 // indirect
