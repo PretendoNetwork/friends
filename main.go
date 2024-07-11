@@ -3,8 +3,8 @@ package main
 import (
 	"sync"
 
-	"github.com/PretendoNetwork/friends/grpc"
-	"github.com/PretendoNetwork/friends/nex"
+	"github.com/CloudnetworkTeam/friends/grpc"
+	"github.com/CloudnetworkTeam/friends/nex"
 )
 
 var wg sync.WaitGroup
