@@ -7,9 +7,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/types"
+	"github.com/CloudnetworkTeam/friends/database"
+	"github.com/CloudnetworkTeam/friends/globals"
+	"github.com/CloudnetworkTeam/friends/types"
 	"github.com/PretendoNetwork/plogger-go"
 	pb "github.com/PretendoNetwork/grpc-go/account"
 	"google.golang.org/grpc"
