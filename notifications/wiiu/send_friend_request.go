@@ -1,7 +1,7 @@
 package notifications_wiiu
 
 import (
-	"github.com/PretendoNetwork/friends/globals"
+	"github.com/CloudnetworkTeam/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
