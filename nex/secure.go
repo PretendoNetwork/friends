@@ -5,12 +5,12 @@ import (
 	"os"
 	"time"
 
-	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
-	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
-	"github.com/PretendoNetwork/friends/globals"
-	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
-	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
-	"github.com/PretendoNetwork/friends/types"
+	database_3ds "github.com/CloudnetworkTeam/friends/database/3ds"
+	database_wiiu "github.com/CloudnetworkTeam/friends/database/wiiu"
+	"github.com/CloudnetworkTeam/friends/globals"
+	notifications_3ds "github.com/CloudnetworkTeam/friends/notifications/3ds"
+	notifications_wiiu "github.com/CloudnetworkTeam/friends/notifications/wiiu"
+	"github.com/CloudnetworkTeam/friends/types"
 	nex "github.com/PretendoNetwork/nex-go"
 	_ "github.com/PretendoNetwork/nex-protocols-go"
 )
