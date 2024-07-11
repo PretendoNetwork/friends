@@ -8,7 +8,7 @@ COPY go.* ./
 RUN go mod download
 
 COPY . ./
-ARG BUILD_STRING=pretendo.friends.docker
+ARG BUILD_STRING=cloud.friends.docker
 RUN go build -ldflags "-X 'main.serverBuildString=${BUILD_STRING}'" -v -o server
 
 # --- runner ---
