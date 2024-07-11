@@ -3,8 +3,8 @@ package notifications_3ds
 import (
 	"database/sql"
 
-	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
-	"github.com/PretendoNetwork/friends/globals"
+	database_3ds "github.com/CloudnetworkTeam/friends/database/3ds"
+	"github.com/CloudnetworkTeam/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
