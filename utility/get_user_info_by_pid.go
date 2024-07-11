@@ -8,8 +8,8 @@ import (
 	"github.com/PretendoNetwork/nex-go"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
 
-	"github.com/PretendoNetwork/friends/database"
-	"github.com/PretendoNetwork/friends/globals"
+	"github.com/CloudnetworkTeam/friends/database"
+	"github.com/CloudnetworkTeam/friends/globals"
 )
 
 // GetUserInfoByPID returns the user information for a given PID
