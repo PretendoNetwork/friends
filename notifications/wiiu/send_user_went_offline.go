@@ -3,9 +3,9 @@ package notifications_wiiu
 import (
 	"time"
 
-	"github.com/PretendoNetwork/friends/database"
-	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
-	"github.com/PretendoNetwork/friends/globals"
+	"github.com/CloudnetworkTeam/friends/database"
+	database_wiiu "github.com/CloudnetworkTeam/friends/database/wiiu"
+	"github.com/CloudnetworkTeam/friends/globals"
 	nex "github.com/PretendoNetwork/nex-go"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
