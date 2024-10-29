@@ -13,6 +13,7 @@ import (
 	"github.com/PretendoNetwork/friends/types"
 	pb "github.com/PretendoNetwork/grpc-go/account"
 	"github.com/PretendoNetwork/nex-go/v2"
+	nex_types "github.com/PretendoNetwork/nex-go/v2/types"
 	"github.com/PretendoNetwork/plogger-go"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -66,10 +67,16 @@ func init() {
 		os.Exit(0)
 	}
 
+	globals.AuthenticationServerAccount = nex.NewAccount(nex_types.NewPID(1), "Quazal Authentication", authenticationServerPassword)
+
 	if strings.TrimSpace(secureServerPassword) == "" {
 		globals.Logger.Error("PN_FRIENDS_CONFIG_SECURE_PASSWORD environment variable not set")
 		os.Exit(0)
 	}
+
+	globals.SecureServerAccount = nex.NewAccount(nex_types.NewPID(2), "Quazal Rendez-Vous", secureServerPassword)
+
+	globals.GuestAccount = nex.NewAccount(nex_types.NewPID(100), "guest", "MMQea3n!fsik") // * Guest account password is always the same, known to all consoles
 
 	if strings.TrimSpace(aesKey) == "" {
 		globals.Logger.Error("PN_FRIENDS_CONFIG_AES_KEY environment variable not set")
