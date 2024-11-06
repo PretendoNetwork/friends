@@ -22,11 +22,9 @@ func StartSecureServer() {
 	globals.SecureServer = nex.NewPRUDPServer()
 	globals.SecureEndpoint = nex.NewPRUDPEndPoint(1)
 
+	globals.SecureEndpoint.ServerAccount = globals.SecureServerAccount
 	globals.SecureEndpoint.AccountDetailsByPID = globals.AccountDetailsByPID
 	globals.SecureEndpoint.AccountDetailsByUsername = globals.AccountDetailsByUsername
-	globals.SecureEndpoint.ServerAccount = nex.NewAccount(types.NewPID(2), "Quazal Rendez-Vous", os.Getenv("PN_FRIENDS_CONFIG_SECURE_PASSWORD"))
-
-	globals.GuestAccount = nex.NewAccount(types.NewPID(100), "guest", "MMQea3n!fsik") // * Guest account password is always the same, known to all consoles
 
 	globals.SecureEndpoint.OnConnectionEnded(func(connection *nex.PRUDPConnection) {
 		pid := connection.PID().LegacyValue()

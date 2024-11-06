@@ -11,12 +11,12 @@ import (
 )
 
 func AccountDetailsByPID(pid *types.PID) (*nex.Account, *nex.Error) {
-	if pid.Equals(AuthenticationEndpoint.ServerAccount.PID) {
-		return AuthenticationEndpoint.ServerAccount, nil
+	if pid.Equals(AuthenticationServerAccount.PID) {
+		return AuthenticationServerAccount, nil
 	}
 
-	if pid.Equals(SecureEndpoint.ServerAccount.PID) {
-		return SecureEndpoint.ServerAccount, nil
+	if pid.Equals(SecureServerAccount.PID) {
+		return SecureServerAccount, nil
 	}
 
 	if pid.Equals(GuestAccount.PID) {

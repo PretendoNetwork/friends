@@ -6,7 +6,6 @@ import (
 
 	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/nex-go/v2"
-	"github.com/PretendoNetwork/nex-go/v2/types"
 )
 
 var serverBuildString string
@@ -17,9 +16,9 @@ func StartAuthenticationServer() {
 	globals.AuthenticationServer = nex.NewPRUDPServer()
 	globals.AuthenticationEndpoint = nex.NewPRUDPEndPoint(1)
 
+	globals.AuthenticationEndpoint.ServerAccount = globals.AuthenticationServerAccount
 	globals.AuthenticationEndpoint.AccountDetailsByPID = globals.AccountDetailsByPID
 	globals.AuthenticationEndpoint.AccountDetailsByUsername = globals.AccountDetailsByUsername
-	globals.AuthenticationEndpoint.ServerAccount = nex.NewAccount(types.NewPID(1), "Quazal Authentication", os.Getenv("PN_FRIENDS_CONFIG_AUTHENTICATION_PASSWORD"))
 
 	registerCommonAuthenticationServerProtocols()
 
