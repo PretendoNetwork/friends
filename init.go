@@ -2,6 +2,7 @@ package main
 
 import (
 	"cmp"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
 	"os"
@@ -36,8 +37,6 @@ func init() {
 
 	postgresURI := os.Getenv("PN_FRIENDS_CONFIG_DATABASE_URI")
 	databaseMaxConnectionsStr := cmp.Or(os.Getenv("PN_FRIENDS_CONFIG_DATABASE_MAX_CONNECTIONS"), "100")
-	authenticationServerPassword := os.Getenv("PN_FRIENDS_CONFIG_AUTHENTICATION_PASSWORD")
-	secureServerPassword := os.Getenv("PN_FRIENDS_CONFIG_SECURE_PASSWORD")
 	aesKey := os.Getenv("PN_FRIENDS_CONFIG_AES_KEY")
 	grpcAPIKey := os.Getenv("PN_FRIENDS_CONFIG_GRPC_API_KEY")
 	grpcServerPort := os.Getenv("PN_FRIENDS_GRPC_SERVER_PORT")
@@ -62,21 +61,18 @@ func init() {
 		globals.DatabaseMaxConnections = databaseMaxConnections
 	}
 
-	if strings.TrimSpace(authenticationServerPassword) == "" {
-		globals.Logger.Error("PN_FRIENDS_CONFIG_AUTHENTICATION_PASSWORD environment variable not set")
+	kerberosPassword := make([]byte, 0x10)
+	_, err = rand.Read(kerberosPassword)
+	if err != nil {
+		globals.Logger.Error("Error generating Kerberos password")
 		os.Exit(0)
 	}
 
-	globals.AuthenticationServerAccount = nex.NewAccount(nex_types.NewPID(1), "Quazal Authentication", authenticationServerPassword)
+	globals.KerberosPassword = string(kerberosPassword)
 
-	if strings.TrimSpace(secureServerPassword) == "" {
-		globals.Logger.Error("PN_FRIENDS_CONFIG_SECURE_PASSWORD environment variable not set")
-		os.Exit(0)
-	}
-
-	globals.SecureServerAccount = nex.NewAccount(nex_types.NewPID(2), "Quazal Rendez-Vous", secureServerPassword)
-
-	globals.GuestAccount = nex.NewAccount(nex_types.NewPID(100), "guest", "MMQea3n!fsik") // * Guest account password is always the same, known to all consoles
+	globals.AuthenticationServerAccount = nex.NewAccount(nex_types.NewPID(1), "Quazal Authentication", globals.KerberosPassword)
+	globals.SecureServerAccount = nex.NewAccount(nex_types.NewPID(2), "Quazal Rendez-Vous", globals.KerberosPassword)
+	globals.GuestAccount = nex.NewAccount(nex_types.NewPID(100), "guest", "MMQea3n!fsik") // * Guest account password is always the same, known to all consoles. Only allow on the friends server
 
 	if strings.TrimSpace(aesKey) == "" {
 		globals.Logger.Error("PN_FRIENDS_CONFIG_AES_KEY environment variable not set")
