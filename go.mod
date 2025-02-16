@@ -8,7 +8,7 @@ require (
 	github.com/PretendoNetwork/grpc-go v1.0.2
 	github.com/PretendoNetwork/nex-go/v2 v2.1.2
 	github.com/PretendoNetwork/nex-protocols-common-go/v2 v2.2.2
-	github.com/PretendoNetwork/nex-protocols-go/v2 v2.2.0
+	github.com/PretendoNetwork/nex-protocols-go/v2 v2.2.1
 	github.com/PretendoNetwork/plogger-go v1.0.4
 	github.com/PretendoNetwork/sql-manager v1.0.0
 	github.com/golang/protobuf v1.5.4

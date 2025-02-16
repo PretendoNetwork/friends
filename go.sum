@@ -4,8 +4,8 @@ github.com/PretendoNetwork/nex-go/v2 v2.1.2 h1:OJFAS6U6VNzZ4YzteKqUEZ5aJMwWIHODe
 github.com/PretendoNetwork/nex-go/v2 v2.1.2/go.mod h1:3LyJzsv3AataJW8D0binp15Q8ZH22MWTYly1VNtXi64=
 github.com/PretendoNetwork/nex-protocols-common-go/v2 v2.2.2 h1:rBJNZDJ92pa9fU3Og0sanyizJTWnELPoGR0Tjz8zlws=
 github.com/PretendoNetwork/nex-protocols-common-go/v2 v2.2.2/go.mod h1:iuNMuBK/zww+44d6ajfLsOusXx/6Llj3zSkmhJwMuuM=
-github.com/PretendoNetwork/nex-protocols-go/v2 v2.2.0 h1:abbCXgYN9icR9hmGV9GkuiOvg92+WBeVTnvtiAU06QU=
-github.com/PretendoNetwork/nex-protocols-go/v2 v2.2.0/go.mod h1:+soBHmwX6ixGxj6cphLuCvfJqxcZPuowc/5e7Qi9Bz0=
+github.com/PretendoNetwork/nex-protocols-go/v2 v2.2.1 h1:/dsuP0W7bZNvrXoXH0ZRdxpxonfbWmmson51WCQdpEQ=
+github.com/PretendoNetwork/nex-protocols-go/v2 v2.2.1/go.mod h1:+soBHmwX6ixGxj6cphLuCvfJqxcZPuowc/5e7Qi9Bz0=
 github.com/PretendoNetwork/plogger-go v1.0.4 h1:PF7xHw9eDRHH+RsAP9tmAE7fG0N0p6H4iPwHKnsoXwc=
 github.com/PretendoNetwork/plogger-go v1.0.4/go.mod h1:7kD6M4vPq1JL4LTuPg6kuB1OvUBOwQOtAvTaUwMbwvU=
 github.com/PretendoNetwork/sql-manager v1.0.0 h1:g0SYpQgi6Kk4ptufrLTSmDxvqaYioTcfXaDH+uXC+a0=
