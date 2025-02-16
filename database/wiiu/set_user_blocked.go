@@ -14,7 +14,7 @@ func SetUserBlocked(blockerPID uint32, blockedPID uint32, titleID uint64, titleV
 	VALUES ($1, $2, $3, $4, $5)
 	ON CONFLICT (blocker_pid, blocked_pid)
 	DO UPDATE SET
-	date = $5`, blockerPID, blockedPID, titleID, titleVersion, date.Value())
+	date = $5`, blockerPID, blockedPID, titleID, titleVersion, uint64(date))
 	if err != nil {
 		return err
 	}

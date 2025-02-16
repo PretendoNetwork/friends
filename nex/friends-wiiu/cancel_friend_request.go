@@ -10,7 +10,7 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
 )
 
-func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, id *types.PrimitiveU64) (*nex.RMCMessage, *nex.Error) {
+func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, id types.UInt64) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -18,7 +18,7 @@ func CancelFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	pid, err := database_wiiu.DeleteFriendRequestAndReturnFriendPID(id.Value)
+	pid, err := database_wiiu.DeleteFriendRequestAndReturnFriendPID(uint64(id))
 	if err != nil {
 		if err == database.ErrFriendRequestNotFound {
 			return nil, nex.NewError(nex.ResultCodes.FPD.InvalidMessageID, "") // TODO - Add error message

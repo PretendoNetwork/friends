@@ -10,7 +10,7 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence *friends_3ds_types.NintendoPresence, showGame *types.PrimitiveBool) (*nex.RMCMessage, *nex.Error) {
+func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence friends_3ds_types.NintendoPresence, showGame types.Bool) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -18,18 +18,18 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	currentPresence := presence.Copy().(*friends_3ds_types.NintendoPresence)
+	currentPresence := presence.Copy().(friends_3ds_types.NintendoPresence)
 
 	// Send an entirely empty status, with every flag set to update
-	if !showGame.Value {
+	if !showGame {
 		currentPresence = friends_3ds_types.NewNintendoPresence()
 		currentPresence.GameKey = friends_3ds_types.NewGameKey()
-		currentPresence.ChangedFlags = types.NewPrimitiveU32(0xFFFFFFFF) // * All flags
+		currentPresence.ChangedFlags = types.NewUInt32(0xFFFFFFFF) // * All flags
 	}
 
 	go notifications_3ds.SendPresenceUpdate(connection, currentPresence)
 
-	pid := connection.PID().LegacyValue()
+	pid := uint32(connection.PID())
 	connectedUser, ok := globals.ConnectedUsers.Get(pid)
 
 	if !ok || connectedUser == nil {

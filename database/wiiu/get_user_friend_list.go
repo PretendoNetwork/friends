@@ -10,9 +10,8 @@ import (
 )
 
 // GetUserFriendList returns a user's friend list
-func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo], error) {
-	friendList := types.NewList[*friends_wiiu_types.FriendInfo]()
-	friendList.Type = friends_wiiu_types.NewFriendInfo()
+func GetUserFriendList(pid uint32) (types.List[friends_wiiu_types.FriendInfo], error) {
+	friendList := types.NewList[friends_wiiu_types.FriendInfo]()
 
 	rows, err := database.Manager.Query(`
 	SELECT
@@ -62,26 +61,26 @@ func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo],
 		}
 
 		comment := friends_wiiu_types.NewComment()
-		comment.Unknown = types.NewPrimitiveU8(0)
+		comment.Unknown = types.NewUInt8(0)
 		comment.Contents = types.NewString(commentContents)
 		comment.LastChanged = types.NewDateTime(commentChanged)
 
 		mii := friends_wiiu_types.NewMiiV2()
 		mii.Name = types.NewString(miiName)
-		mii.Unknown1 = types.NewPrimitiveU8(miiUnknown1)
-		mii.Unknown2 = types.NewPrimitiveU8(miiUnknown2)
+		mii.Unknown1 = types.NewUInt8(miiUnknown1)
+		mii.Unknown2 = types.NewUInt8(miiUnknown2)
 		mii.MiiData = types.NewBuffer(miiData)
 		mii.Datetime = types.NewDateTime(miiDatetime)
 
 		principalBasicInfo := friends_wiiu_types.NewPrincipalBasicInfo()
 		principalBasicInfo.PID = types.NewPID(uint64(friendPID))
 		principalBasicInfo.NNID = types.NewString(nnid)
-		principalBasicInfo.Unknown = types.NewPrimitiveU8(unknown)
+		principalBasicInfo.Unknown = types.NewUInt8(unknown)
 		principalBasicInfo.Mii = mii
 
 		nnaInfo := friends_wiiu_types.NewNNAInfo()
-		nnaInfo.Unknown1 = types.NewPrimitiveU8(unknown1)
-		nnaInfo.Unknown2 = types.NewPrimitiveU8(unknown2)
+		nnaInfo.Unknown1 = types.NewUInt8(unknown1)
+		nnaInfo.Unknown2 = types.NewUInt8(unknown2)
 		nnaInfo.PrincipalBasicInfo = principalBasicInfo
 
 		friendInfo := friends_wiiu_types.NewFriendInfo()
@@ -91,7 +90,7 @@ func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo],
 		connectedUser, ok := globals.ConnectedUsers.Get(friendPID)
 		if ok && connectedUser != nil {
 			// * Online
-			friendInfo.Presence = connectedUser.PresenceV2.Copy().(*friends_wiiu_types.NintendoPresenceV2)
+			friendInfo.Presence = connectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
 		} else {
 			// * Offline
 			lastOnline = types.NewDateTime(lastOnlineTime) // TODO - Change this
@@ -100,9 +99,9 @@ func GetUserFriendList(pid uint32) (*types.List[*friends_wiiu_types.FriendInfo],
 		friendInfo.Status = comment
 		friendInfo.BecameFriend = types.NewDateTime(date)
 		friendInfo.LastOnline = lastOnline
-		friendInfo.Unknown = types.NewPrimitiveU64(0)
+		friendInfo.Unknown = types.NewUInt64(0)
 
-		friendList.Append(friendInfo)
+		friendList = append(friendList, friendInfo)
 	}
 
 	return friendList, nil

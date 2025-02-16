@@ -8,7 +8,7 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func UpdateProfile(err error, packet nex.PacketInterface, callID uint32, profileData *friends_3ds_types.MyProfile) (*nex.RMCMessage, *nex.Error) {
+func UpdateProfile(err error, packet nex.PacketInterface, callID uint32, profileData friends_3ds_types.MyProfile) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -16,7 +16,7 @@ func UpdateProfile(err error, packet nex.PacketInterface, callID uint32, profile
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_3ds.UpdateUserProfile(connection.PID().LegacyValue(), profileData)
+	err = database_3ds.UpdateUserProfile(uint32(connection.PID()), profileData)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message

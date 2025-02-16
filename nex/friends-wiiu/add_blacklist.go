@@ -10,7 +10,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func AddBlackList(err error, packet nex.PacketInterface, callID uint32, blacklistPrincipal *friends_wiiu_types.BlacklistedPrincipal) (*nex.RMCMessage, *nex.Error) {
+func AddBlackList(err error, packet nex.PacketInterface, callID uint32, blacklistPrincipal friends_wiiu_types.BlacklistedPrincipal) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -24,7 +24,7 @@ func AddBlackList(err error, packet nex.PacketInterface, callID uint32, blacklis
 	titleID := currentBlacklistPrincipal.GameKey.TitleID
 	titleVersion := currentBlacklistPrincipal.GameKey.TitleVersion
 
-	userInfo, err := database_wiiu.GetUserPrincipalBasicInfo(currentBlacklistPrincipal.PrincipalBasicInfo.PID.LegacyValue())
+	userInfo, err := database_wiiu.GetUserPrincipalBasicInfo(uint32(currentBlacklistPrincipal.PrincipalBasicInfo.PID))
 	if err != nil {
 		if err == database.ErrPIDNotFound {
 			// TODO - Not sure if this is the correct error.
@@ -38,7 +38,7 @@ func AddBlackList(err error, packet nex.PacketInterface, callID uint32, blacklis
 	currentBlacklistPrincipal.PrincipalBasicInfo = userInfo
 	currentBlacklistPrincipal.BlackListedSince = types.NewDateTime(0).Now()
 
-	err = database_wiiu.SetUserBlocked(connection.PID().LegacyValue(), senderPID.LegacyValue(), titleID.Value, titleVersion.Value)
+	err = database_wiiu.SetUserBlocked(uint32(connection.PID()), uint32(senderPID), uint64(titleID), uint16(titleVersion))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message

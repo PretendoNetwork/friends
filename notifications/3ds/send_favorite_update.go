@@ -13,13 +13,12 @@ import (
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
-func SendFavoriteUpdate(connection *nex.PRUDPConnection, gameKey *friends_3ds_types.GameKey) {
+func SendFavoriteUpdate(connection *nex.PRUDPConnection, gameKey friends_3ds_types.GameKey) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewPrimitiveU32(2)
+	eventObject.Type = types.NewUInt32(2)
 	eventObject.SenderPID = connection.PID()
-	eventObject.DataHolder = types.NewAnyDataHolder()
-	eventObject.DataHolder.TypeName = types.NewString("GameKey")
-	eventObject.DataHolder.ObjectData = gameKey.Copy()
+	eventObject.DataHolder = types.NewDataHolder()
+	eventObject.DataHolder.Object = gameKey.Copy().(friends_3ds_types.GameKey)
 
 	stream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
@@ -33,7 +32,7 @@ func SendFavoriteUpdate(connection *nex.PRUDPConnection, gameKey *friends_3ds_ty
 
 	notificationRequestBytes := notificationRequest.Bytes()
 
-	friendsList, err := database_3ds.GetUserFriends(connection.PID().LegacyValue())
+	friendsList, err := database_3ds.GetUserFriends(uint32(connection.PID()))
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 	}
@@ -42,8 +41,8 @@ func SendFavoriteUpdate(connection *nex.PRUDPConnection, gameKey *friends_3ds_ty
 		return
 	}
 
-	friendsList.Each(func(i int, friend *friends_3ds_types.FriendRelationship) bool {
-		connectedUser, ok := globals.ConnectedUsers.Get(friend.PID.LegacyValue())
+	for _, friend := range friendsList {
+		connectedUser, ok := globals.ConnectedUsers.Get(uint32(friend.PID))
 
 		if ok && connectedUser != nil {
 			requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connectedUser.Connection, nil)
@@ -59,7 +58,5 @@ func SendFavoriteUpdate(connection *nex.PRUDPConnection, gameKey *friends_3ds_ty
 
 			globals.SecureServer.Send(requestPacket)
 		}
-
-		return false
-	})
+	}
 }

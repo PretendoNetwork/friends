@@ -9,9 +9,8 @@ import (
 )
 
 // GetUserBlockList returns a user's blacklist
-func GetUserBlockList(pid uint32) (*types.List[*friends_wiiu_types.BlacklistedPrincipal], error) {
-	blockList := types.NewList[*friends_wiiu_types.BlacklistedPrincipal]()
-	blockList.Type = friends_wiiu_types.NewBlacklistedPrincipal()
+func GetUserBlockList(pid uint32) (types.List[friends_wiiu_types.BlacklistedPrincipal], error) {
+	blockList := types.NewList[friends_wiiu_types.BlacklistedPrincipal]()
 
 	rows, err := database.Manager.Query(`
 	SELECT
@@ -54,25 +53,25 @@ func GetUserBlockList(pid uint32) (*types.List[*friends_wiiu_types.BlacklistedPr
 
 		mii := friends_wiiu_types.NewMiiV2()
 		mii.Name = types.NewString(miiName)
-		mii.Unknown1 = types.NewPrimitiveU8(miiUnknown1)
-		mii.Unknown2 = types.NewPrimitiveU8(miiUnknown2)
+		mii.Unknown1 = types.NewUInt8(miiUnknown1)
+		mii.Unknown2 = types.NewUInt8(miiUnknown2)
 		mii.MiiData = types.NewBuffer(miiData)
 		mii.Datetime = types.NewDateTime(miiDatetime)
 
 		principalBasicInfo := friends_wiiu_types.NewPrincipalBasicInfo()
 		principalBasicInfo.PID = types.NewPID(uint64(blockedPID))
 		principalBasicInfo.NNID = types.NewString(blockedNNID)
-		principalBasicInfo.Unknown = types.NewPrimitiveU8(unknown)
+		principalBasicInfo.Unknown = types.NewUInt8(unknown)
 		principalBasicInfo.Mii = mii
 
 		blacklistPrincipal := friends_wiiu_types.NewBlacklistedPrincipal()
 		blacklistPrincipal.PrincipalBasicInfo = principalBasicInfo
 		blacklistPrincipal.GameKey = friends_wiiu_types.NewGameKey()
-		blacklistPrincipal.GameKey.TitleID = types.NewPrimitiveU64(titleID)
-		blacklistPrincipal.GameKey.TitleVersion = types.NewPrimitiveU16(titleVersion)
+		blacklistPrincipal.GameKey.TitleID = types.NewUInt64(titleID)
+		blacklistPrincipal.GameKey.TitleVersion = types.NewUInt16(titleVersion)
 		blacklistPrincipal.BlackListedSince = types.NewDateTime(date)
 
-		blockList.Append(blacklistPrincipal)
+		blockList = append(blockList, blacklistPrincipal)
 	}
 
 	return blockList, nil

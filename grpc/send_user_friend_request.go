@@ -28,7 +28,7 @@ func (s *gRPCFriendsServer) SendUserFriendRequest(ctx context.Context, in *pb.Se
 
 	message := in.GetMessage()
 
-	id, err := database_wiiu.SaveFriendRequest(sender, recipient, sentTime.Value(), expireTime.Value(), message)
+	id, err := database_wiiu.SaveFriendRequest(sender, recipient, uint64(sentTime), uint64(expireTime), message)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return &pb.SendUserFriendRequestResponse{

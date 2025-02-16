@@ -9,18 +9,17 @@ import (
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
-func SendFriendshipCompleted(connection *nex.PRUDPConnection, senderPID *types.PID) {
+func SendFriendshipCompleted(connection *nex.PRUDPConnection, senderPID types.PID) {
 	notificationEvent := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
-	notificationEvent.U32Param = types.NewPrimitiveU32(0)
-	notificationEvent.U64Param1 = types.NewPrimitiveU64(0) // * Local friend code of sender
-	notificationEvent.U64Param2 = types.NewPrimitiveU64(types.NewDateTime(0).Now().Value()) // * Friendship timestamp
+	notificationEvent.U32Param = types.NewUInt32(0)
+	notificationEvent.U64Param1 = types.NewUInt64(0)                                  // * Local friend code of sender
+	notificationEvent.U64Param2 = types.NewUInt64(uint64(types.NewDateTime(0).Now())) // * Friendship timestamp
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewPrimitiveU32(7)
+	eventObject.Type = types.NewUInt32(7)
 	eventObject.SenderPID = senderPID
-	eventObject.DataHolder = types.NewAnyDataHolder()
-	eventObject.DataHolder.TypeName = types.NewString("NintendoNotificationEventGeneral")
-	eventObject.DataHolder.ObjectData = notificationEvent.Copy()
+	eventObject.DataHolder = types.NewDataHolder()
+	eventObject.DataHolder.Object = notificationEvent.Copy().(nintendo_notifications_types.NintendoNotificationEventGeneral)
 
 	stream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 

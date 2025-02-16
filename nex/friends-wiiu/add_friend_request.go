@@ -13,7 +13,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid *types.PID, unknown2 *types.PrimitiveU8, message *types.String, unknown4 *types.PrimitiveU8, unknown5 *types.String, gameKey *friends_wiiu_types.GameKey, unknown6 *types.DateTime) (*nex.RMCMessage, *nex.Error) {
+func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid types.PID, unknown2 types.UInt8, message types.String, unknown4 types.UInt8, unknown5 types.String, gameKey friends_wiiu_types.GameKey, unknown6 types.DateTime) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -21,8 +21,8 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	senderPID := connection.PID().LegacyValue()
-	recipientPID := pid.LegacyValue()
+	senderPID := uint32(connection.PID())
+	recipientPID := uint32(pid)
 
 	senderPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfo(senderPID)
 	if err != nil {
@@ -51,7 +51,7 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 	sentTime.FromTimestamp(currentTimestamp)
 	expireTime.FromTimestamp(expireTimestamp)
 
-	friendRequestID, err := database_wiiu.SaveFriendRequest(senderPID, recipientPID, sentTime.Value(), expireTime.Value(), message.Value)
+	friendRequestID, err := database_wiiu.SaveFriendRequest(senderPID, recipientPID, uint64(sentTime), uint64(expireTime), string(message))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
@@ -62,15 +62,15 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 	friendRequest.PrincipalInfo = recipientPrincipalInfo
 
 	friendRequest.Message = friends_wiiu_types.NewFriendRequestMessage()
-	friendRequest.Message.FriendRequestID = types.NewPrimitiveU64(friendRequestID)
-	friendRequest.Message.Received = types.NewPrimitiveBool(false)
-	friendRequest.Message.Unknown2 = types.NewPrimitiveU8(1) // * Replaying from official server
+	friendRequest.Message.FriendRequestID = types.NewUInt64(friendRequestID)
+	friendRequest.Message.Received = types.NewBool(false)
+	friendRequest.Message.Unknown2 = types.NewUInt8(1) // * Replaying from official server
 	friendRequest.Message.Message = message
-	friendRequest.Message.Unknown3 = types.NewPrimitiveU8(0) // * Replaying from official server
-	friendRequest.Message.Unknown4 = types.NewString("")     // * Replaying from official server
-	friendRequest.Message.GameKey = gameKey                  // * Maybe this is reused?
-	friendRequest.Message.Unknown5 = unknown6                // * Maybe this is reused?
-	friendRequest.Message.ExpiresOn = expireTime             // * No idea why this is set as the sent time
+	friendRequest.Message.Unknown3 = types.NewUInt8(0)   // * Replaying from official server
+	friendRequest.Message.Unknown4 = types.NewString("") // * Replaying from official server
+	friendRequest.Message.GameKey = gameKey              // * Maybe this is reused?
+	friendRequest.Message.Unknown5 = unknown6            // * Maybe this is reused?
+	friendRequest.Message.ExpiresOn = expireTime         // * No idea why this is set as the sent time
 	friendRequest.SentOn = sentTime
 
 	// * Why does this exist?? Always empty??
@@ -82,39 +82,39 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 	friendInfo.NNAInfo.PrincipalBasicInfo.NNID = types.NewString("")
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu_types.NewMiiV2()
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = types.NewString("")
-	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = types.NewPrimitiveU8(0)
-	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = types.NewPrimitiveU8(0)
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = types.NewUInt8(0)
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = types.NewUInt8(0)
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.MiiData = types.NewBuffer([]byte{})
 	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Datetime = types.NewDateTime(0)
-	friendInfo.NNAInfo.PrincipalBasicInfo.Unknown = types.NewPrimitiveU8(0)
-	friendInfo.NNAInfo.Unknown1 = types.NewPrimitiveU8(0)
-	friendInfo.NNAInfo.Unknown2 = types.NewPrimitiveU8(0)
+	friendInfo.NNAInfo.PrincipalBasicInfo.Unknown = types.NewUInt8(0)
+	friendInfo.NNAInfo.Unknown1 = types.NewUInt8(0)
+	friendInfo.NNAInfo.Unknown2 = types.NewUInt8(0)
 
 	friendInfo.Presence = friends_wiiu_types.NewNintendoPresenceV2()
-	friendInfo.Presence.ChangedFlags = types.NewPrimitiveU32(0)
-	friendInfo.Presence.Online = types.NewPrimitiveBool(false)
+	friendInfo.Presence.ChangedFlags = types.NewUInt32(0)
+	friendInfo.Presence.Online = types.NewBool(false)
 	friendInfo.Presence.GameKey = gameKey // * Maybe this is reused?
-	friendInfo.Presence.Unknown1 = types.NewPrimitiveU8(0)
+	friendInfo.Presence.Unknown1 = types.NewUInt8(0)
 	friendInfo.Presence.Message = types.NewString("")
-	friendInfo.Presence.Unknown2 = types.NewPrimitiveU32(0)
-	friendInfo.Presence.Unknown3 = types.NewPrimitiveU8(0)
-	friendInfo.Presence.GameServerID = types.NewPrimitiveU32(0)
-	friendInfo.Presence.Unknown4 = types.NewPrimitiveU32(0)
+	friendInfo.Presence.Unknown2 = types.NewUInt32(0)
+	friendInfo.Presence.Unknown3 = types.NewUInt8(0)
+	friendInfo.Presence.GameServerID = types.NewUInt32(0)
+	friendInfo.Presence.Unknown4 = types.NewUInt32(0)
 	friendInfo.Presence.PID = types.NewPID(0)
-	friendInfo.Presence.GatheringID = types.NewPrimitiveU32(0)
+	friendInfo.Presence.GatheringID = types.NewUInt32(0)
 	friendInfo.Presence.ApplicationData = types.NewBuffer([]byte{0x00})
-	friendInfo.Presence.Unknown5 = types.NewPrimitiveU8(0)
-	friendInfo.Presence.Unknown6 = types.NewPrimitiveU8(0)
-	friendInfo.Presence.Unknown7 = types.NewPrimitiveU8(0)
+	friendInfo.Presence.Unknown5 = types.NewUInt8(0)
+	friendInfo.Presence.Unknown6 = types.NewUInt8(0)
+	friendInfo.Presence.Unknown7 = types.NewUInt8(0)
 
 	friendInfo.Status = friends_wiiu_types.NewComment()
-	friendInfo.Status.Unknown = types.NewPrimitiveU8(0)
+	friendInfo.Status.Unknown = types.NewUInt8(0)
 	friendInfo.Status.Contents = types.NewString("")
 	friendInfo.Status.LastChanged = types.NewDateTime(0)
 
 	friendInfo.BecameFriend = types.NewDateTime(0)
 	friendInfo.LastOnline = types.NewDateTime(0)
-	friendInfo.Unknown = types.NewPrimitiveU64(0)
+	friendInfo.Unknown = types.NewUInt64(0)
 
 	recipientClient, ok := globals.ConnectedUsers.Get(recipientPID)
 
@@ -123,15 +123,15 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 
 		friendRequestNotificationData.PrincipalInfo = senderPrincipalInfo
 		friendRequestNotificationData.Message = friends_wiiu_types.NewFriendRequestMessage()
-		friendRequestNotificationData.Message.FriendRequestID = types.NewPrimitiveU64(friendRequestID)
-		friendRequestNotificationData.Message.Received = types.NewPrimitiveBool(false)
-		friendRequestNotificationData.Message.Unknown2 = types.NewPrimitiveU8(1) // * Replaying from official server
+		friendRequestNotificationData.Message.FriendRequestID = types.NewUInt64(friendRequestID)
+		friendRequestNotificationData.Message.Received = types.NewBool(false)
+		friendRequestNotificationData.Message.Unknown2 = types.NewUInt8(1) // * Replaying from official server
 		friendRequestNotificationData.Message.Message = message
-		friendRequestNotificationData.Message.Unknown3 = types.NewPrimitiveU8(0) // * Replaying from server server
-		friendRequestNotificationData.Message.Unknown4 = types.NewString("")     // * Replaying from server server
-		friendRequestNotificationData.Message.GameKey = gameKey                  // * Maybe this is reused?
-		friendRequestNotificationData.Message.Unknown5 = unknown6                // * Maybe this is reused?
-		friendRequestNotificationData.Message.ExpiresOn = expireTime             // * No idea why this is set as the sent time
+		friendRequestNotificationData.Message.Unknown3 = types.NewUInt8(0)   // * Replaying from server server
+		friendRequestNotificationData.Message.Unknown4 = types.NewString("") // * Replaying from server server
+		friendRequestNotificationData.Message.GameKey = gameKey              // * Maybe this is reused?
+		friendRequestNotificationData.Message.Unknown5 = unknown6            // * Maybe this is reused?
+		friendRequestNotificationData.Message.ExpiresOn = expireTime         // * No idea why this is set as the sent time
 		friendRequestNotificationData.SentOn = sentTime
 
 		go notifications_wiiu.SendFriendRequest(recipientClient.Connection, friendRequestNotificationData)

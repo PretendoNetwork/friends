@@ -10,7 +10,6 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
 func (s *gRPCFriendsServer) GetUserFriendRequestsIncoming(ctx context.Context, in *pb.GetUserFriendRequestsIncomingRequest) (*pb.GetUserFriendRequestsIncomingResponse, error) {
@@ -20,23 +19,21 @@ func (s *gRPCFriendsServer) GetUserFriendRequestsIncoming(ctx context.Context, i
 		return nil, status.Errorf(codes.Internal, "internal server error")
 	}
 
-	friendRequests := make([]*pb.FriendRequest, 0, friendRequestsIn.Length())
+	friendRequests := make([]*pb.FriendRequest, 0, len(friendRequestsIn))
 
 	if friendRequestsIn != nil {
-		friendRequestsIn.Each(func(i int, friendRequestIn *friends_wiiu_types.FriendRequest) bool {
+		for _, friendRequestIn := range friendRequestsIn {
 			friendRequest := &pb.FriendRequest{
-				Id:        friendRequestIn.Message.FriendRequestID.Value,
-				Sender:    friendRequestIn.PrincipalInfo.PID.LegacyValue(),
+				Id:        uint64(friendRequestIn.Message.FriendRequestID),
+				Sender:    uint32(friendRequestIn.PrincipalInfo.PID),
 				Recipient: in.GetPid(),
 				Sent:      uint64(friendRequestIn.SentOn.Standard().Unix()),
 				Expires:   uint64(friendRequestIn.Message.ExpiresOn.Standard().Unix()),
-				Message:   friendRequestIn.Message.Message.Value,
+				Message:   string(friendRequestIn.Message.Message),
 			}
 
 			friendRequests = append(friendRequests, friendRequest)
-
-			return false
-		})
+		}
 	}
 
 	return &pb.GetUserFriendRequestsIncomingResponse{

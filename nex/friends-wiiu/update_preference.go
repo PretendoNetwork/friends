@@ -8,7 +8,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, principalPreference *friends_wiiu_types.PrincipalPreference) (*nex.RMCMessage, *nex.Error) {
+func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, principalPreference friends_wiiu_types.PrincipalPreference) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -16,7 +16,7 @@ func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, prin
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_wiiu.UpdateUserPrincipalPreference(connection.PID().LegacyValue(), principalPreference)
+	err = database_wiiu.UpdateUserPrincipalPreference(uint32(connection.PID()), principalPreference)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message

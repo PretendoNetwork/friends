@@ -10,7 +10,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence *friends_wiiu_types.NintendoPresenceV2) (*nex.RMCMessage, *nex.Error) {
+func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presence friends_wiiu_types.NintendoPresenceV2) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -18,10 +18,10 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	pid := connection.PID().LegacyValue()
+	pid := uint32(connection.PID())
 
-	presence.Online = types.NewPrimitiveBool(true) // * Force online status. I have no idea why this is always false
-	presence.PID = connection.PID()                // * WHY IS THIS SET TO 0 BY DEFAULT??
+	presence.Online = types.NewBool(true) // * Force online status. I have no idea why this is always false
+	presence.PID = connection.PID()       // * WHY IS THIS SET TO 0 BY DEFAULT??
 
 	connectedUser, ok := globals.ConnectedUsers.Get(pid)
 
@@ -36,7 +36,7 @@ func UpdatePresence(err error, packet nex.PacketInterface, callID uint32, presen
 		globals.ConnectedUsers.Set(pid, connectedUser)
 	}
 
-	connectedUser.PresenceV2 = presence.Copy().(*friends_wiiu_types.NintendoPresenceV2)
+	connectedUser.PresenceV2 = presence.Copy().(friends_wiiu_types.NintendoPresenceV2)
 
 	notifications_wiiu.SendPresenceUpdate(presence)
 

@@ -10,7 +10,7 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
 )
 
-func RemoveFriend(err error, packet nex.PacketInterface, callID uint32, pid *types.PID) (*nex.RMCMessage, *nex.Error) {
+func RemoveFriend(err error, packet nex.PacketInterface, callID uint32, pid types.PID) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -18,7 +18,7 @@ func RemoveFriend(err error, packet nex.PacketInterface, callID uint32, pid *typ
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_wiiu.RemoveFriendship(connection.PID().LegacyValue(), pid.LegacyValue())
+	err = database_wiiu.RemoveFriendship(uint32(connection.PID()), uint32(pid))
 	if err != nil {
 		if err == database.ErrFriendshipNotFound {
 			return nil, nex.NewError(nex.ResultCodes.FPD.NotInMyFriendList, "") // TODO - Add error message
@@ -28,7 +28,7 @@ func RemoveFriend(err error, packet nex.PacketInterface, callID uint32, pid *typ
 		}
 	}
 
-	connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
+	connectedUser, ok := globals.ConnectedUsers.Get(uint32(pid))
 	if ok && connectedUser != nil {
 		go notifications_wiiu.SendFriendshipRemoved(connectedUser.Connection, pid)
 	}

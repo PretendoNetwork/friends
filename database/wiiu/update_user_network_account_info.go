@@ -7,7 +7,7 @@ import (
 )
 
 // UpdateNetworkAccountInfo updates a user's network account information
-func UpdateNetworkAccountInfo(pid uint32, nnaInfo *friends_wiiu_types.NNAInfo, birthday *types.DateTime) error {
+func UpdateNetworkAccountInfo(pid uint32, nnaInfo friends_wiiu_types.NNAInfo, birthday types.DateTime) error {
 	_, err := database.Manager.Exec(
 		`INSERT INTO wiiu.network_account_info (pid, unknown1, unknown2, birthday)
 		VALUES ($1, $2, $3, $4)
@@ -15,9 +15,9 @@ func UpdateNetworkAccountInfo(pid uint32, nnaInfo *friends_wiiu_types.NNAInfo, b
 		DO UPDATE
 		SET unknown1 = $2, unknown2 = $3, birthday = $4`,
 		pid,
-		nnaInfo.Unknown1.Value,
-		nnaInfo.Unknown2.Value,
-		birthday.Value(),
+		uint8(nnaInfo.Unknown1),
+		uint8(nnaInfo.Unknown2),
+		uint64(birthday),
 	)
 	if err != nil {
 		return err

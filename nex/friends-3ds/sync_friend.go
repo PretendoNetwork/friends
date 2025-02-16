@@ -13,7 +13,7 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc *types.PrimitiveU64, pids *types.List[*types.PID], lfcList *types.List[*types.PrimitiveU64]) (*nex.RMCMessage, *nex.Error) {
+func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc types.UInt64, pids types.List[types.PID], lfcList types.List[types.UInt64]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -21,63 +21,53 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc *types
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	friendRelationships, err := database_3ds.GetUserFriends(connection.PID().LegacyValue())
+	friendRelationships, err := database_3ds.GetUserFriends(uint32(connection.PID()))
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	if friendRelationships.Each(func(i int, relationship *friends_3ds_types.FriendRelationship) bool {
+	for _, relationship := range friendRelationships {
 		var hasPID bool
-		pids.Each(func(i int, pid *types.PID) bool {
-			if pid.Equals(relationship.PID) {
+		for _, pid := range pids {
+			if pid == relationship.PID {
 				hasPID = true
-				return true
-			}
-
-			return false
-		})
-
-		if !hasPID {
-			err := database_3ds.RemoveFriendship(connection.PID().LegacyValue(), relationship.PID.LegacyValue())
-			if err != nil && err != database.ErrFriendshipNotFound {
-				globals.Logger.Critical(err.Error())
-				return true
+				break
 			}
 		}
 
-		return false
-	}) {
-		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+		if !hasPID {
+			err := database_3ds.RemoveFriendship(uint32(connection.PID()), uint32(relationship.PID))
+			if err != nil && err != database.ErrFriendshipNotFound {
+				globals.Logger.Critical(err.Error())
+				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+			}
+		}
 	}
 
-	relationships := friendRelationships.Slice()
+	// TODO - Not needed?
+	relationships := friendRelationships.Copy().(types.List[friends_3ds_types.FriendRelationship])
 
-	if pids.Each(func(i int, pid *types.PID) bool {
-		if !isPIDInRelationships(relationships, pid.LegacyValue()) {
-			relationship, err := database_3ds.SaveFriendship(connection.PID().LegacyValue(), pid.LegacyValue())
+	for _, pid := range pids {
+		if !isPIDInRelationships(relationships, uint32(pid)) {
+			relationship, err := database_3ds.SaveFriendship(uint32(connection.PID()), uint32(pid))
 			if err != nil {
 				globals.Logger.Critical(err.Error())
-				return true
+				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 			}
 
 			relationships = append(relationships, relationship)
 
 			// * Alert the other side, in case they weren't able to get our presence data
-			connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
+			connectedUser, ok := globals.ConnectedUsers.Get(uint32(pid))
 			if ok && connectedUser != nil {
 				go notifications_3ds.SendFriendshipCompleted(connectedUser.Connection, connection.PID())
 			}
 		}
-
-		return false
-	}) {
-		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	syncedRelationships := types.NewList[*friends_3ds_types.FriendRelationship]()
-	syncedRelationships.Type = friends_3ds_types.NewFriendRelationship()
-	syncedRelationships.SetFromData(relationships)
+	// TODO - Not needed?
+	syncedRelationships := relationships.Copy().(types.List[friends_3ds_types.FriendRelationship])
 
 	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
@@ -93,9 +83,9 @@ func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc *types
 	return rmcResponse, nil
 }
 
-func isPIDInRelationships(relationships []*friends_3ds_types.FriendRelationship, pid uint32) bool {
+func isPIDInRelationships(relationships []friends_3ds_types.FriendRelationship, pid uint32) bool {
 	for i := range relationships {
-		if relationships[i].PID.LegacyValue() == pid {
+		if uint32(relationships[i].PID) == pid {
 			return true
 		}
 	}

@@ -6,10 +6,9 @@ import (
 )
 
 // GetUserNotifications returns notifications for a user
-func GetUserNotifications(pid uint32) *types.List[*friends_wiiu_types.PersistentNotification] {
+func GetUserNotifications(pid uint32) types.List[friends_wiiu_types.PersistentNotification] {
 	// TODO - Do this
-	notifications := types.NewList[*friends_wiiu_types.PersistentNotification]()
-	notifications.Type = friends_wiiu_types.NewPersistentNotification()
+	notifications := types.NewList[friends_wiiu_types.PersistentNotification]()
 
 	return notifications
 }

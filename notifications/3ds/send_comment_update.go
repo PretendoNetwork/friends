@@ -8,7 +8,6 @@ import (
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/constants"
 	"github.com/PretendoNetwork/nex-go/v2/types"
-	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
@@ -18,11 +17,10 @@ func SendCommentUpdate(connection *nex.PRUDPConnection, comment string) {
 	notificationEvent.StrParam = types.NewString(comment)
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewPrimitiveU32(3)
+	eventObject.Type = types.NewUInt32(3)
 	eventObject.SenderPID = connection.PID()
-	eventObject.DataHolder = types.NewAnyDataHolder()
-	eventObject.DataHolder.TypeName = types.NewString("NintendoNotificationEventGeneral")
-	eventObject.DataHolder.ObjectData = notificationEvent.Copy()
+	eventObject.DataHolder = types.NewDataHolder()
+	eventObject.DataHolder.Object = notificationEvent.Copy().(nintendo_notifications_types.NintendoNotificationEventGeneral)
 
 	stream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
@@ -36,7 +34,7 @@ func SendCommentUpdate(connection *nex.PRUDPConnection, comment string) {
 
 	notificationRequestBytes := notificationRequest.Bytes()
 
-	friendsList, err := database_3ds.GetUserFriends(connection.PID().LegacyValue())
+	friendsList, err := database_3ds.GetUserFriends(uint32(connection.PID()))
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 	}
@@ -45,8 +43,8 @@ func SendCommentUpdate(connection *nex.PRUDPConnection, comment string) {
 		return
 	}
 
-	friendsList.Each(func(i int, friend *friends_3ds_types.FriendRelationship) bool {
-		connectedUser, ok := globals.ConnectedUsers.Get(friend.PID.LegacyValue())
+	for _, friend := range friendsList {
+		connectedUser, ok := globals.ConnectedUsers.Get(uint32(friend.PID))
 
 		if ok && connectedUser != nil {
 			requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connectedUser.Connection, nil)
@@ -62,7 +60,5 @@ func SendCommentUpdate(connection *nex.PRUDPConnection, comment string) {
 
 			globals.SecureServer.Send(requestPacket)
 		}
-
-		return false
-	})
+	}
 }

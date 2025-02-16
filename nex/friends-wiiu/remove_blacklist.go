@@ -9,7 +9,7 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
 )
 
-func RemoveBlackList(err error, packet nex.PacketInterface, callID uint32, blockedPID *types.PID) (*nex.RMCMessage, *nex.Error) {
+func RemoveBlackList(err error, packet nex.PacketInterface, callID uint32, blockedPID types.PID) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -17,7 +17,7 @@ func RemoveBlackList(err error, packet nex.PacketInterface, callID uint32, block
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_wiiu.UnsetUserBlocked(connection.PID().LegacyValue(), blockedPID.LegacyValue())
+	err = database_wiiu.UnsetUserBlocked(uint32(connection.PID()), uint32(blockedPID))
 	if err != nil {
 		if err == database.ErrPIDNotFound {
 			return nil, nex.NewError(nex.ResultCodes.FPD.NotInMyBlacklist, "") // TODO - Add error message

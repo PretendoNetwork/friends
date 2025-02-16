@@ -8,28 +8,25 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func GetFriendPresence(err error, packet nex.PacketInterface, callID uint32, pidList *types.List[*types.PID]) (*nex.RMCMessage, *nex.Error) {
+func GetFriendPresence(err error, packet nex.PacketInterface, callID uint32, pidList types.List[types.PID]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	presenceList := types.NewList[*friends_3ds_types.FriendPresence]()
-	presenceList.Type = friends_3ds_types.NewFriendPresence()
+	presenceList := types.NewList[friends_3ds_types.FriendPresence]()
 
-	pidList.Each(func(i int, pid *types.PID) bool {
-		connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
+	for _, pid := range pidList {
+		connectedUser, ok := globals.ConnectedUsers.Get(uint32(pid))
 
-		if ok && connectedUser != nil && connectedUser.Presence != nil {
+		if ok && connectedUser != nil {
 			friendPresence := friends_3ds_types.NewFriendPresence()
-			friendPresence.PID = pid.Copy().(*types.PID)
-			friendPresence.Presence = connectedUser.Presence.Copy().(*friends_3ds_types.NintendoPresence)
+			friendPresence.PID = pid.Copy().(types.PID)
+			friendPresence.Presence = connectedUser.Presence.Copy().(friends_3ds_types.NintendoPresence)
 
-			presenceList.Append(friendPresence)
+			presenceList = append(presenceList, friendPresence)
 		}
-
-		return false
-	})
+	}
 
 	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 

@@ -8,22 +8,18 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
 )
 
-func MarkFriendRequestsAsReceived(err error, packet nex.PacketInterface, callID uint32, ids *types.List[*types.PrimitiveU64]) (*nex.RMCMessage, *nex.Error) {
+func MarkFriendRequestsAsReceived(err error, packet nex.PacketInterface, callID uint32, ids types.List[types.UInt64]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	if ids.Each(func(i int, id *types.PrimitiveU64) bool {
-		err = database_wiiu.SetFriendRequestReceived(id.Value)
+	for _, id := range ids {
+		err = database_wiiu.SetFriendRequestReceived(uint64(id))
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			return true
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 		}
-
-		return false
-	}) {
-		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
 	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, nil)

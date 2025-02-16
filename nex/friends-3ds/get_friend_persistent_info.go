@@ -10,7 +10,7 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
 )
 
-func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint32, pidList *types.List[*types.PID]) (*nex.RMCMessage, *nex.Error) {
+func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint32, pidList types.List[types.PID]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
@@ -18,15 +18,13 @@ func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint3
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	friendPIDs := make([]uint32, pidList.Length())
+	friendPIDs := make([]uint32, len(pidList))
 
-	pidList.Each(func(i int, pid *types.PID) bool {
-		friendPIDs = append(friendPIDs, pid.LegacyValue())
+	for _, pid := range pidList {
+		friendPIDs = append(friendPIDs, uint32(pid))
+	}
 
-		return false
-	})
-
-	infoList, err := database_3ds.GetFriendPersistentInfos(connection.PID().LegacyValue(), friendPIDs)
+	infoList, err := database_3ds.GetFriendPersistentInfos(uint32(connection.PID()), friendPIDs)
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message

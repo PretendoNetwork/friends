@@ -6,7 +6,7 @@ import (
 )
 
 // UpdateUserPrincipalBasicInfo updates the user's basic info
-func UpdateUserPrincipalBasicInfo(pid uint32, principalBasicInfo *friends_wiiu_types.PrincipalBasicInfo) error {
+func UpdateUserPrincipalBasicInfo(pid uint32, principalBasicInfo friends_wiiu_types.PrincipalBasicInfo) error {
 	_, err := database.Manager.Exec(
 		`INSERT INTO wiiu.principal_basic_info (pid, username, unknown)
 		VALUES ($1, $2, $3)
@@ -14,8 +14,8 @@ func UpdateUserPrincipalBasicInfo(pid uint32, principalBasicInfo *friends_wiiu_t
 		DO UPDATE
 		SET username = $2, unknown = $3`,
 		pid,
-		principalBasicInfo.NNID.Value,
-		principalBasicInfo.Unknown.Value,
+		string(principalBasicInfo.NNID),
+		uint8(principalBasicInfo.Unknown),
 	)
 	if err != nil {
 		return err

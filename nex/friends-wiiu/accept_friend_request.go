@@ -11,7 +11,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, id *types.PrimitiveU64) (*nex.RMCMessage, *nex.Error) {
+func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, id types.UInt64) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -19,7 +19,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(id.Value)
+	friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(uint64(id))
 	if err != nil {
 		if err == database.ErrFriendRequestNotFound {
 			return nil, nex.NewError(nex.ResultCodes.FPD.InvalidMessageID, "") // TODO - Add error message
@@ -29,11 +29,11 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 		}
 	}
 
-	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID.LegacyValue()
+	friendPID := uint32(friendInfo.NNAInfo.PrincipalBasicInfo.PID)
 	connectedUser, ok := globals.ConnectedUsers.Get(friendPID)
 
 	if ok && connectedUser != nil {
-		senderPID := connection.PID().LegacyValue()
+		senderPID := uint32(connection.PID())
 		senderConnectedUser, ok := globals.ConnectedUsers.Get(senderPID)
 
 		if ok && senderConnectedUser != nil {
@@ -47,7 +47,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 			}
 
-			senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(*friends_wiiu_types.NintendoPresenceV2)
+			senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
 
 			status, err := database_wiiu.GetUserComment(senderPID)
 			if err != nil {
@@ -60,7 +60,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 
 			senderFriendInfo.BecameFriend = friendInfo.BecameFriend
 			senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
-			senderFriendInfo.Unknown = types.NewPrimitiveU64(0)
+			senderFriendInfo.Unknown = types.NewUInt64(0)
 
 			go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Connection, senderFriendInfo)
 		}

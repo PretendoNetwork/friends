@@ -9,7 +9,7 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
 )
 
-func AddFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32, lfc *types.PrimitiveU64, pid *types.PID) (*nex.RMCMessage, *nex.Error) {
+func AddFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32, lfc types.UInt64, pid types.PID) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -17,13 +17,13 @@ func AddFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	friendRelationship, err := database_3ds.SaveFriendship(connection.PID().LegacyValue(), pid.LegacyValue())
+	friendRelationship, err := database_3ds.SaveFriendship(uint32(connection.PID()), uint32(pid))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	connectedUser, ok := globals.ConnectedUsers.Get(pid.LegacyValue())
+	connectedUser, ok := globals.ConnectedUsers.Get(uint32(pid))
 	if ok && connectedUser != nil {
 		go notifications_3ds.SendFriendshipCompleted(connectedUser.Connection, connection.PID())
 	}

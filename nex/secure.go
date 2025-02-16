@@ -27,7 +27,7 @@ func StartSecureServer() {
 	globals.SecureEndpoint.AccountDetailsByUsername = globals.AccountDetailsByUsername
 
 	globals.SecureEndpoint.OnConnectionEnded(func(connection *nex.PRUDPConnection) {
-		pid := connection.PID().LegacyValue()
+		pid := uint32(connection.PID())
 		user, ok := globals.ConnectedUsers.Get(pid)
 
 		if !ok || user == nil {

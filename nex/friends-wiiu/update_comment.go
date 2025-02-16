@@ -9,7 +9,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment *friends_wiiu_types.Comment) (*nex.RMCMessage, *nex.Error) {
+func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment friends_wiiu_types.Comment) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -17,7 +17,7 @@ func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	changed, err := database_wiiu.UpdateUserComment(connection.PID().LegacyValue(), comment.Contents.Value)
+	changed, err := database_wiiu.UpdateUserComment(uint32(connection.PID()), string(comment.Contents))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
@@ -25,7 +25,7 @@ func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment
 
 	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	types.NewPrimitiveU64(changed).WriteTo(rmcResponseStream) // TODO - This is ugly
+	types.NewUInt64(changed).WriteTo(rmcResponseStream) // TODO - This is ugly
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

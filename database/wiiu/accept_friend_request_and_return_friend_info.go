@@ -10,21 +10,21 @@ import (
 )
 
 // AcceptFriendRequestAndReturnFriendInfo accepts the given friend reuqest and returns the friend's information
-func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wiiu_types.FriendInfo, error) {
+func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (friends_wiiu_types.FriendInfo, error) {
 	var senderPID uint32
 	var recipientPID uint32
 
 	row, err := database.Manager.QueryRow(`SELECT sender_pid, recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID)
 	if err != nil {
-		return nil, err
+		return friends_wiiu_types.NewFriendInfo(), err
 	}
 
 	err = row.Scan(&senderPID, &recipientPID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, database.ErrFriendRequestNotFound
+			return friends_wiiu_types.NewFriendInfo(), database.ErrFriendRequestNotFound
 		} else {
-			return nil, err
+			return friends_wiiu_types.NewFriendInfo(), err
 		}
 	}
 
@@ -41,9 +41,9 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		ON CONFLICT (user1_pid, user2_pid)
 		DO UPDATE SET
 		date = $3,
-		active = true`, senderPID, recipientPID, acceptedTime.Value())
+		active = true`, senderPID, recipientPID, uint64(acceptedTime))
 	if err != nil {
-		return nil, err
+		return friends_wiiu_types.NewFriendInfo(), err
 	}
 
 	_, err = database.Manager.Exec(`
@@ -52,14 +52,14 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 		ON CONFLICT (user1_pid, user2_pid)
 		DO UPDATE SET
 		date = $3,
-		active = true`, recipientPID, senderPID, acceptedTime.Value())
+		active = true`, recipientPID, senderPID, uint64(acceptedTime))
 	if err != nil {
-		return nil, err
+		return friends_wiiu_types.NewFriendInfo(), err
 	}
 
 	err = SetFriendRequestAccepted(friendRequestID)
 	if err != nil {
-		return nil, err
+		return friends_wiiu_types.NewFriendInfo(), err
 	}
 
 	friendInfo := friends_wiiu_types.NewFriendInfo()
@@ -68,21 +68,21 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 
 	if ok && connectedUser != nil {
 		// * Online
-		friendInfo.Presence = connectedUser.PresenceV2.Copy().(*friends_wiiu_types.NintendoPresenceV2)
+		friendInfo.Presence = connectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
 	} else {
 		// * Offline
 		var lastOnlineTime uint64
 		row, err = database.Manager.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, senderPID)
 		if err != nil {
-			return nil, err
+			return friends_wiiu_types.NewFriendInfo(), err
 		}
 
 		err = row.Scan(&lastOnlineTime)
 		if err != nil {
 			if err == sql.ErrNoRows {
-				return nil, database.ErrPIDNotFound
+				return friends_wiiu_types.NewFriendInfo(), database.ErrPIDNotFound
 			} else {
-				return nil, err
+				return friends_wiiu_types.NewFriendInfo(), err
 			}
 		}
 
@@ -91,13 +91,13 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (*friends_wi
 
 	status, err := GetUserComment(senderPID)
 	if err != nil {
-		return nil, err
+		return friends_wiiu_types.NewFriendInfo(), err
 	}
 
 	friendInfo.Status = status
 	friendInfo.BecameFriend = acceptedTime
 	friendInfo.LastOnline = lastOnline // TODO - Change this
-	friendInfo.Unknown = types.NewPrimitiveU64(0)
+	friendInfo.Unknown = types.NewUInt64(0)
 
 	return friendInfo, nil
 }

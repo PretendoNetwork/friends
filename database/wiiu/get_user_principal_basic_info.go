@@ -9,7 +9,7 @@ import (
 )
 
 // GetUserPrincipalBasicInfo returns the users basic info
-func GetUserPrincipalBasicInfo(pid uint32) (*friends_wiiu_types.PrincipalBasicInfo, error) {
+func GetUserPrincipalBasicInfo(pid uint32) (friends_wiiu_types.PrincipalBasicInfo, error) {
 	principalBasicInfo := friends_wiiu_types.NewPrincipalBasicInfo()
 
 	var nnid string
@@ -17,24 +17,24 @@ func GetUserPrincipalBasicInfo(pid uint32) (*friends_wiiu_types.PrincipalBasicIn
 
 	row, err := database.Manager.QueryRow(`SELECT username, unknown FROM wiiu.principal_basic_info WHERE pid=$1`, pid)
 	if err != nil {
-		return nil, err
+		return principalBasicInfo, err
 	}
 
 	err = row.Scan(&nnid, &unknown)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, database.ErrPIDNotFound
+			return principalBasicInfo, database.ErrPIDNotFound
 		} else {
-			return nil, err
+			return principalBasicInfo, err
 		}
 	}
 
 	principalBasicInfo.PID = types.NewPID(uint64(pid))
 	principalBasicInfo.NNID = types.NewString(nnid)
-	principalBasicInfo.Unknown = types.NewPrimitiveU8(unknown)
+	principalBasicInfo.Unknown = types.NewUInt8(unknown)
 	principalBasicInfo.Mii, err = GetUserMii(pid)
 	if err != nil {
-		return nil, err
+		return principalBasicInfo, err
 	}
 
 	return principalBasicInfo, nil

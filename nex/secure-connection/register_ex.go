@@ -12,7 +12,7 @@ import (
 	secure_connection "github.com/PretendoNetwork/nex-protocols-go/v2/secure-connection"
 )
 
-func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs *types.List[*types.StationURL], hCustomData *types.AnyDataHolder) (*nex.RMCMessage, *nex.Error) {
+func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs types.List[types.StationURL], hCustomData types.DataHolder) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.Core.InvalidArgument, "")
@@ -23,14 +23,14 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs 
 	retval := types.NewQResultSuccess(nex.ResultCodes.Core.Unknown)
 
 	// TODO - Validate loginData
-	pid := connection.PID().LegacyValue()
+	pid := uint32(connection.PID())
 
 	user := friends_types.NewConnectedUser()
 	user.PID = pid
 	user.Connection = connection
 
 	lastOnline := types.NewDateTime(0).Now()
-	loginDataType := hCustomData.TypeName.Value
+	loginDataType := hCustomData.Object.DataObjectID().(types.String)
 
 	switch loginDataType {
 	case "NintendoLoginData":
@@ -54,22 +54,22 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs 
 		retval = types.NewQResultError(nex.ResultCodes.Authentication.ValidationFailed)
 	}
 
-	pidConnectionID := types.NewPrimitiveU32(0)
+	pidConnectionID := types.NewUInt32(0)
 	urlPublic := types.NewString("")
 
 	if retval.IsSuccess() {
 		globals.ConnectedUsers.Set(pid, user)
 
-		localStation, _ := vecMyURLs.Get(0)
+		localStation := vecMyURLs[0]
 
 		address := connection.Address().(*net.UDPAddr)
 
 		localStation.SetAddress(address.IP.String())
 		localStation.SetPortNumber(uint16(address.Port))
 
-		localStationURL := localStation.EncodeToString()
+		localStationURL := localStation.URL()
 
-		pidConnectionID = types.NewPrimitiveU32(connection.ID)
+		pidConnectionID = types.NewUInt32(connection.ID)
 		urlPublic = types.NewString(localStationURL)
 	}
 

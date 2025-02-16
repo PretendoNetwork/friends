@@ -9,7 +9,7 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func UpdateMii(err error, packet nex.PacketInterface, callID uint32, mii *friends_3ds_types.Mii) (*nex.RMCMessage, *nex.Error) {
+func UpdateMii(err error, packet nex.PacketInterface, callID uint32, mii friends_3ds_types.Mii) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -17,7 +17,7 @@ func UpdateMii(err error, packet nex.PacketInterface, callID uint32, mii *friend
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_3ds.UpdateUserMii(connection.PID().LegacyValue(), mii)
+	err = database_3ds.UpdateUserMii(uint32(connection.PID()), mii)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message

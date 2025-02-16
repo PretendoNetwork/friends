@@ -6,7 +6,7 @@ import (
 )
 
 // UpdateUserMii updates the user's Mii
-func UpdateUserMii(pid uint32, mii *friends_wiiu_types.MiiV2) error {
+func UpdateUserMii(pid uint32, mii friends_wiiu_types.MiiV2) error {
 	_, err := database.Manager.Exec(`
 		INSERT INTO wiiu.mii (pid, name, unknown1, unknown2, data, unknown_datetime)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -19,11 +19,11 @@ func UpdateUserMii(pid uint32, mii *friends_wiiu_types.MiiV2) error {
 		data = $5,
 		unknown_datetime = $6`,
 		pid,
-		mii.Name.Value,
-		mii.Unknown1.Value,
-		mii.Unknown2.Value,
-		mii.MiiData.Value,
-		mii.Datetime.Value(),
+		string(mii.Name),
+		uint8(mii.Unknown1),
+		uint8(mii.Unknown2),
+		[]byte(mii.MiiData),
+		uint64(mii.Datetime),
 	)
 	if err != nil {
 		return err

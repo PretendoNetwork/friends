@@ -10,8 +10,8 @@ type ConnectedUser struct {
 	PID        uint32
 	Platform   Platform
 	Connection *nex.PRUDPConnection
-	Presence   *friends_3ds_types.NintendoPresence
-	PresenceV2 *friends_wiiu_types.NintendoPresenceV2
+	Presence   friends_3ds_types.NintendoPresence
+	PresenceV2 friends_wiiu_types.NintendoPresenceV2
 }
 
 func NewConnectedUser() *ConnectedUser {

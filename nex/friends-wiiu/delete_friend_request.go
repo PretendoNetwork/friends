@@ -9,13 +9,13 @@ import (
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
 )
 
-func DeleteFriendRequest(err error, packet nex.PacketInterface, callID uint32, id *types.PrimitiveU64) (*nex.RMCMessage, *nex.Error) {
+func DeleteFriendRequest(err error, packet nex.PacketInterface, callID uint32, id types.UInt64) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	err = database_wiiu.SetFriendRequestDenied(id.Value)
+	err = database_wiiu.SetFriendRequestDenied(uint64(id))
 	if err != nil {
 		if err == database.ErrFriendRequestNotFound {
 			return nil, nex.NewError(nex.ResultCodes.FPD.InvalidMessageID, "") // TODO - Add error message

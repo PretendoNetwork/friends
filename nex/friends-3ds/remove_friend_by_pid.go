@@ -10,7 +10,7 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
 )
 
-func RemoveFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32, pid *types.PID) (*nex.RMCMessage, *nex.Error) {
+func RemoveFriendByPrincipalID(err error, packet nex.PacketInterface, callID uint32, pid types.PID) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -18,7 +18,7 @@ func RemoveFriendByPrincipalID(err error, packet nex.PacketInterface, callID uin
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_3ds.RemoveFriendship(connection.PID().LegacyValue(), pid.LegacyValue())
+	err = database_3ds.RemoveFriendship(uint32(connection.PID()), uint32(pid))
 	if err != nil {
 		if err == database.ErrFriendshipNotFound {
 			// * Official servers don't actually check this, but

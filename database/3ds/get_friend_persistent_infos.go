@@ -8,9 +8,8 @@ import (
 )
 
 // GetFriendPersistentInfos returns the persistent information of all friends
-func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*friends_3ds_types.FriendPersistentInfo], error) {
-	persistentInfos := types.NewList[*friends_3ds_types.FriendPersistentInfo]()
-	persistentInfos.Type = friends_3ds_types.NewFriendPersistentInfo()
+func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (types.List[friends_3ds_types.FriendPersistentInfo], error) {
+	persistentInfos := types.NewList[friends_3ds_types.FriendPersistentInfo]()
 
 	rows, err := database.Manager.Query(`
 	SELECT pid, region, area, language, country, favorite_title, favorite_title_version, comment, comment_changed, last_online, mii_changed FROM "3ds".user_data WHERE pid=ANY($1::int[])`, pq.Array(pids))
@@ -53,22 +52,22 @@ func GetFriendPersistentInfos(user1_pid uint32, pids []uint32) (*types.List[*fri
 			return persistentInfos, err
 		}
 
-		gameKey.TitleID = types.NewPrimitiveU64(titleID)
-		gameKey.TitleVersion = types.NewPrimitiveU16(titleVersion)
+		gameKey.TitleID = types.NewUInt64(titleID)
+		gameKey.TitleVersion = types.NewUInt16(titleVersion)
 
 		persistentInfo.PID = types.NewPID(uint64(pid))
-		persistentInfo.Region = types.NewPrimitiveU8(region)
-		persistentInfo.Country = types.NewPrimitiveU8(country)
-		persistentInfo.Area = types.NewPrimitiveU8(area)
-		persistentInfo.Language = types.NewPrimitiveU8(language)
-		persistentInfo.Platform = types.NewPrimitiveU8(2) // * Always 3DS
+		persistentInfo.Region = types.NewUInt8(region)
+		persistentInfo.Country = types.NewUInt8(country)
+		persistentInfo.Area = types.NewUInt8(area)
+		persistentInfo.Language = types.NewUInt8(language)
+		persistentInfo.Platform = types.NewUInt8(2) // * Always 3DS
 		persistentInfo.GameKey = gameKey
 		persistentInfo.Message = types.NewString(message)
 		persistentInfo.MessageUpdatedAt = types.NewDateTime(msgUpdateTime)
 		persistentInfo.MiiModifiedAt = types.NewDateTime(miiModifiedAtTime)
 		persistentInfo.LastOnline = types.NewDateTime(lastOnlineTime)
 
-		persistentInfos.Append(persistentInfo)
+		persistentInfos = append(persistentInfos, persistentInfo)
 	}
 
 	return persistentInfos, nil

@@ -10,7 +10,7 @@ import (
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
 )
 
-func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment *types.String) (*nex.RMCMessage, *nex.Error) {
+func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment types.String) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -18,13 +18,13 @@ func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_3ds.UpdateUserComment(connection.PID().LegacyValue(), comment.Value)
+	err = database_3ds.UpdateUserComment(uint32(connection.PID()), string(comment))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	go notifications_3ds.SendCommentUpdate(connection, comment.Value)
+	go notifications_3ds.SendCommentUpdate(connection, string(comment))
 
 	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, nil)
 	rmcResponse.ProtocolID = friends_3ds.ProtocolID

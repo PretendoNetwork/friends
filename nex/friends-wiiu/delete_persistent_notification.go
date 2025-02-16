@@ -8,7 +8,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func DeletePersistentNotification(err error, packet nex.PacketInterface, callID uint32, notifications *types.List[*friends_wiiu_types.PersistentNotification]) (*nex.RMCMessage, *nex.Error) {
+func DeletePersistentNotification(err error, packet nex.PacketInterface, callID uint32, notifications types.List[friends_wiiu_types.PersistentNotification]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message

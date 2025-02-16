@@ -13,7 +13,7 @@ func CheckSettingStatus(err error, packet nex.PacketInterface, callID uint32) (*
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	status := types.NewPrimitiveU8(0xFF) // TODO - What is this??
+	status := types.NewUInt8(0xFF) // TODO - What is this??
 
 	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 

@@ -10,13 +10,12 @@ import (
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
-func SendFriendRequestAccepted(connection *nex.PRUDPConnection, friendInfo *friends_wiiu_types.FriendInfo) {
+func SendFriendRequestAccepted(connection *nex.PRUDPConnection, friendInfo friends_wiiu_types.FriendInfo) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewPrimitiveU32(30)
-	eventObject.SenderPID = friendInfo.NNAInfo.PrincipalBasicInfo.PID.Copy().(*types.PID)
-	eventObject.DataHolder = types.NewAnyDataHolder()
-	eventObject.DataHolder.TypeName = types.NewString("FriendInfo")
-	eventObject.DataHolder.ObjectData = friendInfo.Copy()
+	eventObject.Type = types.NewUInt32(30)
+	eventObject.SenderPID = friendInfo.NNAInfo.PrincipalBasicInfo.PID.Copy().(types.PID)
+	eventObject.DataHolder = types.NewDataHolder()
+	eventObject.DataHolder.Object = friendInfo.Copy().(friends_wiiu_types.FriendInfo)
 
 	stream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 

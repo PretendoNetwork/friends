@@ -16,7 +16,7 @@ import (
 	account_management_types "github.com/PretendoNetwork/nex-protocols-go/v2/account-management/types"
 )
 
-func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32, strPrincipalName *types.String, strKey *types.String, uiGroups *types.PrimitiveU32, strEmail *types.String, oAuthData *types.AnyDataHolder) (*nex.RMCMessage, *nex.Error) {
+func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32, strPrincipalName types.String, strKey types.String, uiGroups types.UInt32, strEmail types.String, oAuthData types.DataHolder) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.Core.InvalidArgument, "") // TODO - Add error message
@@ -24,17 +24,17 @@ func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32,
 
 	var tokenBase64 string
 
-	oAuthDataType := oAuthData.TypeName.Value
+	oAuthDataType := oAuthData.Object.DataObjectID().(types.String)
 
 	switch oAuthDataType {
 	case "NintendoCreateAccountData": // * Wii U
-		nintendoCreateAccountData := oAuthData.ObjectData.Copy().(*account_management_types.NintendoCreateAccountData)
+		nintendoCreateAccountData := oAuthData.Object.Copy().(account_management_types.NintendoCreateAccountData)
 
-		tokenBase64 = nintendoCreateAccountData.Token.Value
+		tokenBase64 = string(nintendoCreateAccountData.Token)
 	case "AccountExtraInfo": // * 3DS
-		accountExtraInfo := oAuthData.ObjectData.Copy().(*account_management_types.AccountExtraInfo)
+		accountExtraInfo := oAuthData.Object.Copy().(account_management_types.AccountExtraInfo)
 
-		tokenBase64 = accountExtraInfo.NEXToken.Value
+		tokenBase64 = string(accountExtraInfo.NEXToken)
 		tokenBase64 = strings.Replace(tokenBase64, ".", "+", -1)
 		tokenBase64 = strings.Replace(tokenBase64, "-", "/", -1)
 		tokenBase64 = strings.Replace(tokenBase64, "*", "=", -1)
@@ -58,9 +58,9 @@ func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32,
 	pid := types.NewPID(uint64(decryptedToken.UserPID))
 
 	pidByteArray := make([]byte, 4)
-	binary.LittleEndian.PutUint32(pidByteArray, pid.LegacyValue())
+	binary.LittleEndian.PutUint32(pidByteArray, uint32(pid))
 
-	mac := hmac.New(md5.New, []byte(strKey.Value))
+	mac := hmac.New(md5.New, []byte(strKey))
 	_, err = mac.Write(pidByteArray)
 	if err != nil {
 		globals.Logger.Error(err.Error())

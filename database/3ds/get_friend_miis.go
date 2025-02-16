@@ -8,9 +8,8 @@ import (
 )
 
 // GetFriendMiis returns the Mii of all friends
-func GetFriendMiis(pids []uint32) (*types.List[*friends_3ds_types.FriendMii], error) {
-	friendMiis := types.NewList[*friends_3ds_types.FriendMii]()
-	friendMiis.Type = friends_3ds_types.NewFriendMii()
+func GetFriendMiis(pids []uint32) (types.List[friends_3ds_types.FriendMii], error) {
+	friendMiis := types.NewList[friends_3ds_types.FriendMii]()
 
 	rows, err := database.Manager.Query(`
 	SELECT pid, mii_name, mii_profanity, mii_character_set, mii_data, mii_changed FROM "3ds".user_data WHERE pid=ANY($1::int[])`, pq.Array(pids))
@@ -34,8 +33,8 @@ func GetFriendMiis(pids []uint32) (*types.List[*friends_3ds_types.FriendMii], er
 
 		mii := friends_3ds_types.NewMii()
 		mii.Name = types.NewString(miiName)
-		mii.ProfanityFlag = types.NewPrimitiveBool(miiProfanity)
-		mii.CharacterSet = types.NewPrimitiveU8(miiCharacterSet)
+		mii.ProfanityFlag = types.NewBool(miiProfanity)
+		mii.CharacterSet = types.NewUInt8(miiCharacterSet)
 		mii.MiiData = types.NewBuffer(miiData)
 
 		friendMii := friends_3ds_types.NewFriendMii()
@@ -43,7 +42,7 @@ func GetFriendMiis(pids []uint32) (*types.List[*friends_3ds_types.FriendMii], er
 		friendMii.Mii = mii
 		friendMii.ModifiedAt = types.NewDateTime(changedTime)
 
-		friendMiis.Append(friendMii)
+		friendMiis = append(friendMiis, friendMii)
 	}
 
 	return friendMiis, nil

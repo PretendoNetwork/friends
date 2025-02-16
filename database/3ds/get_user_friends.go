@@ -9,9 +9,8 @@ import (
 )
 
 // GetUserFriends returns all friend relationships of a user
-func GetUserFriends(pid uint32) (*types.List[*friends_3ds_types.FriendRelationship], error) {
-	friendRelationships := types.NewList[*friends_3ds_types.FriendRelationship]()
-	friendRelationships.Type = friends_3ds_types.NewFriendRelationship()
+func GetUserFriends(pid uint32) (types.List[friends_3ds_types.FriendRelationship], error) {
+	friendRelationships := types.NewList[friends_3ds_types.FriendRelationship]()
 
 	rows, err := database.Manager.Query("SELECT user2_pid, type FROM \"3ds\".friendships WHERE user1_pid=$1 AND type=1 LIMIT 100", pid)
 	if err != nil {
@@ -34,11 +33,11 @@ func GetUserFriends(pid uint32) (*types.List[*friends_3ds_types.FriendRelationsh
 
 		relationship := friends_3ds_types.NewFriendRelationship()
 
-		relationship.LFC = types.NewPrimitiveU64(0)
+		relationship.LFC = types.NewUInt64(0)
 		relationship.PID = types.NewPID(uint64(pid))
-		relationship.RelationshipType = types.NewPrimitiveU8(relationshipType)
+		relationship.RelationshipType = types.NewUInt8(relationshipType)
 
-		friendRelationships.Append(relationship)
+		friendRelationships = append(friendRelationships, relationship)
 	}
 
 	return friendRelationships, nil

@@ -10,7 +10,7 @@ import (
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, publicMode *types.PrimitiveBool, showGame *types.PrimitiveBool, showPlayedGame *types.PrimitiveBool) (*nex.RMCMessage, *nex.Error) {
+func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, publicMode types.Bool, showGame types.Bool, showPlayedGame types.Bool) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -18,20 +18,20 @@ func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, publ
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	err = database_3ds.UpdateUserPreferences(connection.PID().LegacyValue(), publicMode.Value, showGame.Value)
+	err = database_3ds.UpdateUserPreferences(uint32(connection.PID()), bool(publicMode), bool(showGame))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	if !showGame.Value {
+	if !showGame {
 		emptyPresence := friends_3ds_types.NewNintendoPresence()
 		emptyPresence.GameKey = friends_3ds_types.NewGameKey()
-		emptyPresence.ChangedFlags = types.NewPrimitiveU32(0xFFFFFFFF) // * All flags
+		emptyPresence.ChangedFlags = types.NewUInt32(0xFFFFFFFF) // * All flags
 		notifications_3ds.SendPresenceUpdate(connection, emptyPresence)
 	}
 
-	if !publicMode.Value {
+	if !publicMode {
 		notifications_3ds.SendUserWentOfflineGlobally(connection)
 	}
 

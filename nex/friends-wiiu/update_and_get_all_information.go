@@ -14,7 +14,7 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID uint32, nnaInfo *friends_wiiu_types.NNAInfo, presence *friends_wiiu_types.NintendoPresenceV2, birthday *types.DateTime) (*nex.RMCMessage, *nex.Error) {
+func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID uint32, nnaInfo friends_wiiu_types.NNAInfo, presence friends_wiiu_types.NintendoPresenceV2, birthday types.DateTime) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
@@ -23,7 +23,7 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
 	// * Get user information
-	pid := connection.PID().LegacyValue()
+	pid := uint32(connection.PID())
 	connectedUser, ok := globals.ConnectedUsers.Get(pid)
 
 	if !ok || connectedUser == nil {
@@ -36,7 +36,7 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		globals.ConnectedUsers.Set(pid, connectedUser)
 	}
 
-	connectedUser.PresenceV2 = presence.Copy().(*friends_wiiu_types.NintendoPresenceV2)
+	connectedUser.PresenceV2 = presence.Copy().(friends_wiiu_types.NintendoPresenceV2)
 
 	database_wiiu.UpdateNetworkAccountInfo(pid, nnaInfo, birthday)
 
@@ -88,8 +88,8 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 
 	// * Update user information
 
-	presence.Online = types.NewPrimitiveBool(true) // * Force online status. I have no idea why this is always false
-	presence.PID = connection.PID()                // * WHY IS THIS SET TO 0 BY DEFAULT??
+	presence.Online = types.NewBool(true) // * Force online status. I have no idea why this is always false
+	presence.PID = connection.PID()       // * WHY IS THIS SET TO 0 BY DEFAULT??
 
 	notifications_wiiu.SendPresenceUpdate(presence)
 
@@ -101,20 +101,20 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		bella.Status = friends_wiiu_types.NewComment()
 		bella.BecameFriend = types.NewDateTime(0)
 		bella.LastOnline = types.NewDateTime(0)
-		bella.Unknown = types.NewPrimitiveU64(0)
+		bella.Unknown = types.NewUInt64(0)
 
 		bella.NNAInfo.PrincipalBasicInfo = friends_wiiu_types.NewPrincipalBasicInfo()
-		bella.NNAInfo.Unknown1 = types.NewPrimitiveU8(0)
-		bella.NNAInfo.Unknown2 = types.NewPrimitiveU8(0)
+		bella.NNAInfo.Unknown1 = types.NewUInt8(0)
+		bella.NNAInfo.Unknown2 = types.NewUInt8(0)
 
 		bella.NNAInfo.PrincipalBasicInfo.PID = types.NewPID(1743126339)
 		bella.NNAInfo.PrincipalBasicInfo.NNID = types.NewString("bells1998")
 		bella.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu_types.NewMiiV2()
-		bella.NNAInfo.PrincipalBasicInfo.Unknown = types.NewPrimitiveU8(0)
+		bella.NNAInfo.PrincipalBasicInfo.Unknown = types.NewUInt8(0)
 
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Name = types.NewString("bella")
-		bella.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = types.NewPrimitiveU8(0)
-		bella.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = types.NewPrimitiveU8(0)
+		bella.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = types.NewUInt8(0)
+		bella.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = types.NewUInt8(0)
 		bella.NNAInfo.PrincipalBasicInfo.Mii.MiiData = types.NewBuffer([]byte{
 			0x03, 0x00, 0x00, 0x40, 0xE9, 0x55, 0xA2, 0x09,
 			0xE7, 0xC7, 0x41, 0x82, 0xD9, 0x7D, 0x0B, 0x2D,
@@ -131,38 +131,38 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		})
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Datetime = types.NewDateTime(0)
 
-		bella.Presence.ChangedFlags = types.NewPrimitiveU32(0x1EE)
-		bella.Presence.Online = types.NewPrimitiveBool(true)
+		bella.Presence.ChangedFlags = types.NewUInt32(0x1EE)
+		bella.Presence.Online = types.NewBool(true)
 		bella.Presence.GameKey = friends_wiiu_types.NewGameKey()
-		bella.Presence.Unknown1 = types.NewPrimitiveU8(0)
+		bella.Presence.Unknown1 = types.NewUInt8(0)
 		bella.Presence.Message = types.NewString("Testing")
 		//bella.Presence.Unknown2 = 2
-		bella.Presence.Unknown2 = types.NewPrimitiveU32(0)
+		bella.Presence.Unknown2 = types.NewUInt32(0)
 		//bella.Presence.Unknown3 = 2
-		bella.Presence.Unknown3 = types.NewPrimitiveU8(0)
+		bella.Presence.Unknown3 = types.NewUInt8(0)
 		//bella.Presence.GameServerID = 0x1010EB00
-		bella.Presence.GameServerID = types.NewPrimitiveU32(0)
+		bella.Presence.GameServerID = types.NewUInt32(0)
 		//bella.Presence.Unknown4 = 3
-		bella.Presence.Unknown4 = types.NewPrimitiveU32(0)
+		bella.Presence.Unknown4 = types.NewUInt32(0)
 		bella.Presence.PID = types.NewPID(1743126339)
 		//bella.Presence.GatheringID = 1743126339 // test fake ID
-		bella.Presence.GatheringID = types.NewPrimitiveU32(0)
+		bella.Presence.GatheringID = types.NewUInt32(0)
 		//bella.Presence.ApplicationData, _ = hex.DecodeString("0000200300000000000000001843ffe567000000")
 		bella.Presence.ApplicationData = types.NewBuffer([]byte{0x0})
-		bella.Presence.Unknown5 = types.NewPrimitiveU8(0)
-		bella.Presence.Unknown6 = types.NewPrimitiveU8(0)
-		bella.Presence.Unknown7 = types.NewPrimitiveU8(0)
+		bella.Presence.Unknown5 = types.NewUInt8(0)
+		bella.Presence.Unknown6 = types.NewUInt8(0)
+		bella.Presence.Unknown7 = types.NewUInt8(0)
 
 		//bella.Presence.GameKey.TitleID = 0x000500001010EC00
-		bella.Presence.GameKey.TitleID = types.NewPrimitiveU64(0)
+		bella.Presence.GameKey.TitleID = types.NewUInt64(0)
 		//bella.Presence.GameKey.TitleVersion = 64
-		bella.Presence.GameKey.TitleVersion = types.NewPrimitiveU16(0)
+		bella.Presence.GameKey.TitleVersion = types.NewUInt16(0)
 
-		bella.Status.Unknown = types.NewPrimitiveU8(0)
+		bella.Status.Unknown = types.NewUInt8(0)
 		bella.Status.Contents = types.NewString("test")
 		bella.Status.LastChanged = types.NewDateTime(0)
 
-		friendList.Append(bella)
+		friendList = append(friendList, bella)
 	}
 
 	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
@@ -173,9 +173,9 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 	friendRequestsOut.WriteTo(rmcResponseStream)
 	friendRequestsIn.WriteTo(rmcResponseStream)
 	blockList.WriteTo(rmcResponseStream)
-	types.NewPrimitiveBool(false).WriteTo(rmcResponseStream) // * Unknown
+	types.NewBool(false).WriteTo(rmcResponseStream) // * Unknown
 	notifications.WriteTo(rmcResponseStream)
-	types.NewPrimitiveBool(false).WriteTo(rmcResponseStream) // * Unknown
+	types.NewBool(false).WriteTo(rmcResponseStream) // * Unknown
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 

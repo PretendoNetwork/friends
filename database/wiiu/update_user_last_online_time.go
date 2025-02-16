@@ -6,13 +6,13 @@ import (
 )
 
 // UpdateUserLastOnlineTime updates a user's last online time
-func UpdateUserLastOnlineTime(pid uint32, lastOnline *types.DateTime) error {
+func UpdateUserLastOnlineTime(pid uint32, lastOnline types.DateTime) error {
 	_, err := database.Manager.Exec(`
 		INSERT INTO wiiu.user_data (pid, last_online)
 		VALUES ($1, $2)
 		ON CONFLICT (pid)
 		DO UPDATE SET 
-		last_online = $2`, pid, lastOnline.Value())
+		last_online = $2`, pid, uint64(lastOnline))
 
 	if err != nil {
 		return err

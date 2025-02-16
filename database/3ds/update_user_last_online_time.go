@@ -8,7 +8,7 @@ import (
 )
 
 // UpdateUserLastOnlineTime updates a user's last online time
-func UpdateUserLastOnlineTime(pid uint32, lastOnline *types.DateTime) error {
+func UpdateUserLastOnlineTime(pid uint32, lastOnline types.DateTime) error {
 	var showOnline bool
 
 	row, err := database.Manager.QueryRow(`SELECT show_online FROM "3ds".user_data WHERE pid=$1`, pid)
@@ -30,7 +30,7 @@ func UpdateUserLastOnlineTime(pid uint32, lastOnline *types.DateTime) error {
 		VALUES ($1, $2)
 		ON CONFLICT (pid)
 		DO UPDATE SET 
-		last_online = $2`, pid, lastOnline.Value())
+		last_online = $2`, pid, uint64(lastOnline))
 	if err != nil {
 		return err
 	}

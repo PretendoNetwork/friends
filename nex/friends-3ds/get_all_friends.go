@@ -17,7 +17,7 @@ func GetAllFriends(err error, packet nex.PacketInterface, callID uint32) (*nex.R
 
 	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	friendRelationships, err := database_3ds.GetUserFriends(connection.PID().LegacyValue())
+	friendRelationships, err := database_3ds.GetUserFriends(uint32(connection.PID()))
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
