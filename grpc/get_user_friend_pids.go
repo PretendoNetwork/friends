@@ -37,10 +37,11 @@ func (s *gRPCFriendsServer) GetUserFriendPIDs(ctx context.Context, in *pb.GetUse
 		return nil, status.Errorf(codes.Internal, "internal server error")
 	}
 
-	for _, relationship := range relationships {
-		// * Only add complete relationships to the list
-		if relationship.RelationshipType == 1 {
-			pids = append(pids, relationship.PID)
+	if relationships != nil {
+		for _, relationship := range relationships {
+			if relationship.RelationshipType == 1 {
+				pids = append(pids, uint32(relationship.PID))
+			}
 		}
 	}
 

@@ -4,43 +4,33 @@ import (
 	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
 )
 
-func RemoveBlacklist(err error, client *nex.Client, callID uint32, blockedPID uint32) uint32 {
+func RemoveBlackList(err error, packet nex.PacketInterface, callID uint32, blockedPID types.PID) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	err = database_wiiu.UnsetUserBlocked(client.PID(), blockedPID)
+	connection := packet.Sender().(*nex.PRUDPConnection)
+
+	err = database_wiiu.UnsetUserBlocked(uint32(connection.PID()), uint32(blockedPID))
 	if err != nil {
 		if err == database.ErrPIDNotFound {
-			return nex.Errors.FPD.NotInMyBlacklist
+			return nil, nex.NewError(nex.ResultCodes.FPD.NotInMyBlacklist, "") // TODO - Add error message
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 		}
 	}
 
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodRemoveBlackList, nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, nil)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodRemoveBlackList
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

@@ -1,28 +1,27 @@
 package nex_friends_wiiu
 
 import (
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/utility"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) uint32 {
+func GetBasicInfo(err error, packet nex.PacketInterface, callID uint32, pids types.List[types.PID]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	infos := make([]*friends_wiiu_types.PrincipalBasicInfo, 0)
+	infos := types.NewList[friends_wiiu_types.PrincipalBasicInfo]()
 
-	for i := 0; i < len(pids); i++ {
-		pid := pids[i]
-
-		info, err := utility.GetUserInfoByPID(pid)
+	for _, pid := range pids {
+		info, err := database_wiiu.GetUserPrincipalBasicInfo(uint32(pid))
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 		}
 
 		if info.PID != 0 {
@@ -30,30 +29,16 @@ func GetBasicInfo(err error, client *nex.Client, callID uint32, pids []uint32) u
 		}
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream.WriteListStructure(infos)
+	infos.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodGetBasicInfo, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodGetBasicInfo
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

@@ -5,45 +5,41 @@ import (
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
 )
 
-func GetFriendPersistentInfo(err error, client *nex.Client, callID uint32, pids []uint32) uint32 {
+func GetFriendPersistentInfo(err error, packet nex.PacketInterface, callID uint32, pidList types.List[types.PID]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	infoList, err := database_3ds.GetFriendPersistentInfos(client.PID(), pids)
+	connection := packet.Sender().(*nex.PRUDPConnection)
+
+	friendPIDs := make([]uint32, len(pidList))
+
+	for _, pid := range pidList {
+		friendPIDs = append(friendPIDs, uint32(pid))
+	}
+
+	infoList, err := database_3ds.GetFriendPersistentInfos(uint32(connection.PID()), friendPIDs)
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream.WriteListStructure(infoList)
+	infoList.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodGetFriendPersistentInfo, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodGetFriendPersistentInfo
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

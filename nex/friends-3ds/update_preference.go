@@ -4,50 +4,41 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
-	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func UpdatePreference(err error, client *nex.Client, callID uint32, showOnline bool, showCurrentGame bool, showPlayedGame bool) uint32 {
+func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, publicMode types.Bool, showGame types.Bool, showPlayedGame types.Bool) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	err = database_3ds.UpdateUserPreferences(client.PID(), showOnline, showCurrentGame)
+	connection := packet.Sender().(*nex.PRUDPConnection)
+
+	err = database_3ds.UpdateUserPreferences(uint32(connection.PID()), bool(publicMode), bool(showGame))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	if !showCurrentGame {
+	if !showGame {
 		emptyPresence := friends_3ds_types.NewNintendoPresence()
 		emptyPresence.GameKey = friends_3ds_types.NewGameKey()
-		emptyPresence.ChangedFlags = 0xFFFFFFFF // All flags
-		notifications_3ds.SendPresenceUpdate(client, emptyPresence)
-	}
-	if !showOnline {
-		notifications_3ds.SendUserWentOfflineGlobally(client)
+		emptyPresence.ChangedFlags = types.NewUInt32(0xFFFFFFFF) // * All flags
+		notifications_3ds.SendPresenceUpdate(connection, emptyPresence)
 	}
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodUpdatePreference, nil)
+	if !publicMode {
+		notifications_3ds.SendUserWentOfflineGlobally(connection)
+	}
 
-	rmcResponseBytes := rmcResponse.Bytes()
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, nil)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodUpdatePreference
+	rmcResponse.CallID = callID
 
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

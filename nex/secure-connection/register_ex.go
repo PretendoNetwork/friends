@@ -1,93 +1,90 @@
 package nex_secure_connection
 
 import (
-	"time"
+	"net"
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/types"
-	nex "github.com/PretendoNetwork/nex-go"
-	secure_connection "github.com/PretendoNetwork/nex-protocols-go/secure-connection"
+	friends_types "github.com/PretendoNetwork/friends/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	secure_connection "github.com/PretendoNetwork/nex-protocols-go/v2/secure-connection"
 )
 
-func RegisterEx(err error, client *nex.Client, callID uint32, stationUrls []*nex.StationURL, loginData *nex.DataHolder) uint32 {
+func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs types.List[types.StationURL], hCustomData types.DataHolder) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Core.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.Core.InvalidArgument, "")
 	}
 
-	retval := nex.NewResultSuccess(nex.Errors.Core.Unknown)
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	// TODO: Validate loginData
-	pid := client.PID()
-	user := globals.ConnectedUsers[pid]
-	lastOnline := nex.NewDateTime(0)
-	lastOnline.FromTimestamp(time.Now())
+	retval := types.NewQResultSuccess(nex.ResultCodes.Core.Unknown)
 
-	loginDataType := loginData.TypeName()
+	// TODO - Validate loginData
+	pid := uint32(connection.PID())
+
+	user := friends_types.NewConnectedUser()
+	user.PID = pid
+	user.Connection = connection
+
+	lastOnline := types.NewDateTime(0).Now()
+	loginDataType := hCustomData.Object.DataObjectID().(types.String)
+
 	switch loginDataType {
 	case "NintendoLoginData":
-		user.Platform = types.WUP // Platform is Wii U
+		user.Platform = friends_types.WUP // * Platform is Wii U
 
 		err = database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			retval = nex.NewResultError(nex.Errors.Authentication.Unknown)
+			retval = types.NewQResultError(nex.ResultCodes.Authentication.Unknown)
 		}
 	case "AccountExtraInfo":
-		user.Platform = types.CTR // Platform is 3DS
+		user.Platform = friends_types.CTR // * Platform is 3DS
 
 		err = database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			retval = nex.NewResultError(nex.Errors.Authentication.Unknown)
+			retval = types.NewQResultError(nex.ResultCodes.Authentication.Unknown)
 		}
 	default:
 		globals.Logger.Errorf("Unknown loginData data type %s!", loginDataType)
-		retval = nex.NewResultError(nex.Errors.Authentication.ValidationFailed)
+		retval = types.NewQResultError(nex.ResultCodes.Authentication.ValidationFailed)
 	}
+
+	pidConnectionID := types.NewUInt32(0)
+	urlPublic := types.NewString("")
 
 	if retval.IsSuccess() {
-		localStation := stationUrls[0]
+		globals.ConnectedUsers.Set(pid, user)
 
-		address := client.Address().IP.String()
+		localStation := vecMyURLs[0]
 
-		localStation.SetAddress(address)
-		localStation.SetPort(uint32(client.Address().Port))
+		address := connection.Address().(*net.UDPAddr)
 
-		localStationURL := localStation.EncodeToString()
+		localStation.SetAddress(address.IP.String())
+		localStation.SetPortNumber(uint16(address.Port))
 
-		rmcResponseStream.WriteResult(retval)
-		rmcResponseStream.WriteUInt32LE(globals.SecureServer.ConnectionIDCounter().Increment())
-		rmcResponseStream.WriteString(localStationURL)
-	} else {
-		rmcResponseStream.WriteResult(retval)
-		rmcResponseStream.WriteUInt32LE(0)
-		rmcResponseStream.WriteString("prudp:/")
+		localStationURL := localStation.URL()
+
+		pidConnectionID = types.NewUInt32(connection.ID)
+		urlPublic = types.NewString(localStationURL)
 	}
+
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
+
+	retval.WriteTo(rmcResponseStream)
+	pidConnectionID.WriteTo(rmcResponseStream)
+	urlPublic.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(secure_connection.ProtocolID, callID)
-	rmcResponse.SetSuccess(secure_connection.MethodRegisterEx, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = secure_connection.ProtocolID
+	rmcResponse.MethodID = secure_connection.MethodRegisterEx
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

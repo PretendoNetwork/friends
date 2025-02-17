@@ -10,89 +10,76 @@ import (
 
 	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/friends/utility"
-	nex "github.com/PretendoNetwork/nex-go"
-	account_management "github.com/PretendoNetwork/nex-protocols-go/account-management"
-	account_management_types "github.com/PretendoNetwork/nex-protocols-go/account-management/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	account_management "github.com/PretendoNetwork/nex-protocols-go/v2/account-management"
+	account_management_types "github.com/PretendoNetwork/nex-protocols-go/v2/account-management/types"
 )
 
-func NintendoCreateAccount(err error, client *nex.Client, callID uint32, strPrincipalName string, strKey string, uiGroups uint32, strEmail string, oAuthData *nex.DataHolder) uint32 {
+func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32, strPrincipalName types.String, strKey types.String, uiGroups types.UInt32, strEmail types.String, oAuthData types.DataHolder) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Core.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.Core.InvalidArgument, "") // TODO - Add error message
 	}
 
 	var tokenBase64 string
 
-	oAuthDataType := oAuthData.TypeName()
+	oAuthDataType := oAuthData.Object.DataObjectID().(types.String)
 
 	switch oAuthDataType {
-	case "NintendoCreateAccountData": // Wii U
-		nintendoCreateAccountData := oAuthData.ObjectData().(*account_management_types.NintendoCreateAccountData)
+	case "NintendoCreateAccountData": // * Wii U
+		nintendoCreateAccountData := oAuthData.Object.Copy().(account_management_types.NintendoCreateAccountData)
 
-		tokenBase64 = nintendoCreateAccountData.Token
-	case "AccountExtraInfo": // 3DS
-		accountExtraInfo := oAuthData.ObjectData().(*account_management_types.AccountExtraInfo)
+		tokenBase64 = string(nintendoCreateAccountData.Token)
+	case "AccountExtraInfo": // * 3DS
+		accountExtraInfo := oAuthData.Object.Copy().(account_management_types.AccountExtraInfo)
 
-		tokenBase64 = accountExtraInfo.NEXToken
+		tokenBase64 = string(accountExtraInfo.NEXToken)
 		tokenBase64 = strings.Replace(tokenBase64, ".", "+", -1)
 		tokenBase64 = strings.Replace(tokenBase64, "-", "/", -1)
 		tokenBase64 = strings.Replace(tokenBase64, "*", "=", -1)
 	default:
 		globals.Logger.Errorf("Invalid oAuthData data type %s!", oAuthDataType)
-		return nex.Errors.Authentication.TokenParseError
+		return nil, nex.NewError(nex.ResultCodes.Authentication.TokenParseError, "") // TODO - Add error message
 	}
 
 	encryptedToken, err := base64.StdEncoding.DecodeString(tokenBase64)
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Authentication.TokenParseError
+		return nil, nex.NewError(nex.ResultCodes.Authentication.TokenParseError, "") // TODO - Add error message
 	}
 
 	decryptedToken, err := utility.DecryptToken(encryptedToken)
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Authentication.TokenParseError
+		return nil, nex.NewError(nex.ResultCodes.Authentication.TokenParseError, "") // TODO - Add error message
 	}
 
-	pid := decryptedToken.UserPID
+	pid := types.NewPID(uint64(decryptedToken.UserPID))
 
 	pidByteArray := make([]byte, 4)
-	binary.LittleEndian.PutUint32(pidByteArray, pid)
+	binary.LittleEndian.PutUint32(pidByteArray, uint32(pid))
 
 	mac := hmac.New(md5.New, []byte(strKey))
 	_, err = mac.Write(pidByteArray)
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.Authentication.Unknown
+		return nil, nex.NewError(nex.ResultCodes.Authentication.Unknown, "") // TODO - Add error message
 	}
 
-	pidHmac := hex.EncodeToString(mac.Sum(nil))
+	pidHmac := types.NewString(hex.EncodeToString(mac.Sum(nil)))
 
-	rmcResponse := nex.NewRMCResponse(account_management.ProtocolID, callID)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
-
-	rmcResponseStream.WriteUInt32LE(pid)
-	rmcResponseStream.WriteString(pidHmac)
+	pid.WriteTo(rmcResponseStream)
+	pidHmac.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse.SetSuccess(account_management.MethodNintendoCreateAccount, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = account_management.ProtocolID
+	rmcResponse.MethodID = account_management.MethodNintendoCreateAccount
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

@@ -4,42 +4,31 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
-	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func UpdateMii(err error, client *nex.Client, callID uint32, mii *friends_3ds_types.Mii) uint32 {
+func UpdateMii(err error, packet nex.PacketInterface, callID uint32, mii friends_3ds_types.Mii) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	err = database_3ds.UpdateUserMii(client.PID(), mii)
+	connection := packet.Sender().(*nex.PRUDPConnection)
+
+	err = database_3ds.UpdateUserMii(uint32(connection.PID()), mii)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	go notifications_3ds.SendMiiUpdateNotification(client)
+	go notifications_3ds.SendMiiUpdateNotification(connection)
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodUpdateMii, nil)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, nil)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodUpdateMii
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

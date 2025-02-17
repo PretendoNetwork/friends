@@ -6,7 +6,7 @@ import (
 
 // SetFriendRequestReceived marks a friend request as received
 func SetFriendRequestReceived(friendRequestID uint64) error {
-	result, err := database.Postgres.Exec(`UPDATE wiiu.friend_requests SET received=true WHERE id=$1`, friendRequestID)
+	result, err := database.Manager.Exec(`UPDATE wiiu.friend_requests SET received=true WHERE id=$1`, friendRequestID)
 	if err != nil {
 		return err
 	}

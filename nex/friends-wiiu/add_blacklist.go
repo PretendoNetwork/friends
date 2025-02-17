@@ -1,22 +1,22 @@
 package nex_friends_wiiu
 
 import (
-	"time"
-
 	"github.com/PretendoNetwork/friends/database"
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/utility"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincipal *friends_wiiu_types.BlacklistedPrincipal) uint32 {
+func AddBlackList(err error, packet nex.PacketInterface, callID uint32, blacklistPrincipal friends_wiiu_types.BlacklistedPrincipal) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
+
+	connection := packet.Sender().(*nex.PRUDPConnection)
 
 	currentBlacklistPrincipal := blacklistPrincipal
 
@@ -24,52 +24,36 @@ func AddBlacklist(err error, client *nex.Client, callID uint32, blacklistPrincip
 	titleID := currentBlacklistPrincipal.GameKey.TitleID
 	titleVersion := currentBlacklistPrincipal.GameKey.TitleVersion
 
-	date := nex.NewDateTime(0)
-	date.FromTimestamp(time.Now())
-
-	userInfo, err := utility.GetUserInfoByPID(currentBlacklistPrincipal.PrincipalBasicInfo.PID)
+	userInfo, err := database_wiiu.GetUserPrincipalBasicInfo(uint32(currentBlacklistPrincipal.PrincipalBasicInfo.PID))
 	if err != nil {
 		if err == database.ErrPIDNotFound {
-			return nex.Errors.FPD.InvalidPrincipalID // TODO: Not sure if this is the correct error.
+			// TODO - Not sure if this is the correct error.
+			return nil, nex.NewError(nex.ResultCodes.FPD.InvalidPrincipalID, "") // TODO - Add error message
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 		}
 	}
 
 	currentBlacklistPrincipal.PrincipalBasicInfo = userInfo
-	currentBlacklistPrincipal.BlackListedSince = date
+	currentBlacklistPrincipal.BlackListedSince = types.NewDateTime(0).Now()
 
-	err = database_wiiu.SetUserBlocked(client.PID(), senderPID, titleID, titleVersion)
+	err = database_wiiu.SetUserBlocked(uint32(connection.PID()), uint32(senderPID), uint64(titleID), uint16(titleVersion))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream.WriteStructure(blacklistPrincipal)
+	blacklistPrincipal.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodAddBlackList, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodAddBlackList
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

@@ -1,38 +1,31 @@
 package nex
 
 import (
-	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/nex-go"
+	"github.com/PretendoNetwork/nex-go/v2"
 )
 
 var serverBuildString string
 
 func StartAuthenticationServer() {
-	globals.AuthenticationServer = nex.NewServer()
-	globals.AuthenticationServer.SetPRUDPVersion(0)
-	globals.AuthenticationServer.SetPRUDPProtocolMinorVersion(0) // TODO: Figure out what to put here
-	globals.AuthenticationServer.SetDefaultNEXVersion(&nex.NEXVersion{
-		Major: 1,
-		Minor: 1,
-		Patch: 0,
-	})
-	globals.AuthenticationServer.SetKerberosKeySize(16)
-	globals.AuthenticationServer.SetKerberosPassword(globals.KerberosPassword)
-	globals.AuthenticationServer.SetAccessKey("ridfebb9")
+	port, _ := strconv.Atoi(os.Getenv("PN_FRIENDS_AUTHENTICATION_SERVER_PORT"))
 
-	globals.AuthenticationServer.On("Data", func(packet *nex.PacketV0) {
-		request := packet.RMCRequest()
+	globals.AuthenticationServer = nex.NewPRUDPServer()
+	globals.AuthenticationEndpoint = nex.NewPRUDPEndPoint(1)
 
-		fmt.Println("==Friends - Auth==")
-		fmt.Printf("Protocol ID: %#v\n", request.ProtocolID())
-		fmt.Printf("Method ID: %#v\n", request.MethodID())
-		fmt.Println("===============")
-	})
+	globals.AuthenticationEndpoint.ServerAccount = globals.AuthenticationServerAccount
+	globals.AuthenticationEndpoint.AccountDetailsByPID = globals.AccountDetailsByPID
+	globals.AuthenticationEndpoint.AccountDetailsByUsername = globals.AccountDetailsByUsername
 
 	registerCommonAuthenticationServerProtocols()
 
-	globals.AuthenticationServer.Listen(fmt.Sprintf(":%s", os.Getenv("PN_FRIENDS_AUTHENTICATION_SERVER_PORT")))
+	globals.AuthenticationServer.SetFragmentSize(962)
+	globals.AuthenticationServer.LibraryVersions.SetDefault(nex.NewLibraryVersion(1, 1, 0))
+	globals.AuthenticationServer.SessionKeyLength = 16
+	globals.AuthenticationServer.AccessKey = "ridfebb9"
+	globals.AuthenticationServer.BindPRUDPEndPoint(globals.AuthenticationEndpoint)
+	globals.AuthenticationServer.Listen(port)
 }

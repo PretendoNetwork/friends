@@ -6,7 +6,7 @@ import (
 
 // UpdateUserPreferences updates a user's preferences
 func UpdateUserPreferences(pid uint32, show_online bool, show_current_game bool) error {
-	_, err := database.Postgres.Exec(`
+	_, err := database.Manager.Exec(`
 		INSERT INTO "3ds".user_data (pid, show_online, show_current_game)
 		VALUES ($1, $2, $3)
 		ON CONFLICT (pid)

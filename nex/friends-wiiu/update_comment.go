@@ -3,46 +3,36 @@ package nex_friends_wiiu
 import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func UpdateComment(err error, client *nex.Client, callID uint32, comment *friends_wiiu_types.Comment) uint32 {
+func UpdateComment(err error, packet nex.PacketInterface, callID uint32, comment friends_wiiu_types.Comment) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	changed, err := database_wiiu.UpdateUserComment(client.PID(), comment.Contents)
+	connection := packet.Sender().(*nex.PRUDPConnection)
+
+	changed, err := database_wiiu.UpdateUserComment(uint32(connection.PID()), string(comment.Contents))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream.WriteUInt64LE(changed)
+	types.NewUInt64(changed).WriteTo(rmcResponseStream) // TODO - This is ugly
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodUpdateComment, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodUpdateComment
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }
