@@ -14,7 +14,7 @@ import (
 
 func (s *gRPCFriendsServer) AcceptFriendRequest(ctx context.Context, in *pb.AcceptFriendRequestRequest) (*pb.AcceptFriendRequestResponse, error) {
 
-	friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(in.GetFriendRequestId())
+	_, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(in.GetFriendRequestId())
 	if err != nil {
 		if err == database.ErrFriendRequestNotFound {
 			return &pb.AcceptFriendRequestResponse{
@@ -35,6 +35,6 @@ func (s *gRPCFriendsServer) AcceptFriendRequest(ctx context.Context, in *pb.Acce
 	}
 
 	return &pb.AcceptFriendRequestResponse{
-		Success: friendInfo != nil,
+		Success: err == nil,
 	}, nil
 }

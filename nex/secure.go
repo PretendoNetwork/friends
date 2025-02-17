@@ -1,8 +1,8 @@
 package nex
 
 import (
-	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
@@ -10,73 +10,61 @@ import (
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
 	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
-	"github.com/PretendoNetwork/friends/types"
-	nex "github.com/PretendoNetwork/nex-go"
-	_ "github.com/PretendoNetwork/nex-protocols-go"
+	friends_types "github.com/PretendoNetwork/friends/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	_ "github.com/PretendoNetwork/nex-protocols-go/v2"
 )
 
 func StartSecureServer() {
-	globals.SecureServer = nex.NewServer()
-	globals.SecureServer.SetFragmentSize(900)
-	globals.SecureServer.SetPRUDPVersion(0)
-	globals.SecureServer.SetKerberosKeySize(16)
-	globals.SecureServer.SetKerberosPassword(globals.KerberosPassword)
-	globals.SecureServer.SetPingTimeout(20) // Maybe too long?
-	globals.SecureServer.SetAccessKey("ridfebb9")
-	globals.SecureServer.SetDefaultNEXVersion(&nex.NEXVersion{
-		Major: 1,
-		Minor: 1,
-		Patch: 0,
-	})
+	port, _ := strconv.Atoi(os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT"))
 
-	globals.SecureServer.On("Data", func(packet *nex.PacketV0) {
-		request := packet.RMCRequest()
+	globals.SecureServer = nex.NewPRUDPServer()
+	globals.SecureEndpoint = nex.NewPRUDPEndPoint(1)
 
-		fmt.Println("==Friends - Secure==")
-		fmt.Printf("Protocol ID: %#v\n", request.ProtocolID())
-		fmt.Printf("Method ID: %#v\n", request.MethodID())
-		fmt.Println("====================")
-	})
+	globals.SecureEndpoint.ServerAccount = globals.SecureServerAccount
+	globals.SecureEndpoint.AccountDetailsByPID = globals.AccountDetailsByPID
+	globals.SecureEndpoint.AccountDetailsByUsername = globals.AccountDetailsByUsername
 
-	globals.SecureServer.On("Kick", func(packet *nex.PacketV0) {
-		pid := packet.Sender().PID()
+	globals.SecureEndpoint.OnConnectionEnded(func(connection *nex.PRUDPConnection) {
+		pid := uint32(connection.PID())
+		user, ok := globals.ConnectedUsers.Get(pid)
 
-		if globals.ConnectedUsers[pid] == nil {
+		if !ok || user == nil {
 			return
 		}
 
-		platform := globals.ConnectedUsers[pid].Platform
-		lastOnline := nex.NewDateTime(0)
+		platform := user.Platform
+		lastOnline := types.NewDateTime(0)
 		lastOnline.FromTimestamp(time.Now())
 
-		if platform == types.WUP {
+		if platform == friends_types.WUP {
 			err := database_wiiu.UpdateUserLastOnlineTime(pid, lastOnline)
 			if err != nil {
 				globals.Logger.Critical(err.Error())
 			}
 
-			notifications_wiiu.SendUserWentOfflineGlobally(packet.Sender())
-		} else if platform == types.CTR {
+			notifications_wiiu.SendUserWentOfflineGlobally(connection)
+		} else if platform == friends_types.CTR {
 			err := database_3ds.UpdateUserLastOnlineTime(pid, lastOnline)
 			if err != nil {
 				globals.Logger.Critical(err.Error())
 			}
 
-			notifications_3ds.SendUserWentOfflineGlobally(packet.Sender())
+			notifications_3ds.SendUserWentOfflineGlobally(connection)
 		}
 
-		delete(globals.ConnectedUsers, pid)
-		fmt.Println("Leaving (Kick)")
+		globals.ConnectedUsers.Delete(pid)
 	})
-
-	globals.SecureServer.On("Disconnect", func(packet *nex.PacketV0) {
-		fmt.Println("Leaving (Disconnect)")
-	})
-
-	globals.SecureServer.On("Connect", connect)
 
 	registerCommonSecureServerProtocols()
 	registerSecureServerProtocols()
 
-	globals.SecureServer.Listen(fmt.Sprintf(":%s", os.Getenv("PN_FRIENDS_SECURE_SERVER_PORT")))
+	globals.SecureEndpoint.IsSecureEndPoint = true
+	globals.SecureServer.SetFragmentSize(962)
+	globals.SecureServer.LibraryVersions.SetDefault(nex.NewLibraryVersion(1, 1, 0))
+	globals.SecureServer.SessionKeyLength = 16
+	globals.SecureServer.AccessKey = "ridfebb9"
+	globals.SecureServer.BindPRUDPEndPoint(globals.SecureEndpoint)
+	globals.SecureServer.Listen(port)
 }

@@ -2,21 +2,34 @@ package database_wiiu
 
 import (
 	"database/sql"
-	"fmt"
-	"time"
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
-	"github.com/PretendoNetwork/friends/utility"
-	"github.com/PretendoNetwork/nex-go"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
 // GetUserFriendList returns a user's friend list
-func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
-	friendList := make([]*friends_wiiu_types.FriendInfo, 0)
+func GetUserFriendList(pid uint32) (types.List[friends_wiiu_types.FriendInfo], error) {
+	friendList := types.NewList[friends_wiiu_types.FriendInfo]()
 
-	rows, err := database.Postgres.Query(`SELECT user2_pid, date FROM wiiu.friendships WHERE user1_pid=$1 AND active=true LIMIT 100`, pid)
+	rows, err := database.Manager.Query(`
+	SELECT
+		f.user2_pid, f.date,
+		u.comment, u.comment_changed,
+		u.last_online,
+		bi.username, bi.unknown,
+		ai.unknown1, ai.unknown2,
+		mii.name, mii.unknown1, mii.unknown2, mii.data, mii.unknown_datetime
+	FROM wiiu.friendships AS f
+	INNER JOIN wiiu.user_data AS u ON u.pid = f.user2_pid
+	INNER JOIN wiiu.principal_basic_info AS bi ON bi.pid = f.user2_pid
+	INNER JOIN wiiu.network_account_info AS ai ON ai.pid = f.user2_pid
+	INNER JOIN wiiu.mii AS mii ON mii.pid = f.user2_pid
+	WHERE f.user1_pid=$1 AND f.active=true
+	LIMIT 100
+	`, pid)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return friendList, database.ErrEmptyList
@@ -24,87 +37,69 @@ func GetUserFriendList(pid uint32) ([]*friends_wiiu_types.FriendInfo, error) {
 			return friendList, err
 		}
 	}
+	defer rows.Close()
 
 	for rows.Next() {
 		var friendPID uint32
 		var date uint64
-		rows.Scan(&friendPID, &date)
+		var lastOnlineTime uint64
+		var commentContents string
+		var commentChanged uint64 = 0
+		var nnid string
+		var unknown uint8
+		var unknown1 uint8
+		var unknown2 uint8
+		var miiName string
+		var miiUnknown1 uint8
+		var miiUnknown2 uint8
+		var miiData []byte
+		var miiDatetime uint64
 
-		friendInfo := friends_wiiu_types.NewFriendInfo()
-		connectedUser := globals.ConnectedUsers[friendPID]
-		var lastOnline *nex.DateTime
-
-		if connectedUser != nil {
-			// Online
-			friendInfo.NNAInfo = connectedUser.NNAInfo
-			friendInfo.Presence = connectedUser.PresenceV2
-
-			if friendInfo.NNAInfo == nil || friendInfo.NNAInfo.PrincipalBasicInfo == nil {
-				// TODO: Fix this
-				globals.Logger.Error(fmt.Sprintf("User %d has friend %d with bad presence data", pid, friendPID))
-				if friendInfo.NNAInfo == nil {
-					globals.Logger.Error(fmt.Sprintf("%d friendInfo.NNAInfo is nil", friendPID))
-				} else {
-					globals.Logger.Error(fmt.Sprintf("%d friendInfo.NNAInfo.PrincipalBasicInfo is nil", friendPID))
-				}
-
-				continue
-			}
-
-			lastOnline = nex.NewDateTime(0)
-			lastOnline.FromTimestamp(time.Now())
-		} else {
-			// Offline
-
-			userInfo, err := utility.GetUserInfoByPID(friendPID)
-			if err != nil {
-				return nil, err
-			}
-
-			friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
-
-			friendInfo.NNAInfo.PrincipalBasicInfo = userInfo
-			friendInfo.NNAInfo.Unknown1 = 0
-			friendInfo.NNAInfo.Unknown2 = 0
-
-			friendInfo.Presence = friends_wiiu_types.NewNintendoPresenceV2()
-			friendInfo.Presence.ChangedFlags = 0
-			friendInfo.Presence.Online = false
-			friendInfo.Presence.GameKey = friends_wiiu_types.NewGameKey()
-			friendInfo.Presence.GameKey.TitleID = 0
-			friendInfo.Presence.GameKey.TitleVersion = 0
-			friendInfo.Presence.Unknown1 = 0
-			friendInfo.Presence.Message = ""
-			friendInfo.Presence.Unknown2 = 0
-			friendInfo.Presence.Unknown3 = 0
-			friendInfo.Presence.GameServerID = 0
-			friendInfo.Presence.Unknown4 = 0
-			friendInfo.Presence.PID = 0
-			friendInfo.Presence.GatheringID = 0
-			friendInfo.Presence.ApplicationData = []byte{0x00}
-			friendInfo.Presence.Unknown5 = 0
-			friendInfo.Presence.Unknown6 = 0
-			friendInfo.Presence.Unknown7 = 0
-
-			var lastOnlineTime uint64
-			err = database.Postgres.QueryRow(`SELECT last_online FROM wiiu.user_data WHERE pid=$1`, friendPID).Scan(&lastOnlineTime)
-			if err != nil {
-				return nil, err
-			}
-
-			lastOnline = nex.NewDateTime(lastOnlineTime) // TODO: Change this
-		}
-
-		status, err := GetUserComment(friendPID)
+		err := rows.Scan(&friendPID, &date, &commentContents, &commentChanged, &lastOnlineTime, &nnid, &unknown, &unknown1, &unknown2, &miiName, &miiUnknown1, &miiUnknown2, &miiData, &miiDatetime)
 		if err != nil {
 			return nil, err
 		}
 
-		friendInfo.Status = status
+		comment := friends_wiiu_types.NewComment()
+		comment.Unknown = types.NewUInt8(0)
+		comment.Contents = types.NewString(commentContents)
+		comment.LastChanged = types.NewDateTime(commentChanged)
 
-		friendInfo.BecameFriend = nex.NewDateTime(date)
+		mii := friends_wiiu_types.NewMiiV2()
+		mii.Name = types.NewString(miiName)
+		mii.Unknown1 = types.NewUInt8(miiUnknown1)
+		mii.Unknown2 = types.NewUInt8(miiUnknown2)
+		mii.MiiData = types.NewBuffer(miiData)
+		mii.Datetime = types.NewDateTime(miiDatetime)
+
+		principalBasicInfo := friends_wiiu_types.NewPrincipalBasicInfo()
+		principalBasicInfo.PID = types.NewPID(uint64(friendPID))
+		principalBasicInfo.NNID = types.NewString(nnid)
+		principalBasicInfo.Unknown = types.NewUInt8(unknown)
+		principalBasicInfo.Mii = mii
+
+		nnaInfo := friends_wiiu_types.NewNNAInfo()
+		nnaInfo.Unknown1 = types.NewUInt8(unknown1)
+		nnaInfo.Unknown2 = types.NewUInt8(unknown2)
+		nnaInfo.PrincipalBasicInfo = principalBasicInfo
+
+		friendInfo := friends_wiiu_types.NewFriendInfo()
+		friendInfo.NNAInfo = nnaInfo
+
+		lastOnline := types.NewDateTime(0).Now()
+		connectedUser, ok := globals.ConnectedUsers.Get(friendPID)
+		if ok && connectedUser != nil {
+			// * Online
+			friendInfo.Presence = connectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
+		} else {
+			// * Offline
+			lastOnline = types.NewDateTime(lastOnlineTime) // TODO - Change this
+		}
+
+		friendInfo.Status = comment
+		friendInfo.BecameFriend = types.NewDateTime(date)
 		friendInfo.LastOnline = lastOnline
-		friendInfo.Unknown = 0
+		friendInfo.Unknown = types.NewUInt64(0)
 
 		friendList = append(friendList, friendInfo)
 	}

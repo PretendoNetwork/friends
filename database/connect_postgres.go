@@ -1,20 +1,20 @@
 package database
 
 import (
-	"database/sql"
 	"os"
 
 	_ "github.com/lib/pq"
 
 	"github.com/PretendoNetwork/friends/globals"
+	sqlmanager "github.com/PretendoNetwork/sql-manager"
 )
 
-var Postgres *sql.DB
+var Manager *sqlmanager.SQLManager
 
 func ConnectPostgres() {
 	var err error
 
-	Postgres, err = sql.Open("postgres", os.Getenv("PN_FRIENDS_CONFIG_DATABASE_URI"))
+	Manager, err = sqlmanager.NewSQLManager("postgres", os.Getenv("PN_FRIENDS_CONFIG_DATABASE_URI"), int64(globals.DatabaseMaxConnections))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 	}

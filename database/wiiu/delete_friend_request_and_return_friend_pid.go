@@ -10,7 +10,12 @@ import (
 func DeleteFriendRequestAndReturnFriendPID(friendRequestID uint64) (uint32, error) {
 	var recipientPID uint32
 
-	err := database.Postgres.QueryRow(`SELECT recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID).Scan(&recipientPID)
+	row, err := database.Manager.QueryRow(`SELECT recipient_pid FROM wiiu.friend_requests WHERE id=$1`, friendRequestID)
+	if err != nil {
+		return 0, err
+	}
+
+	err = row.Scan(&recipientPID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return 0, database.ErrFriendRequestNotFound
@@ -19,7 +24,7 @@ func DeleteFriendRequestAndReturnFriendPID(friendRequestID uint64) (uint32, erro
 		}
 	}
 
-	result, err := database.Postgres.Exec(`
+	result, err := database.Manager.Exec(`
 		DELETE FROM wiiu.friend_requests WHERE id=$1`, friendRequestID)
 	if err != nil {
 		return 0, err

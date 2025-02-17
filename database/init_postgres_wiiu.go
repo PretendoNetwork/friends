@@ -5,7 +5,7 @@ import "github.com/PretendoNetwork/friends/globals"
 func initPostgresWiiU() {
 	var err error
 
-	_, err = Postgres.Exec(`CREATE SCHEMA IF NOT EXISTS wiiu`)
+	_, err = Manager.Exec(`CREATE SCHEMA IF NOT EXISTS wiiu`)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return
@@ -13,21 +13,55 @@ func initPostgresWiiU() {
 
 	globals.Logger.Success("[Wii U] Postgres schema created")
 
-	_, err = Postgres.Exec(`CREATE TABLE IF NOT EXISTS wiiu.user_data (
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.user_data (
 		pid integer PRIMARY KEY,
 		show_online boolean DEFAULT true,
 		show_current_game boolean DEFAULT true,
 		block_friend_requests boolean DEFAULT false,
 		comment text DEFAULT '',
 		comment_changed bigint DEFAULT 0,
-		last_online bigint
+		last_online bigint DEFAULT 0
 	)`)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return
 	}
 
-	_, err = Postgres.Exec(`CREATE TABLE IF NOT EXISTS wiiu.friendships (
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.network_account_info (
+		pid integer PRIMARY KEY,
+		unknown1 integer,
+		unknown2 integer,
+		birthday bigint
+	)`)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return
+	}
+
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.principal_basic_info (
+		pid integer PRIMARY KEY,
+		username text,
+		unknown integer
+	)`)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return
+	}
+
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.mii (
+		pid integer PRIMARY KEY,
+		name text,
+		unknown1 integer,
+		unknown2 integer,
+		data bytea,
+		unknown_datetime bigint
+	)`)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return
+	}
+
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.friendships (
 		id bigserial PRIMARY KEY,
 		user1_pid integer,
 		user2_pid integer,
@@ -40,7 +74,7 @@ func initPostgresWiiU() {
 		return
 	}
 
-	_, err = Postgres.Exec(`CREATE TABLE IF NOT EXISTS wiiu.blocks (
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.blocks (
 		id bigserial PRIMARY KEY,
 		blocker_pid integer,
 		blocked_pid integer,
@@ -54,7 +88,7 @@ func initPostgresWiiU() {
 		return
 	}
 
-	_, err = Postgres.Exec(`CREATE TABLE IF NOT EXISTS wiiu.friend_requests (
+	_, err = Manager.Exec(`CREATE TABLE IF NOT EXISTS wiiu.friend_requests (
 		id bigserial PRIMARY KEY,
 		sender_pid integer,
 		recipient_pid integer,

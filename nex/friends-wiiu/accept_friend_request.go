@@ -5,78 +5,77 @@ import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func AcceptFriendRequest(err error, client *nex.Client, callID uint32, id uint64) uint32 {
+func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, id types.UInt64) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(id)
+	connection := packet.Sender().(*nex.PRUDPConnection)
+
+	friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(uint64(id))
 	if err != nil {
 		if err == database.ErrFriendRequestNotFound {
-			return nex.Errors.FPD.InvalidMessageID
+			return nil, nex.NewError(nex.ResultCodes.FPD.InvalidMessageID, "") // TODO - Add error message
 		} else {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.FPD.Unknown
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 		}
 	}
 
-	friendPID := friendInfo.NNAInfo.PrincipalBasicInfo.PID
-	connectedUser := globals.ConnectedUsers[friendPID]
+	friendPID := uint32(friendInfo.NNAInfo.PrincipalBasicInfo.PID)
+	connectedUser, ok := globals.ConnectedUsers.Get(friendPID)
 
-	if connectedUser != nil {
-		senderPID := client.PID()
-		senderConnectedUser := globals.ConnectedUsers[senderPID]
+	if ok && connectedUser != nil {
+		senderPID := uint32(connection.PID())
+		senderConnectedUser, ok := globals.ConnectedUsers.Get(senderPID)
 
-		senderFriendInfo := friends_wiiu_types.NewFriendInfo()
+		if ok && senderConnectedUser != nil {
+			var err error
 
-		senderFriendInfo.NNAInfo = senderConnectedUser.NNAInfo
-		senderFriendInfo.Presence = senderConnectedUser.PresenceV2
-		status, err := database_wiiu.GetUserComment(senderPID)
-		if err != nil {
-			globals.Logger.Critical(err.Error())
-			senderFriendInfo.Status = friends_wiiu_types.NewComment()
-			senderFriendInfo.Status.LastChanged = nex.NewDateTime(0)
-		} else {
-			senderFriendInfo.Status = status
+			senderFriendInfo := friends_wiiu_types.NewFriendInfo()
+
+			senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(senderPID)
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+			}
+
+			senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
+
+			status, err := database_wiiu.GetUserComment(senderPID)
+			if err != nil {
+				globals.Logger.Critical(err.Error())
+				senderFriendInfo.Status = friends_wiiu_types.NewComment()
+				senderFriendInfo.Status.LastChanged = types.NewDateTime(0)
+			} else {
+				senderFriendInfo.Status = status
+			}
+
+			senderFriendInfo.BecameFriend = friendInfo.BecameFriend
+			senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
+			senderFriendInfo.Unknown = types.NewUInt64(0)
+
+			go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Connection, senderFriendInfo)
 		}
-
-		senderFriendInfo.BecameFriend = friendInfo.BecameFriend
-		senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO: Change this
-		senderFriendInfo.Unknown = 0
-
-		go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Client, senderFriendInfo)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream.WriteStructure(friendInfo)
+	friendInfo.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodAcceptFriendRequest, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodAcceptFriendRequest
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

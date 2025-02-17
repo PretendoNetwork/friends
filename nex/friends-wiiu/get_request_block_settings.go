@@ -3,61 +3,48 @@ package nex_friends_wiiu
 import (
 	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
 	"github.com/PretendoNetwork/friends/globals"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu"
-	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/friends-wiiu/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-func GetRequestBlockSettings(err error, client *nex.Client, callID uint32, pids []uint32) uint32 {
+func GetRequestBlockSettings(err error, packet nex.PacketInterface, callID uint32, pids types.List[types.UInt32]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	settings := make([]*friends_wiiu_types.PrincipalRequestBlockSetting, 0)
+	connection := packet.Sender().(*nex.PRUDPConnection)
 
-	// TODO:
-	// Improve this. Use less database_wiiu.reads
-	for i := 0; i < len(pids); i++ {
-		requestedPID := pids[i]
+	settings := types.NewList[friends_wiiu_types.PrincipalRequestBlockSetting]()
 
+	// TODO - Improve this. Use less database_wiiu reads
+	for _, pid := range pids {
 		setting := friends_wiiu_types.NewPrincipalRequestBlockSetting()
-		setting.PID = requestedPID
-		isBlocked, err := database_wiiu.IsFriendRequestBlocked(client.PID(), requestedPID)
+		setting.PID = pid
+
+		isBlocked, err := database_wiiu.IsFriendRequestBlocked(uint32(connection.PID()), uint32(pid))
 		if err != nil {
 			globals.Logger.Critical(err.Error())
-			return nex.Errors.Core.Unknown
+			return nil, nex.NewError(nex.ResultCodes.Core.Unknown, "") // TODO - Add error message
 		}
 
-		setting.IsBlocked = isBlocked
+		setting.IsBlocked = types.NewBool(isBlocked)
 
 		settings = append(settings, setting)
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcResponseStream.WriteListStructure(settings)
+	settings.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	// Build response packet
-	rmcResponse := nex.NewRMCResponse(friends_wiiu.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_wiiu.MethodGetRequestBlockSettings, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodGetRequestBlockSettings
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }

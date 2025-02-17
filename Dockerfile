@@ -1,19 +1,36 @@
-# --- builder ---
-FROM golang:1.20.6-alpine3.17 as builder
-LABEL stage=builder
-RUN apk add git
-WORKDIR /build
+# syntax=docker/dockerfile:1
 
-COPY go.* ./
-RUN go mod download
+ARG app_dir="/home/go/app"
 
-COPY . ./
-ARG BUILD_STRING=pretendo.friends.docker
-RUN go build -ldflags "-X 'main.serverBuildString=${BUILD_STRING}'" -v -o server
 
-# --- runner ---
-FROM alpine:3.17 as runner
-WORKDIR /build
+# * Building the application
+FROM golang:1.23.6-alpine AS build
+ARG app_dir
+ARG build_string=pretendo.friends.docker
 
-COPY --from=builder /build/server /build/
-CMD ["/build/server"]
+WORKDIR ${app_dir}
+
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+	--mount=type=bind,source=go.sum,target=go.sum \
+	--mount=type=bind,source=go.mod,target=go.mod \
+	go mod download -x
+
+COPY . .
+RUN --mount=type=cache,target=/go/pkg/mod/ \
+	CGO_ENABLED=0 go build -v -o ${app_dir}/build/server -ldflags "-X 'main.serverBuildString=${build_string}'"
+
+
+# * Running the final application
+FROM alpine:3.20 AS final
+ARG app_dir
+WORKDIR ${app_dir}
+
+RUN addgroup go && adduser -D -G go go
+
+RUN mkdir -p ${app_dir}/log && chown go:go ${app_dir}/log
+
+USER go
+
+COPY --from=build ${app_dir}/build/server ${app_dir}/server
+
+CMD [ "./server" ]

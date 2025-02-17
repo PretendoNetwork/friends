@@ -7,84 +7,88 @@ import (
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
 	notifications_3ds "github.com/PretendoNetwork/friends/notifications/3ds"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/friends-3ds"
-	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
-	"golang.org/x/exp/slices"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
-func SyncFriend(err error, client *nex.Client, callID uint32, lfc uint64, pids []uint32, lfcList []uint64) uint32 {
+func SyncFriend(err error, packet nex.PacketInterface, callID uint32, lfc types.UInt64, pids types.List[types.PID], lfcList types.List[types.UInt64]) (*nex.RMCMessage, *nex.Error) {
 	if err != nil {
 		globals.Logger.Error(err.Error())
-		return nex.Errors.FPD.InvalidArgument
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	friendRelationships, err := database_3ds.GetUserFriends(client.PID())
+	connection := packet.Sender().(*nex.PRUDPConnection)
+
+	friendRelationships, err := database_3ds.GetUserFriends(uint32(connection.PID()))
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
-		return nex.Errors.FPD.Unknown
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	for i := 0; i < len(friendRelationships); i++ {
-		if !slices.Contains(pids, friendRelationships[i].PID) {
-			err := database_3ds.RemoveFriendship(client.PID(), friendRelationships[i].PID)
+	for _, relationship := range friendRelationships {
+		var hasPID bool
+		for _, pid := range pids {
+			if pid == relationship.PID {
+				hasPID = true
+				break
+			}
+		}
+
+		if !hasPID {
+			err := database_3ds.RemoveFriendship(uint32(connection.PID()), uint32(relationship.PID))
 			if err != nil && err != database.ErrFriendshipNotFound {
 				globals.Logger.Critical(err.Error())
-				return nex.Errors.FPD.Unknown
+				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 			}
 		}
 	}
 
-	for i := 0; i < len(pids); i++ {
-		if !isPIDInRelationships(friendRelationships, pids[i]) {
-			friendRelationship, err := database_3ds.SaveFriendship(client.PID(), pids[i])
+	// TODO - Not needed?
+	relationships := friendRelationships.Copy().(types.List[friends_3ds_types.FriendRelationship])
+
+	for _, pid := range pids {
+		if !isPIDInRelationships(relationships, uint32(pid)) {
+			relationship, err := database_3ds.SaveFriendship(uint32(connection.PID()), uint32(pid))
 			if err != nil {
 				globals.Logger.Critical(err.Error())
-				return nex.Errors.FPD.Unknown
+				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 			}
 
-			friendRelationships = append(friendRelationships, friendRelationship)
+			relationships = append(relationships, relationship)
 
-			// Alert the other side, in case they weren't able to get our presence data
-			connectedUser := globals.ConnectedUsers[pids[i]]
-			if connectedUser != nil {
-				go notifications_3ds.SendFriendshipCompleted(connectedUser.Client, pids[i], client.PID())
+			// * Alert the other side, in case they weren't able to get our presence data
+			connectedUser, ok := globals.ConnectedUsers.Get(uint32(pid))
+			if ok && connectedUser != nil {
+				go notifications_3ds.SendFriendshipCompleted(connectedUser.Connection, connection.PID())
 			}
 		}
 	}
 
-	rmcResponseStream := nex.NewStreamOut(globals.SecureServer)
+	// TODO - Not needed?
+	syncedRelationships := relationships.Copy().(types.List[friends_3ds_types.FriendRelationship])
 
-	rmcResponseStream.WriteListStructure(friendRelationships)
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
+
+	syncedRelationships.WriteTo(rmcResponseStream)
 
 	rmcResponseBody := rmcResponseStream.Bytes()
 
-	rmcResponse := nex.NewRMCResponse(friends_3ds.ProtocolID, callID)
-	rmcResponse.SetSuccess(friends_3ds.MethodSyncFriend, rmcResponseBody)
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_3ds.ProtocolID
+	rmcResponse.MethodID = friends_3ds.MethodSyncFriend
+	rmcResponse.CallID = callID
 
-	rmcResponseBytes := rmcResponse.Bytes()
-
-	responsePacket, _ := nex.NewPacketV0(client, nil)
-
-	responsePacket.SetVersion(0)
-	responsePacket.SetSource(0xA1)
-	responsePacket.SetDestination(0xAF)
-	responsePacket.SetType(nex.DataPacket)
-	responsePacket.SetPayload(rmcResponseBytes)
-
-	responsePacket.AddFlag(nex.FlagNeedsAck)
-	responsePacket.AddFlag(nex.FlagReliable)
-
-	globals.SecureServer.Send(responsePacket)
-
-	return 0
+	return rmcResponse, nil
 }
 
-func isPIDInRelationships(relationships []*friends_3ds_types.FriendRelationship, pid uint32) bool {
+func isPIDInRelationships(relationships []friends_3ds_types.FriendRelationship, pid uint32) bool {
 	for i := range relationships {
-		if relationships[i].PID == pid {
+		if uint32(relationships[i].PID) == pid {
 			return true
 		}
 	}
+
 	return false
 }

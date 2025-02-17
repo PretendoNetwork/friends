@@ -5,52 +5,56 @@ import (
 
 	database_3ds "github.com/PretendoNetwork/friends/database/3ds"
 	"github.com/PretendoNetwork/friends/globals"
-	nex "github.com/PretendoNetwork/nex-go"
-	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/friends-3ds/types"
-	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
-	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications/types"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/constants"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
+	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
-func SendPresenceUpdate(client *nex.Client, presence *friends_3ds_types.NintendoPresence) {
+func SendPresenceUpdate(connection *nex.PRUDPConnection, presence friends_3ds_types.NintendoPresence) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = 1
-	eventObject.SenderPID = client.PID()
-	eventObject.DataHolder = nex.NewDataHolder()
-	eventObject.DataHolder.SetTypeName("NintendoPresence")
-	eventObject.DataHolder.SetObjectData(presence)
+	eventObject.Type = types.NewUInt32(1)
+	eventObject.SenderPID = connection.PID()
+	eventObject.DataHolder = types.NewDataHolder()
+	eventObject.DataHolder.Object = presence.Copy().(friends_3ds_types.NintendoPresence)
 
-	stream := nex.NewStreamOut(globals.SecureServer)
-	eventObjectBytes := eventObject.Bytes(stream)
+	stream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
 
-	rmcRequest := nex.NewRMCRequest()
-	rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
-	rmcRequest.SetCallID(3810693103)
-	rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent1)
-	rmcRequest.SetParameters(eventObjectBytes)
+	eventObject.WriteTo(stream)
 
-	rmcRequestBytes := rmcRequest.Bytes()
+	notificationRequest := nex.NewRMCRequest(globals.SecureEndpoint)
+	notificationRequest.ProtocolID = nintendo_notifications.ProtocolID
+	notificationRequest.CallID = 3810693103
+	notificationRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent1
+	notificationRequest.Parameters = stream.Bytes()
 
-	friendsList, err := database_3ds.GetUserFriends(client.PID())
+	notificationRequestBytes := notificationRequest.Bytes()
+
+	friendsList, err := database_3ds.GetUserFriends(uint32(connection.PID()))
 	if err != nil && err != sql.ErrNoRows {
 		globals.Logger.Critical(err.Error())
 	}
 
-	for i := 0; i < len(friendsList); i++ {
+	if friendsList == nil {
+		return
+	}
 
-		connectedUser := globals.ConnectedUsers[friendsList[i].PID]
+	for _, friend := range friendsList {
+		connectedUser, ok := globals.ConnectedUsers.Get(uint32(friend.PID))
 
-		if connectedUser != nil {
+		if ok && connectedUser != nil {
+			requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connectedUser.Connection, nil)
 
-			requestPacket, _ := nex.NewPacketV0(connectedUser.Client, nil)
-
-			requestPacket.SetVersion(0)
-			requestPacket.SetSource(0xA1)
-			requestPacket.SetDestination(0xAF)
-			requestPacket.SetType(nex.DataPacket)
-			requestPacket.SetPayload(rmcRequestBytes)
-
-			requestPacket.AddFlag(nex.FlagNeedsAck)
-			requestPacket.AddFlag(nex.FlagReliable)
+			requestPacket.SetType(constants.DataPacket)
+			requestPacket.AddFlag(constants.PacketFlagNeedsAck)
+			requestPacket.AddFlag(constants.PacketFlagReliable)
+			requestPacket.SetSourceVirtualPortStreamType(connectedUser.Connection.StreamType)
+			requestPacket.SetSourceVirtualPortStreamID(globals.SecureEndpoint.StreamID)
+			requestPacket.SetDestinationVirtualPortStreamType(connectedUser.Connection.StreamType)
+			requestPacket.SetDestinationVirtualPortStreamID(connectedUser.Connection.StreamID)
+			requestPacket.SetPayload(notificationRequestBytes)
 
 			globals.SecureServer.Send(requestPacket)
 		}

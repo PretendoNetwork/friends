@@ -5,34 +5,35 @@ import (
 
 	"github.com/PretendoNetwork/friends/globals"
 	pb "github.com/PretendoNetwork/grpc-go/friends"
-	nex "github.com/PretendoNetwork/nex-go"
-	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/nintendo-notifications"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/constants"
+	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
 	empty "github.com/golang/protobuf/ptypes/empty"
 )
 
 // SendUserNotificationWiiU implements helloworld.SendUserNotificationWiiU
 func (s *gRPCFriendsServer) SendUserNotificationWiiU(ctx context.Context, in *pb.SendUserNotificationWiiURequest) (*empty.Empty, error) {
-	connectedUser := globals.ConnectedUsers[in.GetPid()]
+	connectedUser, ok := globals.ConnectedUsers.Get(in.GetPid())
 
-	if connectedUser != nil {
-		rmcRequest := nex.NewRMCRequest()
-		rmcRequest.SetProtocolID(nintendo_notifications.ProtocolID)
-		rmcRequest.SetCallID(3810693103)
-		rmcRequest.SetMethodID(nintendo_notifications.MethodProcessNintendoNotificationEvent2)
-		rmcRequest.SetParameters(in.GetNotificationData())
+	if ok && connectedUser != nil {
+		rmcRequest := nex.NewRMCRequest(globals.SecureEndpoint)
+		rmcRequest.ProtocolID = nintendo_notifications.ProtocolID
+		rmcRequest.CallID = 3810693103
+		rmcRequest.MethodID = nintendo_notifications.MethodProcessNintendoNotificationEvent2
+		rmcRequest.Parameters = in.GetNotificationData()
 
 		rmcRequestBytes := rmcRequest.Bytes()
 
-		requestPacket, _ := nex.NewPacketV0(connectedUser.Client, nil)
+		requestPacket, _ := nex.NewPRUDPPacketV0(globals.SecureEndpoint.Server, connectedUser.Connection, nil)
 
-		requestPacket.SetVersion(0)
-		requestPacket.SetSource(0xA1)
-		requestPacket.SetDestination(0xAF)
-		requestPacket.SetType(nex.DataPacket)
+		requestPacket.SetType(constants.DataPacket)
+		requestPacket.AddFlag(constants.PacketFlagNeedsAck)
+		requestPacket.AddFlag(constants.PacketFlagReliable)
+		requestPacket.SetSourceVirtualPortStreamType(connectedUser.Connection.StreamType)
+		requestPacket.SetSourceVirtualPortStreamID(globals.SecureEndpoint.StreamID)
+		requestPacket.SetDestinationVirtualPortStreamType(connectedUser.Connection.StreamType)
+		requestPacket.SetDestinationVirtualPortStreamID(connectedUser.Connection.StreamID)
 		requestPacket.SetPayload(rmcRequestBytes)
-
-		requestPacket.AddFlag(nex.FlagNeedsAck)
-		requestPacket.AddFlag(nex.FlagReliable)
 
 		globals.SecureServer.Send(requestPacket)
 	}
