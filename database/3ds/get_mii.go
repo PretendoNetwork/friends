@@ -24,7 +24,7 @@ func GetMii(pid types.PID) (friends_3ds_types.FriendMii, error) {
 	var miiData []byte
 	var changedTime uint64
 
-	err = rows.Scan(&pid, &miiName, &miiProfanity, &miiCharacterSet, &miiData, &changedTime)
+	err = rows.Scan(&miiName, &miiProfanity, &miiCharacterSet, &miiData, &changedTime)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return friendMii, database.ErrPIDNotFound
