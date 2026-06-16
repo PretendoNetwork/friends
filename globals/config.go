@@ -15,6 +15,7 @@ type config struct {
 	HealthCheckPort          uint16 `envconf:"optional"`
 	EnableBella              bool   `envconf:"optional"`
 	MiiDecryptKey            string
+	PIDHmacKey               string
 }
 
 var Config *config = &config{}
