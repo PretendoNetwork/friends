@@ -100,3 +100,4 @@ All configuration options are handled via environment variables
 | `PN_FRIENDS_CONFIG_HEALTH_CHECK_PORT`          | Port for the basic UDP health check server                                                                             | No                                  |
 | `PN_FRIENDS_CONFIG_ENABLE_BELLA`               | Enables a debug user named "Bella" which is always assigned as your friend                                             | No                                  |
 | `PN_FRIENDS_CONFIG_MII_DECRYPT_KEY`            | AES key used to decrypt 3DS Mii data (as a hex string)                                                                 | Yes                                 |
+| `PN_FRIENDS_CONFIG_PID_HMAC_KEY`               | AES key used for the `pidHMAC` field in accounts                                                                       | Yes                                 |
