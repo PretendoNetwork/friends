@@ -8,6 +8,7 @@ import (
 	pb "github.com/PretendoNetwork/grpc/go/account/v2"
 	"github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	common_globals "github.com/PretendoNetwork/nex-protocols-common-go/v2/globals"
 	"google.golang.org/grpc/metadata"
 )
 
@@ -36,9 +37,9 @@ func AccountDetailsByUsername(username string) (*nex.Account, *nex.Error) {
 	// * Would always return an error even when it shouldn't.
 	// TODO - Look into this more
 
-	ctx := metadata.NewOutgoingContext(context.Background(), GRPCAccountCommonMetadata)
+	ctx := metadata.NewOutgoingContext(context.Background(), common_globals.GRPCAccountCommonMetadata)
 
-	response, err := GRPCAccountClient.GetNEXPassword(ctx, &pb.GetNEXPasswordRequest{Pid: uint32(pid)})
+	response, err := common_globals.GRPCAccountClient.GetNEXPassword(ctx, &pb.GetNEXPasswordRequest{Pid: uint32(pid)})
 	if err != nil {
 		Logger.Error(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.RendezVous.InvalidPID, "Invalid PID")

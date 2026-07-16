@@ -8,6 +8,7 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2/constants"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_constants "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/constants"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
@@ -37,7 +38,7 @@ func SendUserWentOffline(connection *nex.PRUDPConnection, pid types.PID) {
 	nintendoNotificationEventGeneral.StrParam = types.NewString("")
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewUInt32(10)
+	eventObject.Type = nintendo_notifications_constants.NotificationTypeFriendOffline
 	eventObject.SenderPID = connection.PID().Copy().(types.PID)
 	eventObject.DataHolder = types.NewDataHolder()
 	eventObject.DataHolder.Object = nintendoNotificationEventGeneral.Copy().(nintendo_notifications_types.NintendoNotificationEventGeneral)

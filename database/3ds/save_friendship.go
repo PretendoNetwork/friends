@@ -3,6 +3,7 @@ package database_3ds
 import (
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds_constants "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/constants"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
@@ -24,7 +25,7 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (friends_3ds_types.Fr
 
 	if !found {
 		friendRelationship.PID = types.NewPID(uint64(recipientPID))
-		friendRelationship.RelationshipType = types.NewUInt8(2) // * Non-existent
+		friendRelationship.RelationshipType = friends_3ds_constants.RelationshipTypeInvalid
 		return friendRelationship, nil
 	}
 
@@ -79,7 +80,7 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (friends_3ds_types.Fr
 	}
 
 	friendRelationship.PID = types.NewPID(uint64(recipientPID))
-	friendRelationship.RelationshipType = types.NewUInt8(1) // * Complete
+	friendRelationship.RelationshipType = friends_3ds_constants.RelationshipTypeComplete
 
 	return friendRelationship, nil
 }

@@ -10,6 +10,7 @@ import (
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_constants "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/constants"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
@@ -91,7 +92,7 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 	friendInfo.NNAInfo.Unknown2 = types.NewUInt8(0)
 
 	friendInfo.Presence = friends_wiiu_types.NewNintendoPresenceV2()
-	friendInfo.Presence.ChangedFlags = types.NewUInt32(0)
+	friendInfo.Presence.ChangedFlags = friends_wiiu_constants.PresenceChangedFlagNone
 	friendInfo.Presence.Online = types.NewBool(false)
 	friendInfo.Presence.GameKey = gameKey // * Maybe this is reused?
 	friendInfo.Presence.Unknown1 = types.NewUInt8(0)

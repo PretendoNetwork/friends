@@ -6,6 +6,7 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2/constants"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_constants "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/constants"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
@@ -13,7 +14,7 @@ func SendFriendshipRemoved(connection *nex.PRUDPConnection, senderPID types.PID)
 	nintendoNotificationEventGeneral := nintendo_notifications_types.NewNintendoNotificationEventGeneral()
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewUInt32(26)
+	eventObject.Type = nintendo_notifications_constants.NotificationTypeFriendshipCanceledWiiU
 	eventObject.SenderPID = senderPID.Copy().(types.PID)
 	eventObject.DataHolder = types.NewDataHolder()
 	eventObject.DataHolder.Object = nintendoNotificationEventGeneral.Copy().(nintendo_notifications_types.NintendoNotificationEventGeneral)

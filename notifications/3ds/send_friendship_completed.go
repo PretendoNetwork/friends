@@ -6,6 +6,7 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2/constants"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_constants "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/constants"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
@@ -16,7 +17,7 @@ func SendFriendshipCompleted(connection *nex.PRUDPConnection, senderPID types.PI
 	notificationEvent.U64Param2 = types.NewUInt64(uint64(types.NewDateTime(0).Now())) // * Friendship timestamp
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewUInt32(7)
+	eventObject.Type = nintendo_notifications_constants.NotificationTypeFriendshipCompleted3DS
 	eventObject.SenderPID = senderPID
 	eventObject.DataHolder = types.NewDataHolder()
 	eventObject.DataHolder.Object = notificationEvent.Copy().(nintendo_notifications_types.NintendoNotificationEventGeneral)

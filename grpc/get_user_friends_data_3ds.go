@@ -14,6 +14,7 @@ import (
 	"github.com/PretendoNetwork/friends/utility"
 	pb "github.com/PretendoNetwork/grpc/go/friends/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds_constants "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/constants"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -69,7 +70,7 @@ func (s *gRPCFriendsV2Server) GetUserFriendsData3DS(ctx context.Context, in *pb.
 		mii := friends_3ds_types.NewMii()
 		mii.Name = types.NewString("Bandwidth")
 		mii.ProfanityFlag = types.NewBool(false)
-		mii.CharacterSet = types.NewUInt8(0)
+		mii.CharacterSet = friends_3ds_constants.MiiCharacterSetJUE
 		mii.MiiData = types.NewBuffer([]byte{
 			0x03, 0x00, 0x00, 0x40, 0xE9, 0x55, 0xA2, 0x09,
 			0xE7, 0xC7, 0x41, 0x82, 0xD9, 0x7D, 0x0B, 0x2D,

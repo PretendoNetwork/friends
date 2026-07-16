@@ -3,7 +3,6 @@ package globals
 type config struct {
 	PostgresURI              string
 	PostgresMaxConnections   int64
-	AESKey                   string
 	GRPCAPIKey               string `envconf:"optional"`
 	GRPCServerPort           uint16
 	AuthenticationServerPort uint16

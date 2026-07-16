@@ -9,12 +9,13 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_constants "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/constants"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
 func SendPresenceUpdate(presence friends_wiiu_types.NintendoPresenceV2) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewUInt32(24)
+	eventObject.Type = nintendo_notifications_constants.NotificationTypeFriendStartedTitleWiiU
 	eventObject.SenderPID = presence.PID.Copy().(types.PID)
 	eventObject.DataHolder = types.NewDataHolder()
 	eventObject.DataHolder.Object = presence.Copy().(friends_wiiu_types.NintendoPresenceV2)

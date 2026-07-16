@@ -294,6 +294,7 @@ func NewConfigParser[T any](config T) *ConfigParser[T] {
 			"NEX":   true, // * Start of our custom ones
 			"GRPC":  true,
 			"AES":   true,
+			"PID":   true,
 		},
 		allowedPluralInitialisms: map[string]bool{
 			"API":  true,
