@@ -9,6 +9,7 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2/constants"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_constants "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/constants"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
@@ -17,7 +18,7 @@ func SendCommentUpdate(connection *nex.PRUDPConnection, comment string) {
 	notificationEvent.StrParam = types.NewString(comment)
 
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewUInt32(3)
+	eventObject.Type = nintendo_notifications_constants.NotificationTypeFriendCommentUpdated3DS
 	eventObject.SenderPID = connection.PID()
 	eventObject.DataHolder = types.NewDataHolder()
 	eventObject.DataHolder.Object = notificationEvent.Copy().(nintendo_notifications_types.NintendoNotificationEventGeneral)

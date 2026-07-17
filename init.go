@@ -4,20 +4,16 @@ import (
 	"crypto/md5"
 	"crypto/rand"
 	"encoding/hex"
-	"fmt"
 	"os"
 	"strings"
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/friends/globals"
 	"github.com/PretendoNetwork/friends/types"
-	pb "github.com/PretendoNetwork/grpc/go/account/v2"
 	"github.com/PretendoNetwork/nex-go/v2"
 	nex_types "github.com/PretendoNetwork/nex-go/v2/types"
+	common_globals "github.com/PretendoNetwork/nex-protocols-common-go/v2/globals"
 	"github.com/PretendoNetwork/plogger-go"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/metadata"
 
 	"github.com/joho/godotenv"
 )
@@ -47,11 +43,6 @@ func init() {
 	globals.AuthenticationServerAccount = nex.NewAccount(nex_types.NewPID(1), "Quazal Authentication", globals.KerberosPassword, false)
 	globals.SecureServerAccount = nex.NewAccount(nex_types.NewPID(2), "Quazal Rendez-Vous", globals.KerberosPassword, false)
 	globals.GuestAccount = nex.NewAccount(nex_types.NewPID(100), "guest", "MMQea3n!fsik", false)
-	globals.AESKey, err = hex.DecodeString(globals.Config.AESKey)
-	if err != nil {
-		globals.Logger.Criticalf("Failed to decode AES key: %v", err)
-		os.Exit(0)
-	}
 
 	if strings.TrimSpace(globals.Config.GRPCAPIKey) == "" {
 		globals.Logger.Warning("Insecure gRPC server detected. PN_FRIENDS_CONFIG_GRPC_API_KEY environment variable not set")
@@ -61,16 +52,7 @@ func init() {
 		globals.Logger.Warning("Insecure gRPC server detected. PN_FRIENDS_CONFIG_ACCOUNT_GRPC_API_KEY environment variable not set")
 	}
 
-	globals.GRPCAccountClientConnection, err = grpc.NewClient(fmt.Sprintf("%s:%d", globals.Config.AccountGRPCHost, globals.Config.AccountGRPCPort), grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		globals.Logger.Criticalf("Failed to connect to account gRPC server: %v", err)
-		os.Exit(0)
-	}
-
-	globals.GRPCAccountClient = pb.NewAccountServiceClient(globals.GRPCAccountClientConnection)
-	globals.GRPCAccountCommonMetadata = metadata.Pairs(
-		"X-API-Key", globals.Config.AccountGRPCAPIKey,
-	)
+	common_globals.ConnectToAccountGRPC(globals.Config.AccountGRPCHost, globals.Config.AccountGRPCPort, globals.Config.AccountGRPCAPIKey)
 
 	if strings.TrimSpace(globals.Config.MiiDecryptKey) == "" {
 		globals.Logger.Warning("PN_FRIENDS_CONFIG_MII_DECRYPT_KEY environment variable not set. 3DS Mii data cannot be decrypted")

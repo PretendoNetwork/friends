@@ -9,6 +9,7 @@ import (
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_constants "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/constants"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
@@ -129,7 +130,13 @@ func UpdateAndGetAllInformation(err error, packet nex.PacketInterface, callID ui
 		})
 		bella.NNAInfo.PrincipalBasicInfo.Mii.Datetime = types.NewDateTime(0)
 
-		bella.Presence.ChangedFlags = types.NewUInt32(0x1EE)
+		bella.Presence.ChangedFlags = friends_wiiu_constants.PresenceChangedFlagApplicationData |
+			friends_wiiu_constants.PresenceChangedFlagGatheringID |
+			friends_wiiu_constants.PresenceChangedFlagOwnerPID |
+			friends_wiiu_constants.PresenceChangedFlagJoinGameMode |
+			friends_wiiu_constants.PresenceChangedFlagMatchmakeSystemType |
+			friends_wiiu_constants.PresenceChangedFlagJoinAvailabilityFlag |
+			friends_wiiu_constants.PresenceChangedFlagGameModeDescription // 0x1EE
 		bella.Presence.Online = types.NewBool(true)
 		bella.Presence.GameKey = friends_wiiu_types.NewGameKey()
 		bella.Presence.Unknown1 = types.NewUInt8(0)

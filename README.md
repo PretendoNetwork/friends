@@ -88,7 +88,6 @@ All configuration options are handled via environment variables
 | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
 | `PN_FRIENDS_CONFIG_POSTGRES_URI`               | Fully qualified URI to your Postgres server (Example `postgres://username:password@localhost/friends?sslmode=disable`) | Yes                                 |
 | `PN_FRIENDS_CONFIG_POSTGRES_MAX_CONNECTIONS`   | Postgres server max connections                                                                                        | Yes                                 |
-| `PN_FRIENDS_CONFIG_AES_KEY`                    | AES key used in tokens provided by the account server                                                                  | Yes                                 |
 | `PN_FRIENDS_CONFIG_GRPC_API_KEY`               | API key for your GRPC server                                                                                           | No (Assumed to be an open gRPC API) |
 | `PN_FRIENDS_CONFIG_GRPC_SERVER_PORT`           | Port for the GRPC server                                                                                               | Yes                                 |
 | `PN_FRIENDS_CONFIG_AUTHENTICATION_SERVER_PORT` | Port for the authentication server                                                                                     | Yes                                 |

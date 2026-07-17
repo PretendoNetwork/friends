@@ -7,6 +7,7 @@ import (
 	nex "github.com/PretendoNetwork/nex-go/v2"
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_3ds "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds"
+	friends_3ds_constants "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/constants"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
@@ -27,7 +28,7 @@ func UpdatePreference(err error, packet nex.PacketInterface, callID uint32, publ
 	if !showGame {
 		emptyPresence := friends_3ds_types.NewNintendoPresence()
 		emptyPresence.GameKey = friends_3ds_types.NewGameKey()
-		emptyPresence.ChangedFlags = types.NewUInt32(0xFFFFFFFF) // * All flags
+		emptyPresence.ChangedFlags = friends_3ds_constants.PresenceChangedFlag(0xFFFFFFFF) // * All flags
 		notifications_3ds.SendPresenceUpdate(connection, emptyPresence)
 	}
 

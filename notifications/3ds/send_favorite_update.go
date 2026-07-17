@@ -10,12 +10,13 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_constants "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/constants"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
 func SendFavoriteUpdate(connection *nex.PRUDPConnection, gameKey friends_3ds_types.GameKey) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewUInt32(2)
+	eventObject.Type = nintendo_notifications_constants.NotificationTypeFriendFavoriteGameUpdated3DS
 	eventObject.SenderPID = connection.PID()
 	eventObject.DataHolder = types.NewDataHolder()
 	eventObject.DataHolder.Object = gameKey.Copy().(friends_3ds_types.GameKey)

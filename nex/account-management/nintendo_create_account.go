@@ -20,13 +20,12 @@ func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32,
 		return nil, nex.NewError(nex.ResultCodes.Core.InvalidArgument, err.Error())
 	}
 
-	decryptedToken, nexError := utility.ValidateNintendoCreateAccountToken(oAuthData)
+	pid, nexError := utility.ValidateNintendoCreateAccountToken(oAuthData)
 	if nexError != nil {
 		globals.Logger.Error(nexError.Error())
 		return nil, nexError
 	}
 
-	pid := types.NewPID(uint64(decryptedToken.UserPID))
 	pidString := strconv.FormatUint(uint64(pid), 10)
 
 	mac := hmac.New(md5.New, []byte(globals.Config.PIDHmacKey))

@@ -28,7 +28,7 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs 
 	pidConnectionID := types.NewUInt32(0)
 	urlPublic := types.NewString("")
 
-	errorCode := common_globals.ValidatePretendoLoginData(connection.PID(), hCustomData, globals.AESKey)
+	errorCode := common_globals.ValidatePNLoginData(connection.PID(), hCustomData, []string{"00003200"})
 	if errorCode != nil {
 		common_globals.Logger.Error(errorCode.Message)
 		retval = types.NewQResultError(errorCode.ResultCode)
@@ -50,16 +50,16 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs 
 
 			// * Station reports itself as being non-public (local)
 			if localStation == nil && !stationURL.IsPublic() {
-				localStation = &stationURL
+				localStation = stationURL.CopyRef().(*types.StationURL)
 			}
 
 			// * Still did not find the station, trying heuristics
 			if localStation == nil && natf == constants.UnknownNATFiltering && natm == constants.UnknownNATMapping {
-				localStation = &stationURL
+				localStation = stationURL.CopyRef().(*types.StationURL)
 			}
 
 			if publicStation == nil && stationURL.IsPublic() {
-				publicStation = &stationURL
+				publicStation = stationURL.CopyRef().(*types.StationURL)
 			}
 		}
 
@@ -69,7 +69,7 @@ func RegisterEx(err error, packet nex.PacketInterface, callID uint32, vecMyURLs 
 		}
 
 		if publicStation == nil {
-			publicStation = localStation
+			publicStation = localStation.CopyRef().(*types.StationURL)
 
 			var address string
 			var port uint16

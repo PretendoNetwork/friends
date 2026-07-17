@@ -7,12 +7,13 @@ import (
 	"github.com/PretendoNetwork/nex-go/v2/types"
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 	nintendo_notifications "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications"
+	nintendo_notifications_constants "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/constants"
 	nintendo_notifications_types "github.com/PretendoNetwork/nex-protocols-go/v2/nintendo-notifications/types"
 )
 
 func SendFriendRequest(connection *nex.PRUDPConnection, friendRequestNotificationData friends_wiiu_types.FriendRequest) {
 	eventObject := nintendo_notifications_types.NewNintendoNotificationEvent()
-	eventObject.Type = types.NewUInt32(27)
+	eventObject.Type = nintendo_notifications_constants.NotificationTypeFriendRequestReceivedWiiU
 	eventObject.SenderPID = friendRequestNotificationData.PrincipalInfo.PID.Copy().(types.PID)
 	eventObject.DataHolder = types.NewDataHolder()
 	eventObject.DataHolder.Object = friendRequestNotificationData.Copy().(friends_wiiu_types.FriendRequest)

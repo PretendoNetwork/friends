@@ -5,6 +5,7 @@ import (
 
 	"github.com/PretendoNetwork/friends/database"
 	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_3ds_constants "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/constants"
 	friends_3ds_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-3ds/types"
 )
 
@@ -36,7 +37,7 @@ func GetMii(pid types.PID) (friends_3ds_types.FriendMii, error) {
 	friendMii.PID = types.NewPID(uint64(pid))
 	friendMii.Mii.Name = types.NewString(miiName)
 	friendMii.Mii.ProfanityFlag = types.NewBool(miiProfanity)
-	friendMii.Mii.CharacterSet = types.NewUInt8(miiCharacterSet)
+	friendMii.Mii.CharacterSet = friends_3ds_constants.MiiCharacterSet(miiCharacterSet)
 	friendMii.Mii.MiiData = types.NewBuffer(miiData)
 	friendMii.ModifiedAt = types.NewDateTime(changedTime)
 
