@@ -51,6 +51,7 @@ func SaveFriendship(senderPID uint32, recipientPID uint32) (friends_3ds_types.Fr
 		}
 
 		friendRelationship.PID = types.NewPID(uint64(recipientPID))
+		friendRelationship.RelationshipType = friends_3ds_constants.RelationshipTypeIncomplete
 		return friendRelationship, nil
 	}
 
