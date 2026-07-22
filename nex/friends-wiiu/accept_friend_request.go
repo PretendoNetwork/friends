@@ -29,27 +29,27 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 		}
 	}
 
-	friendPID := uint32(friendInfo.NNAInfo.PrincipalBasicInfo.PID)
-	connectedUser, ok := globals.ConnectedUsers.Get(friendPID)
+	senderPID := uint32(friendInfo.NNAInfo.PrincipalBasicInfo.PID)
+	senderUser, ok := globals.ConnectedUsers.Get(senderPID)
 
-	if ok && connectedUser != nil {
-		senderPID := uint32(connection.PID())
-		senderConnectedUser, ok := globals.ConnectedUsers.Get(senderPID)
+	if ok && senderUser != nil {
+		recipientPID := uint32(connection.PID())
+		recipientConnectedUser, ok := globals.ConnectedUsers.Get(recipientPID)
 
-		if ok && senderConnectedUser != nil {
+		if ok && recipientConnectedUser != nil {
 			var err error
 
 			senderFriendInfo := friends_wiiu_types.NewFriendInfo()
 
-			senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(senderPID)
+			senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(recipientPID)
 			if err != nil {
 				globals.Logger.Critical(err.Error())
-				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "tried to accept friend request of unregistered yet connected user user")
 			}
 
-			senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
+			senderFriendInfo.Presence = recipientConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
 
-			status, err := database_wiiu.GetUserComment(senderPID)
+			status, err := database_wiiu.GetUserComment(recipientPID)
 			if err != nil {
 				globals.Logger.Critical(err.Error())
 				senderFriendInfo.Status = friends_wiiu_types.NewComment()
@@ -62,7 +62,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 			senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
 			senderFriendInfo.Unknown = types.NewUInt64(0)
 
-			go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Connection, senderFriendInfo)
+			go notifications_wiiu.SendFriendRequestAccepted(senderUser.Connection, senderFriendInfo)
 		}
 	}
 

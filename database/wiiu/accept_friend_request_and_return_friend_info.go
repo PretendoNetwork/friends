@@ -64,6 +64,10 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (friends_wii
 
 	friendInfo := friends_wiiu_types.NewFriendInfo()
 	connectedUser, ok := globals.ConnectedUsers.Get(senderPID)
+	friendInfo.NNAInfo, err = GetUserNetworkAccountInfo(senderPID)
+	if err != nil {
+		return friends_wiiu_types.NewFriendInfo(), err
+	}
 	lastOnline := types.NewDateTime(0).Now()
 
 	if ok && connectedUser != nil {
