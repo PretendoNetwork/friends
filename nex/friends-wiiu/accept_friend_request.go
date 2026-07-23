@@ -29,27 +29,27 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 		}
 	}
 
-	senderPID := uint32(friendInfo.NNAInfo.PrincipalBasicInfo.PID)
-	senderUser, ok := globals.ConnectedUsers.Get(senderPID)
+	friendPID := uint32(friendInfo.NNAInfo.PrincipalBasicInfo.PID)
+	connectedUser, ok := globals.ConnectedUsers.Get(friendPID)
 
-	if ok && senderUser != nil {
-		recipientPID := uint32(connection.PID())
-		recipientConnectedUser, ok := globals.ConnectedUsers.Get(recipientPID)
+	if ok && connectedUser != nil {
+		senderPID := uint32(connection.PID())
+		senderConnectedUser, ok := globals.ConnectedUsers.Get(senderPID)
 
-		if ok && recipientConnectedUser != nil {
+		if ok && senderConnectedUser != nil {
 			var err error
 
 			senderFriendInfo := friends_wiiu_types.NewFriendInfo()
 
-			senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(recipientPID)
+			senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(senderPID)
 			if err != nil {
 				globals.Logger.Critical(err.Error())
 				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "Tried to accept friend request of unregistered yet connected user.")
 			}
 
-			senderFriendInfo.Presence = recipientConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
+			senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
 
-			status, err := database_wiiu.GetUserComment(recipientPID)
+			status, err := database_wiiu.GetUserComment(senderPID)
 			if err != nil {
 				globals.Logger.Critical(err.Error())
 				senderFriendInfo.Status = friends_wiiu_types.NewComment()
@@ -62,7 +62,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 			senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
 			senderFriendInfo.Unknown = types.NewUInt64(0)
 
-			go notifications_wiiu.SendFriendRequestAccepted(senderUser.Connection, senderFriendInfo)
+			go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Connection, senderFriendInfo)
 		}
 	}
 
