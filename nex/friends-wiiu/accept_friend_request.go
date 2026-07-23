@@ -44,7 +44,7 @@ func AcceptFriendRequest(err error, packet nex.PacketInterface, callID uint32, i
 			senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(senderPID)
 			if err != nil {
 				globals.Logger.Critical(err.Error())
-				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+				return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "Tried to accept friend request of unregistered yet connected user.")
 			}
 
 			senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
