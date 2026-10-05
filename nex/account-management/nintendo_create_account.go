@@ -2,7 +2,7 @@ package nex_account_management
 
 import (
 	"crypto/hmac"
-	"crypto/md5"
+	"crypto/sha256"
 	"strconv"
 
 	"github.com/PretendoNetwork/friends/globals"
@@ -28,7 +28,7 @@ func NintendoCreateAccount(err error, packet nex.PacketInterface, callID uint32,
 
 	pidString := strconv.FormatUint(uint64(pid), 10)
 
-	mac := hmac.New(md5.New, []byte(globals.Config.PIDHmacKey))
+	mac := hmac.New(sha256.New, []byte(globals.Config.PIDHmacKey))
 	_, err = mac.Write([]byte(pidString))
 	if err != nil {
 		globals.Logger.Error(err.Error())
