@@ -38,6 +38,18 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 		return nil, nex.NewError(nex.ResultCodes.FPD.BlacklistedByMe, "Friend request blocked by sender's blocklist")
 	}
 
+	// * Checking that the recipient allows friend requests
+	recipientPrincipalPreferences, err := database_wiiu.GetUserPrincipalPreference(recipientPID)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+	}
+
+	if recipientPrincipalPreferences.BlockFriendRequests == true {
+		// * Do not allow a user with friend requests off to receive a friend request
+		return nil, nex.NewError(nex.ResultCodes.FPD.BlockSettingChangeNotAllowed, "Friend request is blocked by Principal Preferences")
+	}
+
 	senderPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfo(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())

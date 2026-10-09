@@ -17,6 +17,23 @@ func (s *gRPCFriendsServer) SendUserFriendRequest(ctx context.Context, in *pb.Se
 	sender := in.GetSender()
 	recipient := in.GetRecipient()
 
+	// * Checking that the recipient allows friend requests
+	recipientPrincipalPreferences, err := database_wiiu.GetUserPrincipalPreference(recipient)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return &pb.SendUserFriendRequestResponse{
+			Success: false,
+		}, status.Errorf(codes.Internal, "internal server error")
+	}
+
+	if recipientPrincipalPreferences.BlockFriendRequests == true {
+		// * Do not allow a user with friend requests off to receive a friend request
+		return &pb.SendUserFriendRequestResponse{
+			Success: false,
+		}, status.Errorf(codes.Unavailable, "Provisional friend requests through gRPC are unavailable.")
+	}
+
+	print("check is fucked")
 	currentTimestamp := time.Now()
 	expireTimestamp := currentTimestamp.Add(time.Hour * 24 * 29)
 
