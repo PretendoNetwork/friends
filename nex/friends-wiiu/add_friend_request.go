@@ -68,6 +68,89 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 		}
 	}
 
+	// * Check for an already existing (potentially provisional) friend request. This code is a bit messy unfortunately, but it works.
+	friendRequestID, friendRequestMessage, err := database_wiiu.CheckExistingFriendRequestByPIDs(recipientPID, senderPID)
+
+	// * ErrFriendshipNotFound is what we want to receive in this case. Is there a smoother way to check for this though?
+	if err != nil && err != database.ErrFriendRequestNotFound {
+		globals.Logger.Critical(err.Error())
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+	} else if err == nil {
+		friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(friendRequestID)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+		}
+
+		// * PrincipalInfo must remain empty for the console to auto-accept.
+
+		friendRequest := friends_wiiu_types.NewFriendRequest()
+
+		friendRequest.PrincipalInfo.PID = types.NewPID(0)
+		friendRequest.PrincipalInfo.NNID = types.NewString("")
+
+		friendRequest.PrincipalInfo.Mii.Name = types.NewString("")
+		friendRequest.PrincipalInfo.Mii.Unknown1 = types.NewUInt8(0)
+		friendRequest.PrincipalInfo.Mii.Unknown2 = types.NewUInt8(0)
+		friendRequest.PrincipalInfo.Mii.Datetime = types.NewDateTime(0)
+		friendRequest.PrincipalInfo.Unknown = types.NewUInt8(0)
+
+		friendRequest.Message = friendRequestMessage
+
+		// * Send notification to recipient
+
+		connectedUser, ok := globals.ConnectedUsers.Get(recipientPID)
+
+		if ok && connectedUser != nil {
+			senderConnectedUser, ok := globals.ConnectedUsers.Get(senderPID)
+
+			if ok && senderConnectedUser != nil {
+				var err error
+
+				senderFriendInfo := friends_wiiu_types.NewFriendInfo()
+
+				senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(senderPID)
+				if err != nil {
+					globals.Logger.Critical(err.Error())
+					return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+				}
+
+				senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
+
+				status, err := database_wiiu.GetUserComment(senderPID)
+				if err != nil {
+					globals.Logger.Critical(err.Error())
+					senderFriendInfo.Status = friends_wiiu_types.NewComment()
+					senderFriendInfo.Status.LastChanged = types.NewDateTime(0)
+				} else {
+					senderFriendInfo.Status = status
+				}
+
+				senderFriendInfo.BecameFriend = friendInfo.BecameFriend
+				senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
+				senderFriendInfo.Unknown = types.NewUInt64(0)
+
+				go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Connection, senderFriendInfo)
+			}
+		}
+
+		rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
+
+		friendRequest.WriteTo(rmcResponseStream)
+		friendInfo.WriteTo(rmcResponseStream)
+
+		rmcResponseBody := rmcResponseStream.Bytes()
+
+		rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+		rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+		rmcResponse.MethodID = friends_wiiu.MethodAddFriendRequest
+		rmcResponse.CallID = callID
+
+		return rmcResponse, nil
+	}
+
+	// * There is no existing friend request. Continue with making one.
+
 	currentTimestamp := time.Now()
 	expireTimestamp := currentTimestamp.Add(time.Hour * 24 * 29)
 
@@ -77,7 +160,7 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 	sentTime.FromTimestamp(currentTimestamp)
 	expireTime.FromTimestamp(expireTimestamp)
 
-	friendRequestID, err := database_wiiu.SaveFriendRequest(senderPID, recipientPID, uint64(sentTime), uint64(expireTime), string(message))
+	friendRequestID, err = database_wiiu.SaveFriendRequest(senderPID, recipientPID, uint64(sentTime), uint64(expireTime), string(message))
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
