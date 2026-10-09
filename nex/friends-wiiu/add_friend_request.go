@@ -25,6 +25,19 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 	senderPID := uint32(connection.PID())
 	recipientPID := uint32(pid)
 
+	// * Checking that the user doesn't have the recipient blocked.
+
+	isRecipientBlocked, err := database_wiiu.IsFriendRequestBlocked(recipientPID, senderPID)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+	}
+
+	if isRecipientBlocked {
+		// * Do not allow a user to friend a user they already have blocked
+		return nil, nex.NewError(nex.ResultCodes.FPD.BlacklistedByMe, "Friend request blocked by sender's blocklist")
+	}
+
 	senderPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfo(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
