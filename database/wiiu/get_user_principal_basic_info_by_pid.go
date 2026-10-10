@@ -8,8 +8,8 @@ import (
 	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
 )
 
-// GetUserPrincipalBasicInfo returns the users basic info
-func GetUserPrincipalBasicInfo(pid uint32) (friends_wiiu_types.PrincipalBasicInfo, error) {
+// GetUserPrincipalBasicInfoByPID returns the users basic info from the user's PID
+func GetUserPrincipalBasicInfoByPID(pid uint32) (friends_wiiu_types.PrincipalBasicInfo, error) {
 	principalBasicInfo := friends_wiiu_types.NewPrincipalBasicInfo()
 
 	var nnid string

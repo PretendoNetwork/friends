@@ -50,13 +50,13 @@ func AddFriendRequest(err error, packet nex.PacketInterface, callID uint32, pid 
 		return nil, nex.NewError(nex.ResultCodes.FPD.BlockSettingChangeNotAllowed, "Friend request is blocked by Principal Preferences")
 	}
 
-	senderPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfo(senderPID)
+	senderPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfoByPID(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	recipientPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfo(recipientPID)
+	recipientPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfoByPID(recipientPID)
 	if err != nil {
 		if err == database.ErrPIDNotFound {
 			// TODO - Not sure if this is the correct error.

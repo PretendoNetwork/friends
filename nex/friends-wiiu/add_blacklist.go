@@ -24,7 +24,7 @@ func AddBlackList(err error, packet nex.PacketInterface, callID uint32, blacklis
 	titleID := currentBlacklistPrincipal.GameKey.TitleID
 	titleVersion := currentBlacklistPrincipal.GameKey.TitleVersion
 
-	userInfo, err := database_wiiu.GetUserPrincipalBasicInfo(uint32(currentBlacklistPrincipal.PrincipalBasicInfo.PID))
+	userInfo, err := database_wiiu.GetUserPrincipalBasicInfoByPID(uint32(currentBlacklistPrincipal.PrincipalBasicInfo.PID))
 	if err != nil {
 		if err == database.ErrPIDNotFound {
 			// TODO - Not sure if this is the correct error.

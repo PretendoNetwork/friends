@@ -42,7 +42,7 @@ func DenyFriendRequest(err error, packet nex.PacketInterface, callID uint32, id 
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
 	}
 
-	info, err := database_wiiu.GetUserPrincipalBasicInfo(senderPID)
+	info, err := database_wiiu.GetUserPrincipalBasicInfoByPID(senderPID)
 	if err != nil {
 		globals.Logger.Critical(err.Error())
 		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
