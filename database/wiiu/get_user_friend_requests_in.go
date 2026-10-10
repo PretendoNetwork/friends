@@ -15,13 +15,13 @@ func GetUserFriendRequestsIn(pid uint32) (types.List[friends_wiiu_types.FriendRe
 
 	rows, err := database.Manager.Query(`
 	SELECT
-		fr.id, fr.sender_pid, fr.sent_on, fr.expires_on, fr.message, fr.received,
-		bi.username, bi.unknown,
-		mii.name, mii.unknown1, mii.unknown2, mii.data, mii.unknown_datetime
+	    fr.id, fr.sender_pid, fr.sent_on, fr.expires_on, fr.message, fr.received,
+	    bi.username, bi.unknown,
+	    mii.name, mii.unknown1, mii.unknown2, mii.data, mii.unknown_datetime
 	FROM wiiu.friend_requests AS fr
 	INNER JOIN wiiu.principal_basic_info AS bi ON bi.pid = fr.sender_pid
 	INNER JOIN wiiu.mii AS mii ON mii.pid = fr.sender_pid
-	WHERE recipient_pid=$1 AND accepted=false AND denied=false
+	WHERE recipient_pid=$1 AND accepted=false AND denied=false AND provisional=false
 	LIMIT 100
 	`, pid)
 	if err != nil {

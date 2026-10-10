@@ -1,0 +1,219 @@
+package nex_friends_wiiu
+
+import (
+	"time"
+
+	"github.com/PretendoNetwork/friends/database"
+	database_wiiu "github.com/PretendoNetwork/friends/database/wiiu"
+	"github.com/PretendoNetwork/friends/globals"
+	notifications_wiiu "github.com/PretendoNetwork/friends/notifications/wiiu"
+	nex "github.com/PretendoNetwork/nex-go/v2"
+	"github.com/PretendoNetwork/nex-go/v2/types"
+	friends_wiiu "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu"
+	friends_wiiu_constants "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/constants"
+	friends_wiiu_types "github.com/PretendoNetwork/nex-protocols-go/v2/friends-wiiu/types"
+)
+
+func AddFriendByName(err error, packet nex.PacketInterface, callID uint32, username types.String) (*nex.RMCMessage, *nex.Error) {
+	if err != nil {
+		globals.Logger.Error(err.Error())
+		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
+	}
+
+	connection := packet.Sender().(*nex.PRUDPConnection)
+
+	recipientPrincipalInfo, err := database_wiiu.GetUserPrincipalBasicInfoByNNID(username)
+	if err != nil {
+		if err == database.ErrPIDNotFound {
+			// * This error code seems strange, but this is what Nintendo sends
+			globals.Logger.Errorf("User %d has sent friend request to invalid NNID %s", connection.PID(), username)
+			return nil, nex.NewError(nex.ResultCodes.FPD.RequestLimitExceed, "") // TODO - Add error message
+		} else {
+			globals.Logger.Critical(err.Error())
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+		}
+	}
+
+	senderPID := uint32(connection.PID())
+	recipientPID := uint32(recipientPrincipalInfo.PID)
+
+	// * Checking that the user doesn't have the recipient blocked.
+
+	isRecipientBlocked, err := database_wiiu.IsFriendRequestBlocked(recipientPID, senderPID)
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+	}
+
+	if isRecipientBlocked {
+		// * Do not allow a user to friend a user they already have blocked
+		return nil, nex.NewError(nex.ResultCodes.FPD.BlacklistedByMe, "Friend request blocked by sender's blocklist")
+	}
+
+	// * Check for an already existing (potentially provisional) friend request. This code is a bit messy unfortunately, but it works.
+	friendRequestID, friendRequestMessage, err := database_wiiu.CheckExistingFriendRequestByPIDs(recipientPID, senderPID)
+
+	// * ErrFriendRequestNotFound is what we want to receive in this case. Is there a smoother way to check for this though?
+	if err != nil && err != database.ErrFriendRequestNotFound {
+		globals.Logger.Critical(err.Error())
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+	} else if err == nil {
+		friendInfo, err := database_wiiu.AcceptFriendRequestAndReturnFriendInfo(friendRequestID)
+		if err != nil {
+			globals.Logger.Critical(err.Error())
+			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+		}
+
+		// * PrincipalInfo must remain empty for the console to auto-accept.
+
+		friendRequest := friends_wiiu_types.NewFriendRequest()
+
+		friendRequest.PrincipalInfo.PID = types.NewPID(0)
+		friendRequest.PrincipalInfo.NNID = types.NewString("")
+
+		friendRequest.PrincipalInfo.Mii.Name = types.NewString("")
+		friendRequest.PrincipalInfo.Mii.Unknown1 = types.NewUInt8(0)
+		friendRequest.PrincipalInfo.Mii.Unknown2 = types.NewUInt8(0)
+		friendRequest.PrincipalInfo.Mii.Datetime = types.NewDateTime(0)
+		friendRequest.PrincipalInfo.Unknown = types.NewUInt8(0)
+
+		friendRequest.Message = friendRequestMessage
+
+		// * Send notification to recipient
+
+		connectedUser, ok := globals.ConnectedUsers.Get(recipientPID)
+
+		if ok && connectedUser != nil {
+			senderConnectedUser, ok := globals.ConnectedUsers.Get(senderPID)
+
+			if ok && senderConnectedUser != nil {
+				var err error
+
+				senderFriendInfo := friends_wiiu_types.NewFriendInfo()
+
+				senderFriendInfo.NNAInfo, err = database_wiiu.GetUserNetworkAccountInfo(senderPID)
+				if err != nil {
+					globals.Logger.Critical(err.Error())
+					return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+				}
+
+				senderFriendInfo.Presence = senderConnectedUser.PresenceV2.Copy().(friends_wiiu_types.NintendoPresenceV2)
+
+				status, err := database_wiiu.GetUserComment(senderPID)
+				if err != nil {
+					globals.Logger.Critical(err.Error())
+					senderFriendInfo.Status = friends_wiiu_types.NewComment()
+					senderFriendInfo.Status.LastChanged = types.NewDateTime(0)
+				} else {
+					senderFriendInfo.Status = status
+				}
+
+				senderFriendInfo.BecameFriend = friendInfo.BecameFriend
+				senderFriendInfo.LastOnline = friendInfo.LastOnline // TODO - Change this
+				senderFriendInfo.Unknown = types.NewUInt64(0)
+
+				go notifications_wiiu.SendFriendRequestAccepted(connectedUser.Connection, senderFriendInfo)
+			}
+		}
+
+		rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
+
+		friendRequest.WriteTo(rmcResponseStream)
+		friendInfo.WriteTo(rmcResponseStream)
+
+		rmcResponseBody := rmcResponseStream.Bytes()
+
+		rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+		rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+		rmcResponse.MethodID = friends_wiiu.MethodAddFriendByName
+		rmcResponse.CallID = callID
+
+		return rmcResponse, nil
+	}
+
+	// * No existing provisional friend request. Continue as normal.
+
+	currentTimestamp := time.Now()
+	sentTime := types.NewDateTime(0)
+	sentTime.FromTimestamp(currentTimestamp)
+
+	friendRequestID, err = database_wiiu.SaveProvisionalFriend(senderPID, recipientPID, uint64(sentTime))
+	if err != nil {
+		globals.Logger.Critical(err.Error())
+		return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message
+	}
+
+	friendRequest := friends_wiiu_types.NewFriendRequest()
+
+	friendRequest.PrincipalInfo = recipientPrincipalInfo
+
+	// * All replayed from official server
+	friendRequest.Message = friends_wiiu_types.NewFriendRequestMessage()
+	friendRequest.Message.FriendRequestID = types.NewUInt64(0)
+	friendRequest.Message.Received = types.NewBool(false)
+	friendRequest.Message.Unknown2 = types.NewUInt8(0)
+	friendRequest.Message.Message = types.NewString("")
+	friendRequest.Message.Unknown3 = types.NewUInt8(0)
+	friendRequest.Message.Unknown4 = types.NewString("")
+	friendRequest.Message.GameKey = friends_wiiu_types.NewGameKey()
+	friendRequest.Message.Unknown5 = types.NewDateTime(0)
+	friendRequest.Message.ExpiresOn = types.NewDateTime(0)
+	friendRequest.SentOn = sentTime
+
+	// * Why does this exist?? Always empty??
+	friendInfo := friends_wiiu_types.NewFriendInfo()
+
+	friendInfo.NNAInfo = friends_wiiu_types.NewNNAInfo()
+	friendInfo.NNAInfo.PrincipalBasicInfo = friends_wiiu_types.NewPrincipalBasicInfo()
+	friendInfo.NNAInfo.PrincipalBasicInfo.PID = types.NewPID(0)
+	friendInfo.NNAInfo.PrincipalBasicInfo.NNID = types.NewString("")
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii = friends_wiiu_types.NewMiiV2()
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Name = types.NewString("")
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown1 = types.NewUInt8(0)
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Unknown2 = types.NewUInt8(0)
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.MiiData = types.NewBuffer([]byte{})
+	friendInfo.NNAInfo.PrincipalBasicInfo.Mii.Datetime = types.NewDateTime(0)
+	friendInfo.NNAInfo.PrincipalBasicInfo.Unknown = types.NewUInt8(0)
+	friendInfo.NNAInfo.Unknown1 = types.NewUInt8(0)
+	friendInfo.NNAInfo.Unknown2 = types.NewUInt8(0)
+
+	friendInfo.Presence = friends_wiiu_types.NewNintendoPresenceV2()
+	friendInfo.Presence.ChangedFlags = friends_wiiu_constants.PresenceChangedFlagNone
+	friendInfo.Presence.Online = types.NewBool(false)
+	friendInfo.Presence.GameKey = friends_wiiu_types.NewGameKey()
+	friendInfo.Presence.Unknown1 = types.NewUInt8(0)
+	friendInfo.Presence.Message = types.NewString("")
+	friendInfo.Presence.Unknown2 = types.NewUInt32(0)
+	friendInfo.Presence.Unknown3 = types.NewUInt8(0)
+	friendInfo.Presence.GameServerID = types.NewUInt32(0)
+	friendInfo.Presence.Unknown4 = types.NewUInt32(0)
+	friendInfo.Presence.PID = types.NewPID(0)
+	friendInfo.Presence.GatheringID = types.NewUInt32(0)
+	friendInfo.Presence.ApplicationData = types.NewBuffer([]byte{0x00})
+	friendInfo.Presence.Unknown5 = types.NewUInt8(0)
+	friendInfo.Presence.Unknown6 = types.NewUInt8(0)
+	friendInfo.Presence.Unknown7 = types.NewUInt8(0)
+
+	friendInfo.Status = friends_wiiu_types.NewComment()
+	friendInfo.Status.Unknown = types.NewUInt8(0)
+	friendInfo.Status.Contents = types.NewString("")
+	friendInfo.Status.LastChanged = types.NewDateTime(0)
+
+	friendInfo.BecameFriend = types.NewDateTime(0)
+	friendInfo.LastOnline = types.NewDateTime(0)
+	friendInfo.Unknown = types.NewUInt64(0)
+
+	rmcResponseStream := nex.NewByteStreamOut(globals.SecureEndpoint.LibraryVersions(), globals.SecureEndpoint.ByteStreamSettings())
+
+	friendRequest.WriteTo(rmcResponseStream)
+	friendInfo.WriteTo(rmcResponseStream)
+
+	rmcResponseBody := rmcResponseStream.Bytes()
+
+	rmcResponse := nex.NewRMCSuccess(globals.SecureEndpoint, rmcResponseBody)
+	rmcResponse.ProtocolID = friends_wiiu.ProtocolID
+	rmcResponse.MethodID = friends_wiiu.MethodAddFriendByName
+	rmcResponse.CallID = callID
+
+	return rmcResponse, nil
+}

@@ -14,13 +14,13 @@ func GetUserFriendRequestsOut(pid uint32) (types.List[friends_wiiu_types.FriendR
 
 	rows, err := database.Manager.Query(`
 	SELECT
-		fr.id, fr.recipient_pid, fr.sent_on, fr.expires_on, fr.message, fr.received,
-		bi.username, bi.unknown,
-		mii.name, mii.unknown1, mii.unknown2, mii.data, mii.unknown_datetime
+	    fr.id, fr.recipient_pid, fr.sent_on, fr.expires_on, fr.message, fr.received, fr.provisional,
+	    bi.username, bi.unknown,
+	    mii.name, mii.unknown1, mii.unknown2, mii.data, mii.unknown_datetime
 	FROM wiiu.friend_requests AS fr
 	INNER JOIN wiiu.principal_basic_info AS bi ON bi.pid = fr.recipient_pid
 	INNER JOIN wiiu.mii AS mii ON mii.pid = fr.recipient_pid
-	WHERE sender_pid=$1 AND accepted=false
+	WHERE sender_pid = $1 AND accepted = false
 	LIMIT 100
 	`, pid)
 	if err != nil {
@@ -39,6 +39,7 @@ func GetUserFriendRequestsOut(pid uint32) (types.List[friends_wiiu_types.FriendR
 		var expiresOn uint64
 		var message string
 		var received bool
+		var provisional bool
 
 		var recipientNNID string
 		var unknown uint8
@@ -49,7 +50,7 @@ func GetUserFriendRequestsOut(pid uint32) (types.List[friends_wiiu_types.FriendR
 		var miiData []byte
 		var miiDatetime uint64
 
-		err := rows.Scan(&id, &recipientPID, &sentOn, &expiresOn, &message, &received, &recipientNNID, &unknown, &miiName, &miiUnknown1, &miiUnknown2, &miiData, &miiDatetime)
+		err := rows.Scan(&id, &recipientPID, &sentOn, &expiresOn, &message, &received, &provisional, &recipientNNID, &unknown, &miiName, &miiUnknown1, &miiUnknown2, &miiData, &miiDatetime)
 		if err != nil {
 			return friendRequests, err
 		}
@@ -70,9 +71,17 @@ func GetUserFriendRequestsOut(pid uint32) (types.List[friends_wiiu_types.FriendR
 		friendRequest := friends_wiiu_types.NewFriendRequest()
 		friendRequest.PrincipalInfo = principalBasicInfo
 		friendRequest.Message = friends_wiiu_types.NewFriendRequestMessage()
-		friendRequest.Message.FriendRequestID = types.NewUInt64(id)
+		if provisional {
+			friendRequest.Message.FriendRequestID = types.NewUInt64(0)
+		} else {
+			friendRequest.Message.FriendRequestID = types.NewUInt64(0)
+		}
 		friendRequest.Message.Received = types.NewBool(received)
-		friendRequest.Message.Unknown2 = types.NewUInt8(1)
+		if provisional {
+			friendRequest.Message.Unknown2 = types.NewUInt8(0)
+		} else {
+			friendRequest.Message.Unknown2 = types.NewUInt8(1)
+		}
 		friendRequest.Message.Message = types.NewString(message)
 		friendRequest.Message.Unknown3 = types.NewUInt8(0)
 		friendRequest.Message.Unknown4 = types.NewString("")
