@@ -31,7 +31,7 @@ func GetUserNetworkAccountInfo(pid uint32) (friends_wiiu_types.NNAInfo, error) {
 
 	nnaInfo.Unknown1 = types.NewUInt8(unknown1)
 	nnaInfo.Unknown2 = types.NewUInt8(unknown2)
-	nnaInfo.PrincipalBasicInfo, err = GetUserPrincipalBasicInfo(pid)
+	nnaInfo.PrincipalBasicInfo, err = GetUserPrincipalBasicInfoByPID(pid)
 	if err != nil {
 		return nnaInfo, err
 	}

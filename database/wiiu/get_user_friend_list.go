@@ -15,18 +15,18 @@ func GetUserFriendList(pid uint32) (types.List[friends_wiiu_types.FriendInfo], e
 
 	rows, err := database.Manager.Query(`
 	SELECT
-		f.user2_pid, f.date,
-		u.comment, u.comment_changed,
-		u.last_online,
-		bi.username, bi.unknown,
-		ai.unknown1, ai.unknown2,
-		mii.name, mii.unknown1, mii.unknown2, mii.data, mii.unknown_datetime
+	    f.user2_pid, f.date,
+	    u.comment, u.comment_changed,
+	    u.last_online,
+	    bi.username, bi.unknown,
+	    ai.unknown1, ai.unknown2,
+	    mii.name, mii.unknown1, mii.unknown2, mii.data, mii.unknown_datetime
 	FROM wiiu.friendships AS f
 	INNER JOIN wiiu.user_data AS u ON u.pid = f.user2_pid
 	INNER JOIN wiiu.principal_basic_info AS bi ON bi.pid = f.user2_pid
 	INNER JOIN wiiu.network_account_info AS ai ON ai.pid = f.user2_pid
 	INNER JOIN wiiu.mii AS mii ON mii.pid = f.user2_pid
-	WHERE f.user1_pid=$1 AND f.active=true
+	WHERE f.user1_pid = $1 AND f.active = true AND f.completed = true
 	LIMIT 100
 	`, pid)
 

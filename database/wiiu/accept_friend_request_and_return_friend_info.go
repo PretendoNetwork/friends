@@ -36,23 +36,25 @@ func AcceptFriendRequestAndReturnFriendInfo(friendRequestID uint64) (friends_wii
 	// * If were friends before, just activate the status again
 
 	_, err = database.Manager.Exec(`
-		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active)
-		VALUES ($1, $2, $3, true)
+		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active, completed)
+		VALUES ($1, $2, $3, true, true)
 		ON CONFLICT (user1_pid, user2_pid)
 		DO UPDATE SET
 		date = $3,
-		active = true`, senderPID, recipientPID, uint64(acceptedTime))
+		active = true,
+		completed = true`, senderPID, recipientPID, uint64(acceptedTime))
 	if err != nil {
 		return friends_wiiu_types.NewFriendInfo(), err
 	}
 
 	_, err = database.Manager.Exec(`
-		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active)
-		VALUES ($1, $2, $3, true)
+		INSERT INTO wiiu.friendships (user1_pid, user2_pid, date, active, completed)
+		VALUES ($1, $2, $3, true, true)
 		ON CONFLICT (user1_pid, user2_pid)
 		DO UPDATE SET
 		date = $3,
-		active = true`, recipientPID, senderPID, uint64(acceptedTime))
+		active = true,
+		completed = true`, recipientPID, senderPID, uint64(acceptedTime))
 	if err != nil {
 		return friends_wiiu_types.NewFriendInfo(), err
 	}

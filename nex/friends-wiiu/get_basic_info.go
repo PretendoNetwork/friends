@@ -18,7 +18,7 @@ func GetBasicInfo(err error, packet nex.PacketInterface, callID uint32, pids typ
 	infos := types.NewList[friends_wiiu_types.PrincipalBasicInfo]()
 
 	for _, pid := range pids {
-		info, err := database_wiiu.GetUserPrincipalBasicInfo(uint32(pid))
+		info, err := database_wiiu.GetUserPrincipalBasicInfoByPID(uint32(pid))
 		if err != nil {
 			globals.Logger.Critical(err.Error())
 			return nil, nex.NewError(nex.ResultCodes.FPD.Unknown, "") // TODO - Add error message

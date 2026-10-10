@@ -36,6 +36,7 @@ func registerSecureServerProtocols() {
 	friendsWiiUProtocol.DeletePersistentNotification = nex_friends_wiiu.DeletePersistentNotification
 	friendsWiiUProtocol.CheckSettingStatus = nex_friends_wiiu.CheckSettingStatus
 	friendsWiiUProtocol.GetRequestBlockSettings = nex_friends_wiiu.GetRequestBlockSettings
+	friendsWiiUProtocol.AddFriendByName = nex_friends_wiiu.AddFriendByName
 
 	// * Friends (3DS) protocol handles
 	friends3DSProtocol.UpdateProfile = nex_friends_3ds.UpdateProfile

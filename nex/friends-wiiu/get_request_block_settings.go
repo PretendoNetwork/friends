@@ -15,8 +15,6 @@ func GetRequestBlockSettings(err error, packet nex.PacketInterface, callID uint3
 		return nil, nex.NewError(nex.ResultCodes.FPD.InvalidArgument, "") // TODO - Add error message
 	}
 
-	connection := packet.Sender().(*nex.PRUDPConnection)
-
 	settings := types.NewList[friends_wiiu_types.PrincipalRequestBlockSetting]()
 
 	// TODO - Improve this. Use less database_wiiu reads
@@ -24,13 +22,13 @@ func GetRequestBlockSettings(err error, packet nex.PacketInterface, callID uint3
 		setting := friends_wiiu_types.NewPrincipalRequestBlockSetting()
 		setting.PID = pid
 
-		isBlocked, err := database_wiiu.IsFriendRequestBlocked(uint32(connection.PID()), uint32(pid))
+		principalPreferences, err := database_wiiu.GetUserPrincipalPreference(uint32(pid))
 		if err != nil {
 			globals.Logger.Critical(err.Error())
 			return nil, nex.NewError(nex.ResultCodes.Core.Unknown, "") // TODO - Add error message
 		}
 
-		setting.IsBlocked = types.NewBool(isBlocked)
+		setting.IsBlocked = types.NewBool(bool(principalPreferences.BlockFriendRequests))
 
 		settings = append(settings, setting)
 	}
